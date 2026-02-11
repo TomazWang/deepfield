@@ -67,18 +67,18 @@
 
 ## 8. Skill - Bootstrap
 
-- [ ] 8.1 Create `skills/deepfield-bootstrap.md`
-- [ ] 8.2 Implement brief.md parsing
-- [ ] 8.3 Orchestrate classifier agent invocation
-- [ ] 8.4 Orchestrate clone-repos script for each repository
-- [ ] 8.5 Organize sources into baseline/trusted-docs based on classification
-- [ ] 8.6 Orchestrate scanner agent invocation
-- [ ] 8.7 Orchestrate domain-detector agent invocation
-- [ ] 8.8 Generate initial project-map.md
-- [ ] 8.9 Orchestrate plan-generator agent invocation
-- [ ] 8.10 Create run-0/ directory and initial findings.md
-- [ ] 8.11 Write run-0.config.json with initial hashes
-- [ ] 8.12 Create initial draft documents (skeletons)
+- [x] 8.1 Create `skills/deepfield-bootstrap.md`
+- [x] 8.2 Implement brief.md parsing
+- [x] 8.3 Orchestrate classifier agent invocation
+- [x] 8.4 Orchestrate clone-repos script for each repository
+- [x] 8.5 Organize sources into baseline/trusted-docs based on classification
+- [x] 8.6 Orchestrate scanner agent invocation
+- [x] 8.7 Orchestrate domain-detector agent invocation
+- [x] 8.8 Generate initial project-map.md
+- [x] 8.9 Orchestrate plan-generator agent invocation
+- [x] 8.10 Create run-0/ directory and initial findings.md
+- [x] 8.11 Write run-0.config.json with initial hashes
+- [x] 8.12 Create initial draft documents (skeletons)
 - [ ] 8.13 Test bootstrap workflow end-to-end
 
 ## 9. Agent - Learner
