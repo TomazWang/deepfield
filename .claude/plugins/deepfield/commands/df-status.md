@@ -116,6 +116,38 @@ echo ""
 echo "Next step:      $SUGGESTION"
 echo ""
 
+# Show learning plan progress if it exists
+if [ -f "./kb/wip/learning-plan.md" ]; then
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📊 Learning Progress"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+
+  # Extract topic confidence from learning plan
+  # Simple grep-based extraction for now
+  # Format expected: "**Confidence:** 30% → 65%"
+
+  echo "Topics by Priority:"
+  echo ""
+
+  # HIGH priority topics
+  HIGH_TOPICS=$(grep -A 5 "Priority: HIGH" ./kb/wip/learning-plan.md | grep "^###" | sed 's/^### //' | sed 's/ (Priority: HIGH)//' || true)
+  if [ -n "$HIGH_TOPICS" ]; then
+    echo "  HIGH Priority:"
+    echo "$HIGH_TOPICS" | while read topic; do
+      # Extract confidence for this topic (simplified)
+      CONF=$(grep -A 10 "^### $topic" ./kb/wip/learning-plan.md | grep "Confidence:" | head -1 || echo "Unknown")
+      echo "    • $topic: $CONF"
+    done
+    echo ""
+  fi
+
+  # Count open questions
+  QUESTION_COUNT=$(grep -c "^- " ./kb/wip/learning-plan.md || echo "0")
+  echo "  Open Questions: $QUESTION_COUNT"
+  echo ""
+fi
+
 # Verbose mode: show additional details
 if [ "$VERBOSE" = true ]; then
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

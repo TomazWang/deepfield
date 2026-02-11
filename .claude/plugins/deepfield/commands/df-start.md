@@ -123,6 +123,27 @@ questions:
 
 Store answer in variable: `FOCUS_AREAS`
 
+### Question 4: How many runs before pausing?
+
+```yaml
+# Use AskUserQuestion tool
+questions:
+  - question: "How many learning runs should execute before pausing for your review?"
+    header: "Max Runs"
+    multiSelect: false
+    options:
+      - label: "3 runs (Recommended)"
+        description: "Quick cycles, frequent check-ins"
+      - label: "5 runs"
+        description: "Balanced - good progress between reviews"
+      - label: "10 runs"
+        description: "Deep dives, less frequent interruption"
+      - label: "Until plan complete"
+        description: "Keep going until all HIGH priority topics done"
+```
+
+Store answer in variable: `MAX_RUNS` (convert "Until plan complete" to 999)
+
 ### Generate brief.md
 
 ```bash
@@ -151,6 +172,7 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/update-json.js "$CONFIG_PATH" "{
   \"projectName\": \"$PROJECT_TYPE\",
   \"goal\": \"$GOAL\",
   \"repositories\": [],
+  \"maxRuns\": $MAX_RUNS,
   \"createdAt\": \"$NOW\",
   \"lastModified\": \"$NOW\"
 }"

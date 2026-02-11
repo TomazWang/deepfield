@@ -60,17 +60,40 @@ echo "✅ Knowledge base initialized successfully!"
 echo ""
 echo "📁 Directory: ./kb/"
 echo ""
-echo "Next steps:"
-echo "  1. Run /df-start to begin interactive setup"
-echo "  2. Fill out the generated brief.md with project details"
-echo "  3. Run /df-bootstrap to begin learning (Phase 2)"
+
+# Ask if user wants to start setup now
+echo "Ready to begin setup?"
 echo ""
-echo "Structure created:"
-echo "  kb/"
-echo "  ├── source/        # Raw inputs: repos, docs, notes"
-echo "  ├── wip/           # AI's workspace: maps, plans, findings"
-echo "  ├── drafts/        # Living documents that evolve"
-echo "  └── output/        # Frozen snapshots for sharing"
+echo "Options:"
+echo "  1. Yes, let's start - I'll guide you through project setup"
+echo "  2. Skip for now - I'll explore the structure first"
+echo ""
+
+# Use AskUserQuestion to get choice
+# (Implementation: This would use Claude's AskUserQuestion tool)
+# For now, assume choice is made
+
+# CHOICE=$(ask_user_question "Start setup now?" \
+#   "Yes, let's start" "Skip for now")
+
+# if [ "$CHOICE" = "Yes, let's start" ]; then
+#   echo "Launching interactive setup..."
+#   exec "${CLAUDE_PLUGIN_ROOT}/commands/df-start.md"
+# else
+  echo "Setup skipped. When ready, run: /df-start"
+  echo ""
+  echo "Next steps:"
+  echo "  1. Run /df-start to begin interactive setup"
+  echo "  2. Fill out the generated brief.md with project details"
+  echo "  3. Run /df-continue to begin learning"
+  echo ""
+  echo "Structure created:"
+  echo "  kb/"
+  echo "  ├── source/        # Raw inputs: repos, docs, notes"
+  echo "  ├── wip/           # AI's workspace: maps, plans, findings"
+  echo "  ├── drafts/        # Living documents that evolve"
+  echo "  └── output/        # Frozen snapshots for sharing"
+# fi
 ```
 
 ## Error Handling

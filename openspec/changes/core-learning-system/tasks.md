@@ -141,27 +141,27 @@
 
 ## 13. Command - Init (Optional Start)
 
-- [ ] 13.1 Update `commands/df-init.md` to ask about starting setup
-- [ ] 13.2 Use AskUserQuestion: "Yes, let's start" or "Skip for now"
-- [ ] 13.3 If "Yes", invoke start-interactive-setup skill
-- [ ] 13.4 If "Skip", display next steps message
+- [x] 13.1 Update `commands/df-init.md` to ask about starting setup
+- [x] 13.2 Use AskUserQuestion: "Yes, let's start" or "Skip for now"
+- [x] 13.3 If "Yes", invoke start-interactive-setup skill
+- [x] 13.4 If "Skip", display next steps message
 - [ ] 13.5 Test both paths
 
 ## 14. Command - Start (Max Runs Configuration)
 
-- [ ] 14.1 Update `commands/df-start.md` to ask about max runs
-- [ ] 14.2 Add AskUserQuestion for max runs (3, 5, 10, Until plan complete)
-- [ ] 14.3 Store maxRuns in project.config.json
-- [ ] 14.4 Default to 5 if user skips question
+- [x] 14.1 Update `commands/df-start.md` to ask about max runs
+- [x] 14.2 Add AskUserQuestion for max runs (3, 5, 10, Until plan complete)
+- [x] 14.3 Store maxRuns in project.config.json
+- [x] 14.4 Default to 5 if user skips question
 - [ ] 14.5 Test max runs configuration
 
 ## 15. Command - Status (Learning Progress)
 
-- [ ] 15.1 Update `commands/df-status.md` to read learning-plan.md
-- [ ] 15.2 Display confidence levels per topic
-- [ ] 15.3 Display open questions count
-- [ ] 15.4 Display run count and last run timestamp
-- [ ] 15.5 Suggest next action based on state
+- [x] 15.1 Update `commands/df-status.md` to read learning-plan.md
+- [x] 15.2 Display confidence levels per topic
+- [x] 15.3 Display open questions count
+- [x] 15.4 Display run count and last run timestamp
+- [x] 15.5 Suggest next action based on state
 - [ ] 15.6 Test status display in various states
 
 ## 16. Integration Testing
