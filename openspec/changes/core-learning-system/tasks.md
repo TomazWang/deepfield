@@ -128,15 +128,15 @@
 
 ## 12. Command - Continue (Context-Aware Routing)
 
-- [ ] 12.1 Update `commands/df-continue.md` with state detection
-- [ ] 12.2 Implement routing: EMPTY → error
-- [ ] 12.3 Implement routing: INITIALIZED → invoke start-interactive-setup
-- [ ] 12.4 Implement routing: BRIEF_CREATED → prompt to fill brief
-- [ ] 12.5 Implement routing: BRIEF_READY → invoke bootstrap
-- [ ] 12.6 Implement routing: LEARNING + new input → invoke iterate
-- [ ] 12.7 Implement routing: LEARNING + no input → prompt for sources
-- [ ] 12.8 Implement routing: COMPLETE → suggest next actions
-- [ ] 12.9 Add --once flag support for single-run mode
+- [x] 12.1 Update `commands/df-continue.md` with state detection
+- [x] 12.2 Implement routing: EMPTY → error
+- [x] 12.3 Implement routing: INITIALIZED → invoke start-interactive-setup
+- [x] 12.4 Implement routing: BRIEF_CREATED → prompt to fill brief
+- [x] 12.5 Implement routing: BRIEF_READY → invoke bootstrap
+- [x] 12.6 Implement routing: LEARNING + new input → invoke iterate
+- [x] 12.7 Implement routing: LEARNING + no input → prompt for sources
+- [x] 12.8 Implement routing: COMPLETE → suggest next actions
+- [x] 12.9 Add --once flag support for single-run mode
 - [ ] 12.10 Test routing logic for all states
 
 ## 13. Command - Init (Optional Start)
