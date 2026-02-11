@@ -74,6 +74,7 @@ copy_if_not_exists "$TEMPLATES_DIR/project.config.json" "$TARGET_DIR/project.con
 # wip/ templates
 copy_if_not_exists "$TEMPLATES_DIR/project-map.md" "$TARGET_DIR/wip/project-map.md"
 copy_if_not_exists "$TEMPLATES_DIR/domain-index.md" "$TARGET_DIR/wip/domain-index.md"
+copy_if_not_exists "$TEMPLATES_DIR/learning-plan.md" "$TARGET_DIR/wip/learning-plan.md"
 
 # drafts/ templates
 copy_if_not_exists "$TEMPLATES_DIR/_changelog.md" "$TARGET_DIR/drafts/_changelog.md"

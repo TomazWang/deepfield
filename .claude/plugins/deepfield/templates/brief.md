@@ -96,6 +96,21 @@ Development:
 - [ ] Code conventions and style
 - [ ] Git workflow
 
+## Autonomous Learning Configuration
+
+**How this works:**
+After bootstrap, the system will run multiple learning cycles autonomously - reading code, connecting concepts, and building documentation. After each cycle, it creates a staging area where you can add feedback or new sources.
+
+**Max Consecutive Runs:** [Configured during setup: 3, 5, 10, or "Until plan complete"]
+
+This controls how many learning cycles run before pausing for your review. The system will:
+- Focus on HIGH priority topics first
+- Update confidence levels after each run
+- Stop when learning plan is complete OR max runs reached
+- Create staging areas for you to add feedback between runs
+
+You can always run `/df-continue` to continue learning, or `/df-status` to check progress.
+
 ## Notes for the AI
 
 **Anything else the AI should know?**

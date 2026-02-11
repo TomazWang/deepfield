@@ -1,21 +1,21 @@
 ## 1. Scripts - File Operations
 
-- [ ] 1.1 Create `scripts/clone-repos.sh` for git operations
-- [ ] 1.2 Add branch/tag checkout support to clone script
-- [ ] 1.3 Add error handling and validation to clone script
-- [ ] 1.4 Create `scripts/hash-files.js` for SHA-256 file hashing
-- [ ] 1.5 Add ignore patterns (node_modules, .git, build/) to hash script
-- [ ] 1.6 Add batch processing for large file sets to hash script
+- [x] 1.1 Create `scripts/clone-repos.sh` for git operations
+- [x] 1.2 Add branch/tag checkout support to clone script
+- [x] 1.3 Add error handling and validation to clone script
+- [x] 1.4 Create `scripts/hash-files.js` for SHA-256 file hashing
+- [x] 1.5 Add ignore patterns (node_modules, .git, build/) to hash script
+- [x] 1.6 Add batch processing for large file sets to hash script
 - [ ] 1.7 Test scripts independently with sample repos
 
 ## 2. Templates - Learning Plan
 
-- [ ] 2.1 Create `templates/learning-plan.md` template
-- [ ] 2.2 Add sections: Topics, Confidence Tracking, Priorities, Open Questions
-- [ ] 2.3 Create `templates/staging-readme.md` for run-N-staging areas
-- [ ] 2.4 Create `templates/feedback.md` template for user input
-- [ ] 2.5 Update `templates/brief.md` to include maxRuns explanation
-- [ ] 2.6 Update `scripts/scaffold-kb.sh` to create learning-plan.md
+- [x] 2.1 Create `templates/learning-plan.md` template
+- [x] 2.2 Add sections: Topics, Confidence Tracking, Priorities, Open Questions
+- [x] 2.3 Create `templates/staging-readme.md` for run-N-staging areas
+- [x] 2.4 Create `templates/feedback.md` template for user input
+- [x] 2.5 Update `templates/brief.md` to include maxRuns explanation
+- [x] 2.6 Update `scripts/scaffold-kb.sh` to create learning-plan.md
 
 ## 3. State Management - Configuration
 
