@@ -46,23 +46,23 @@
 
 ## 6. Agent - Domain Detector
 
-- [ ] 6.1 Create `agents/deepfield-domain-detector.md`
-- [ ] 6.2 Implement pattern recognition for common domains (auth, api, data, deploy)
-- [ ] 6.3 Implement file path analysis for domain hints
-- [ ] 6.4 Implement naming convention analysis
-- [ ] 6.5 Add domain suggestion confidence scores
-- [ ] 6.6 Generate domain-index.md structure
+- [x] 6.1 Create `agents/deepfield-domain-detector.md`
+- [x] 6.2 Implement pattern recognition for common domains (auth, api, data, deploy)
+- [x] 6.3 Implement file path analysis for domain hints
+- [x] 6.4 Implement naming convention analysis
+- [x] 6.5 Add domain suggestion confidence scores
+- [x] 6.6 Generate domain-index.md structure
 - [ ] 6.7 Test detector on various project types
 
 ## 7. Agent - Plan Generator
 
-- [ ] 7.1 Create `agents/deepfield-plan-generator.md`
-- [ ] 7.2 Implement initial plan generation from brief + scan
-- [ ] 7.3 Implement priority setting based on user focus areas
-- [ ] 7.4 Implement initial confidence estimation
-- [ ] 7.5 Generate open questions from scan findings
-- [ ] 7.6 Identify needed sources per topic
-- [ ] 7.7 Write learning-plan.md in standard format
+- [x] 7.1 Create `agents/deepfield-plan-generator.md`
+- [x] 7.2 Implement initial plan generation from brief + scan
+- [x] 7.3 Implement priority setting based on user focus areas
+- [x] 7.4 Implement initial confidence estimation
+- [x] 7.5 Generate open questions from scan findings
+- [x] 7.6 Identify needed sources per topic
+- [x] 7.7 Write learning-plan.md in standard format
 - [ ] 7.8 Test plan generation with various briefs
 
 ## 8. Skill - Bootstrap
