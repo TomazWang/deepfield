@@ -109,19 +109,19 @@
 
 ## 11. Skill - Iterate
 
-- [ ] 11.1 Create `skills/deepfield-iterate.md`
-- [ ] 11.2 Implement run number tracking and incrementing
-- [ ] 11.3 Load previous run config and learning plan
-- [ ] 11.4 Orchestrate hash-files script for incremental scanning
-- [ ] 11.5 Compare hashes to identify changed/new files
-- [ ] 11.6 Orchestrate learner agent with focus topics
-- [ ] 11.7 Orchestrate knowledge-synth agent with findings
-- [ ] 11.8 Update learning plan (confidence, priorities, questions)
-- [ ] 11.9 Write run-N.config.json with new hashes and metadata
-- [ ] 11.10 Implement stop condition evaluation logic
-- [ ] 11.11 Implement autonomous loop (continue if conditions allow)
-- [ ] 11.12 Create run-N+1-staging area after each run
-- [ ] 11.13 Generate progress report after execution
+- [x] 11.1 Create `skills/deepfield-iterate.md`
+- [x] 11.2 Implement run number tracking and incrementing
+- [x] 11.3 Load previous run config and learning plan
+- [x] 11.4 Orchestrate hash-files script for incremental scanning
+- [x] 11.5 Compare hashes to identify changed/new files
+- [x] 11.6 Orchestrate learner agent with focus topics
+- [x] 11.7 Orchestrate knowledge-synth agent with findings
+- [x] 11.8 Update learning plan (confidence, priorities, questions)
+- [x] 11.9 Write run-N.config.json with new hashes and metadata
+- [x] 11.10 Implement stop condition evaluation logic
+- [x] 11.11 Implement autonomous loop (continue if conditions allow)
+- [x] 11.12 Create run-N+1-staging area after each run
+- [x] 11.13 Generate progress report after execution
 - [ ] 11.14 Test single run mode (--once flag)
 - [ ] 11.15 Test autonomous multi-run execution
 - [ ] 11.16 Test all stop conditions
