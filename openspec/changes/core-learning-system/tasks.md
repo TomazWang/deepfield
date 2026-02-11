@@ -175,9 +175,13 @@
 - [ ] 16.7 Verify incremental scanning efficiency
 - [ ] 16.8 Verify draft accumulation across runs
 
+**Note**: Testing should be done as a separate phase after implementation is complete.
+
 ## 17. Spec Sync
 
 - [ ] 17.1 Archive core-learning-system change
 - [ ] 17.2 Sync all delta specs to main specs
 - [ ] 17.3 Verify no spec regressions
 - [ ] 17.4 Update CLAUDE.md if needed
+
+**Note**: Spec sync will be done after testing validates the implementation.
