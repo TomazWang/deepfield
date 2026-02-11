@@ -83,28 +83,28 @@
 
 ## 9. Agent - Learner
 
-- [ ] 9.1 Create `agents/deepfield-learner.md`
-- [ ] 9.2 Implement context loading (domain notes, previous findings)
-- [ ] 9.3 Implement focus topic selection from learning plan
-- [ ] 9.4 Implement deep file reading based on focus
-- [ ] 9.5 Implement cross-reference identification
-- [ ] 9.6 Implement pattern recognition across files
-- [ ] 9.7 Implement contradiction detection
-- [ ] 9.8 Write findings.md for current run
-- [ ] 9.9 Link findings to source files with line numbers
+- [x] 9.1 Create `agents/deepfield-learner.md`
+- [x] 9.2 Implement context loading (domain notes, previous findings)
+- [x] 9.3 Implement focus topic selection from learning plan
+- [x] 9.4 Implement deep file reading based on focus
+- [x] 9.5 Implement cross-reference identification
+- [x] 9.6 Implement pattern recognition across files
+- [x] 9.7 Implement contradiction detection
+- [x] 9.8 Write findings.md for current run
+- [x] 9.9 Link findings to source files with line numbers
 - [ ] 9.10 Test learner with focused topics
 
 ## 10. Agent - Knowledge Synthesizer
 
-- [ ] 10.1 Create `agents/deepfield-knowledge-synth.md`
-- [ ] 10.2 Implement draft document creation from findings
-- [ ] 10.3 Implement draft document updates (preserve + integrate)
-- [ ] 10.4 Maintain standard document structure (Overview, Architecture, Patterns, etc.)
-- [ ] 10.5 Generate natural prose from observations
-- [ ] 10.6 Add cross-references between related drafts
-- [ ] 10.7 Update unknowns.md (add/remove gaps)
-- [ ] 10.8 Append to _changelog.md with run summary
-- [ ] 10.9 Mark low-confidence sections appropriately
+- [x] 10.1 Create `agents/deepfield-knowledge-synth.md`
+- [x] 10.2 Implement draft document creation from findings
+- [x] 10.3 Implement draft document updates (preserve + integrate)
+- [x] 10.4 Maintain standard document structure (Overview, Architecture, Patterns, etc.)
+- [x] 10.5 Generate natural prose from observations
+- [x] 10.6 Add cross-references between related drafts
+- [x] 10.7 Update unknowns.md (add/remove gaps)
+- [x] 10.8 Append to _changelog.md with run summary
+- [x] 10.9 Mark low-confidence sections appropriately
 - [ ] 10.10 Test synthesis with multiple runs
 
 ## 11. Skill - Iterate
