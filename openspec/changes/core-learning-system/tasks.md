@@ -27,21 +27,21 @@
 
 ## 4. Agent - Classifier
 
-- [ ] 4.1 Create `agents/deepfield-classifier.md`
-- [ ] 4.2 Implement source type classification (code/doc/config/schema/conversation/spec)
-- [ ] 4.3 Implement trust level classification (trusted/reference/exploratory)
-- [ ] 4.4 Implement domain relevance suggestions
-- [ ] 4.5 Add output format for classification results (JSON)
+- [x] 4.1 Create `agents/deepfield-classifier.md`
+- [x] 4.2 Implement source type classification (code/doc/config/schema/conversation/spec)
+- [x] 4.3 Implement trust level classification (trusted/reference/exploratory)
+- [x] 4.4 Implement domain relevance suggestions
+- [x] 4.5 Add output format for classification results (JSON)
 - [ ] 4.6 Test classifier with diverse source types
 
 ## 5. Agent - Scanner
 
-- [ ] 5.1 Create `agents/deepfield-scanner.md`
-- [ ] 5.2 Implement shallow structural scan logic
-- [ ] 5.3 Implement file tree analysis
-- [ ] 5.4 Implement entry point detection (main, index, package.json, etc.)
-- [ ] 5.5 Implement configuration file identification
-- [ ] 5.6 Add scope limiting based on domains
+- [x] 5.1 Create `agents/deepfield-scanner.md`
+- [x] 5.2 Implement shallow structural scan logic
+- [x] 5.3 Implement file tree analysis
+- [x] 5.4 Implement entry point detection (main, index, package.json, etc.)
+- [x] 5.5 Implement configuration file identification
+- [x] 5.6 Add scope limiting based on domains
 - [ ] 5.7 Test scanner on sample repositories
 
 ## 6. Agent - Domain Detector
