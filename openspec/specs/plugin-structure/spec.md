@@ -1,73 +1,40 @@
-# plugin-structure Specification
-
-## Purpose
-TBD - created by archiving change deepfield-foundation. Update Purpose after archive.
-## Requirements
-### Requirement: Plugin manifest SHALL define metadata
-
-The plugin MUST provide a `plugin.json` manifest file at the plugin root that includes:
-- Plugin name: "deepfield"
-- Plugin version (semantic versioning)
-- Description
-- Author
-- Commands list with names and file paths
-
-#### Scenario: Valid manifest enables plugin loading
-- **WHEN** Claude Code loads plugins
-- **THEN** deepfield plugin is discovered via plugin.json
-- **THEN** all commands are registered and available
-
-#### Scenario: Missing manifest prevents plugin loading
-- **WHEN** plugin.json does not exist
-- **THEN** plugin is not loaded
-- **THEN** commands are not available
+## ADDED Requirements
 
 ### Requirement: Plugin SHALL follow Claude Code directory conventions
 
-The plugin directory structure MUST be:
-```
-.claude/plugins/deepfield/
-├── plugin.json
-├── commands/
-│   ├── df-init.md
-│   ├── df-start.md
-│   └── df-status.md
-├── scripts/
-│   ├── mkdir-recursive.sh
-│   ├── scaffold-kb.sh
-│   ├── update-json.js
-│   ├── read-state.js
-│   └── hash-files.js
-└── templates/
-    ├── project.config.json
-    ├── run.config.json
-    └── brief.md
-```
+The plugin MUST be structured according to Claude Code plugin specifications with .claude-plugin/ manifest.
 
-#### Scenario: Standard layout enables component discovery
-- **WHEN** commands are invoked
-- **THEN** command files are found in commands/ directory
-- **THEN** scripts are accessible from scripts/ directory
-- **THEN** templates are accessible from templates/ directory
+#### Scenario: Valid plugin structure
+- **WHEN** plugin is loaded by Claude Code
+- **THEN** .claude-plugin/plugin.json manifest is found
+- **THEN** commands/ directory contains command files
+- **THEN** skills/ directory contains skill subdirectories
 
-### Requirement: Commands SHALL be defined as markdown files
+#### Scenario: Manifest includes metadata
+- **WHEN** reading plugin.json
+- **THEN** name, version, and description are present
+- **THEN** author information is included
 
-Each command MUST be a markdown file with:
-- YAML frontmatter with command metadata (name, description)
-- Command implementation in markdown body
-- Bash code blocks for script invocation
+### Requirement: Plugin SHALL use proper naming conventions
 
-#### Scenario: Command markdown enables Claude Code execution
-- **WHEN** user invokes /df-init
-- **THEN** Claude Code reads commands/df-init.md
-- **THEN** command logic executes per markdown instructions
+All plugin components MUST use kebab-case naming and proper file extensions.
 
-### Requirement: Plugin SHALL use CLAUDE_PLUGIN_ROOT variable
+#### Scenario: Command naming
+- **WHEN** examining commands/ directory
+- **THEN** command files are named df-*.md
+- **THEN** command names match frontmatter
 
-Scripts and commands MUST reference the plugin root directory using `${CLAUDE_PLUGIN_ROOT}` variable for portability.
+#### Scenario: Skill naming
+- **WHEN** examining skills/ directory
+- **THEN** skill directories use kebab-case
+- **THEN** each skill has SKILL.md file
 
-#### Scenario: Plugin root variable enables portability
-- **WHEN** scripts need to reference plugin files
-- **THEN** ${CLAUDE_PLUGIN_ROOT} resolves to plugin directory
-- **THEN** paths work regardless of installation location
+### Requirement: Plugin SHALL be installable as Claude Code plugin
 
+The plugin MUST be installable via symlink or copy to Claude plugins directory.
+
+#### Scenario: Plugin installation
+- **WHEN** plugin is symlinked to ~/.claude/plugins/
+- **THEN** Claude Code discovers plugin
+- **THEN** commands become available as /df-*
+- **THEN** skills load automatically
