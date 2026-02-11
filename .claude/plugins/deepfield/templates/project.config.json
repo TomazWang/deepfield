@@ -3,6 +3,7 @@
   "projectName": "",
   "goal": "",
   "repositories": [],
+  "maxRuns": 5,
   "createdAt": "",
   "lastModified": ""
 }

@@ -19,10 +19,10 @@
 
 ## 3. State Management - Configuration
 
-- [ ] 3.1 Update project.config.json template to include maxRuns field
-- [ ] 3.2 Update run-N.config.json template to include focusTopics
-- [ ] 3.3 Update run-N.config.json template to include confidenceChanges
-- [ ] 3.4 Add validation for new fields in read-state.js
+- [x] 3.1 Update project.config.json template to include maxRuns field
+- [x] 3.2 Update run-N.config.json template to include focusTopics
+- [x] 3.3 Update run-N.config.json template to include confidenceChanges
+- [x] 3.4 Add validation for new fields in read-state.js
 - [ ] 3.5 Test JSON updates preserve all fields
 
 ## 4. Agent - Classifier
