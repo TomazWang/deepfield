@@ -1,0 +1,34 @@
+{
+  "name": "deepfield",
+  "version": "1.0.0",
+  "description": "AI-driven knowledge base builder for understanding brownfield projects",
+  "private": true,
+  "workspaces": [
+    "cli",
+    "plugin"
+  ],
+  "scripts": {
+    "build": "npm run build -w cli",
+    "build:all": "npm run build -w cli && npm run build -w plugin",
+    "test": "npm test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces"
+  },
+  "keywords": [
+    "knowledge-base",
+    "brownfield",
+    "documentation",
+    "ai",
+    "claude-code"
+  ],
+  "author": "Deepfield Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/deepfield.git"
+  }
+}

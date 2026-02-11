@@ -1,0 +1,23 @@
+{
+  "name": "deepfield",
+  "version": "1.0.0",
+  "description": "AI-driven knowledge base builder for Claude Code that iteratively learns codebases and distills institutional knowledge",
+  "author": "Deepfield Team",
+  "commands": [
+    {
+      "name": "df-init",
+      "file": "commands/df-init.md",
+      "description": "Initialize kb/ directory structure with four-space architecture"
+    },
+    {
+      "name": "df-start",
+      "file": "commands/df-start.md",
+      "description": "Interactive project setup and brief.md generation"
+    },
+    {
+      "name": "df-status",
+      "file": "commands/df-status.md",
+      "description": "Display current knowledge base state and suggest next actions"
+    }
+  ]
+}

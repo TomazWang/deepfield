@@ -1,0 +1,25 @@
+# Source files
+src/
+tsconfig.json
+*.ts
+
+# Development
+node_modules/
+.DS_Store
+*.log
+*.swp
+*.swo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build artifacts (keep dist/)
+*.tsbuildinfo
+
+# Documentation (keep in package)
+# README.md is included
+
+# IDE
+.vscode/
+.idea/
