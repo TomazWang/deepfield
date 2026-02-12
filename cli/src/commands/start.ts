@@ -65,6 +65,24 @@ async function startCommand(options: { nonInteractive?: boolean; answersJson?: s
     );
   }
 
+  // Check if already configured (look at project.config.json)
+  // A project is only considered "configured" if BOTH projectName AND goal are filled
+  // This distinguishes between template placeholders and actual configuration
+  const configPath = join(deepfieldDir, 'project.config.json');
+  if (await pathExists(configPath)) {
+    const config = await readJson(configPath);
+    if (config.projectName && config.projectName.trim().length > 0 &&
+        config.goal && config.goal.trim().length > 0) {
+      if (options.nonInteractive) {
+        throw new Error(
+          `Project already configured: "${config.projectName}"\n` +
+          `To reconfigure, delete ${configPath} first.`
+        );
+      }
+      // Interactive mode will handle reconfiguration prompt below
+    }
+  }
+
   // Parse answers (interactive or non-interactive)
   let answers: StartAnswers;
 
