@@ -60,26 +60,19 @@ Use the AskUserQuestion tool with these questions:
   - "Team onboarding materials" → Store: "Create onboarding materials for new team members"
   - "Prepare for migration/refactor" → Store: "Understand system for migration or refactoring"
 
-**Question 3:**
-- Question: "Select focus areas (you can select multiple)"
-- Header: "Focus Areas"
-- MultiSelect: true
-- Options:
-  - "Architecture & design" → Map to: `architecture`
-  - "Data models" → Map to: `data-models`
-  - "Business logic" → Map to: `business-logic`
-  - "APIs & integrations" → Map to: `apis`
-- If none selected: Default to `["architecture", "business-logic"]`
+**Fixed Defaults (not asked):**
+- Focus Areas: Always default to `["architecture", "business-logic"]`
+- Project Type: Always `"legacy-brownfield"` (all targets are legacy code)
 
 ## Step 3: Build JSON and Call CLI Non-Interactively
 
-After collecting answers:
+After collecting answers from Q1 and Q2 only:
 
 1. Map the answers:
    - `projectName`: Answer from Q1
-   - `projectType`: Always `"legacy-brownfield"` (hardcoded)
-   - `goal`: Full description text from Q2
-   - `focusAreas`: Mapped array from Q3
+   - `projectType`: Always `"legacy-brownfield"` (hardcoded - not asked)
+   - `goal`: Full description text from Q2 selected option
+   - `focusAreas`: Always `["architecture", "business-logic"]` (hardcoded default - not asked)
 
 2. Build JSON string with proper escaping
 
