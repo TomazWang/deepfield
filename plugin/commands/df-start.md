@@ -26,16 +26,15 @@ if [ ! -d "./deepfield" ]; then
   exit 1
 fi
 
-# Check if already configured
-if [ -f "./deepfield/brief.md" ]; then
-  BRIEF_SIZE=$(wc -l < "./deepfield/brief.md" 2>/dev/null || echo 0)
-  if [ "$BRIEF_SIZE" -gt 50 ]; then
-    echo "⚠️  Project configuration already exists"
-    echo ""
-    echo "The deepfield/ directory is already configured."
-    echo "You can edit deepfield/brief.md directly to update project details."
-    exit 0
-  fi
+# Check if already configured (project.config.json exists)
+if [ -f "./deepfield/project.config.json" ]; then
+  echo "⚠️  Project configuration already exists"
+  echo ""
+  echo "The deepfield/ directory is already configured."
+  echo "You can edit deepfield/brief.md directly to update project details."
+  echo ""
+  echo "To reconfigure, delete deepfield/project.config.json and run /df-start again."
+  exit 0
 fi
 
 echo "Let's set up your deepfield knowledge base!"
