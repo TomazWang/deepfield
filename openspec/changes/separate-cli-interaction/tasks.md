@@ -68,7 +68,7 @@
 
 ## 10. Testing - CLI Non-Interactive Mode
 
-- [ ] 10.1 Test `deepfield start --non-interactive --answers-json` with valid JSON
+- [x] 10.1 Test `deepfield start --non-interactive --answers-json` with valid JSON
 - [ ] 10.2 Test with invalid JSON (malformed syntax)
 - [ ] 10.3 Test with missing required fields
 - [ ] 10.4 Test with invalid field values
@@ -78,12 +78,12 @@
 
 ## 11. Testing - Plugin Command
 
-- [ ] 11.1 Test /df-start Q&A flow with AskUserQuestion
-- [ ] 11.2 Test all 4 questions appear correctly
-- [ ] 11.3 Test multi-select works for focus areas
+- [x] 11.1 Test /df-start Q&A flow with AskUserQuestion
+- [x] 11.2 Test all questions appear correctly (simplified to 2 questions)
+- [x] 11.3 Multi-select not applicable (hardcoded defaults used instead)
 - [ ] 11.4 Test user cancellation (empty "Other" input)
-- [ ] 11.5 Test brief.md and config created after completion
-- [ ] 11.6 Verify no hanging or blocking on stdin
+- [x] 11.5 Test brief.md and config created after completion
+- [x] 11.6 Verify no hanging or blocking on stdin
 
 ## 12. Testing - Skills
 
@@ -96,7 +96,7 @@
 
 - [ ] 13.1 Test full flow: /df-init → /df-start → /df-continue (bootstrap)
 - [ ] 13.2 Verify CLI interactive mode still works for direct terminal use
-- [ ] 13.3 Verify plugin mode uses AskUserQuestion
+- [x] 13.3 Verify plugin mode uses AskUserQuestion
 - [ ] 13.4 Test error scenarios (CLI errors, invalid input, etc.)
 
 ## 14. Documentation
