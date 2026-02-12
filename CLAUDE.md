@@ -1,8 +1,24 @@
 # Deepfield - Project Context for Claude Code
 
+## ⚠️ CRITICAL: This is a Plugin Development Project
+
+**YOU ARE DEVELOPING A CLAUDE CODE PLUGIN, NOT USING ONE.**
+
+- **Plugin source code**: `./plugin/` directory (commands, skills, agents)
+- **CLI source code**: `./cli/` directory (TypeScript CLI tool)
+- **DO NOT run /df-* commands in this project** - they will fail or behave incorrectly
+- **DO edit files in ./plugin/** to update the plugin being developed
+- **DO edit files in ./cli/** to update the CLI tool
+
+When the user says "update the plugin" or "fix the command", edit files in `./plugin/`, NOT `./.claude/plugins/`.
+
 ## Project Overview
 
 **Deepfield** is an AI-driven knowledge base builder for Claude Code that iteratively learns codebases and distills institutional knowledge. It helps developers understand brownfield projects through autonomous, iterative learning.
+
+This repository contains:
+1. **Claude Code Plugin** (`./plugin/`) - Commands, skills, and agents for Claude Code
+2. **CLI Tool** (`./cli/`) - Standalone Node.js CLI for project initialization and configuration
 
 ## Core Concept
 

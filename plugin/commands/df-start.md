@@ -1,97 +1,117 @@
 ---
 name: df-start
-description: Start interactive project setup for deepfield knowledge base
+description: Interactive project setup using AskUserQuestion and non-interactive CLI
 allowed-tools:
   - Bash
+  - AskUserQuestion
 ---
 
 # df-start: Start Deepfield Project Setup
 
-Run interactive setup to configure your deepfield knowledge base project.
+**IMPLEMENTATION INSTRUCTIONS FOR CLAUDE:**
 
-## What This Command Does
+When this command is invoked, you MUST follow these steps in order. DO NOT call `deepfield start` without the `--non-interactive` flag.
 
-This command wraps the `deepfield start` CLI tool to conduct an interactive Q&A session about the project. It collects:
+---
 
-- Project name
-- Project type (legacy codebase, team onboarding, documentation, etc.)
-- Main goal of the knowledge base
-- Focus areas (architecture, data models, APIs, security, etc.)
+## Step 1: Verify Prerequisites
 
-The answers are saved to `project.config.json` and used to pre-fill the `brief.md` template.
+Check if deepfield directory exists and isn't already configured:
 
-## Prerequisites
+```bash
+if [ ! -d "./deepfield" ]; then
+  echo "❌ Error: deepfield/ directory not found"
+  echo ""
+  echo "Please run /df-init first to initialize the knowledge base structure."
+  exit 1
+fi
 
-- The `deepfield/` directory must exist (run `/df-init` first)
-- The `deepfield init` command must have been completed successfully
+# Check if already configured
+if [ -f "./deepfield/brief.md" ]; then
+  BRIEF_SIZE=$(wc -l < "./deepfield/brief.md" 2>/dev/null || echo 0)
+  if [ "$BRIEF_SIZE" -gt 50 ]; then
+    echo "⚠️  Project configuration already exists"
+    echo ""
+    echo "The deepfield/ directory is already configured."
+    echo "You can edit deepfield/brief.md directly to update project details."
+    exit 0
+  fi
+fi
 
-## Implementation
+echo "Let's set up your deepfield knowledge base!"
+echo ""
+```
 
-Execute the following steps:
+## Step 2: Collect Answers via AskUserQuestion
 
-1. **Check prerequisites**: Verify deepfield/ directory exists
+Use the AskUserQuestion tool with these questions:
 
-2. **Run the start command**:
+**Question 1:**
+- Question: "What is the learning target project name?"
+- Header: "Project Name"
+- Options: Suggest 2-3 names based on current directory name
+- Allow user to type custom name in "Other"
+
+**Question 2:**
+- Question: "What is your main goal for this knowledge base?"
+- Header: "Main Goal"
+- Options (with full descriptions):
+  - "Generate comprehensive documentation" → Store: "Generate comprehensive documentation for the entire project"
+  - "Document recent changes" → Store: "Document and understand recent code changes"
+  - "Team onboarding materials" → Store: "Create onboarding materials for new team members"
+  - "Prepare for migration/refactor" → Store: "Understand system for migration or refactoring"
+
+**Question 3:**
+- Question: "Select focus areas (you can select multiple)"
+- Header: "Focus Areas"
+- MultiSelect: true
+- Options:
+  - "Architecture & design" → Map to: `architecture`
+  - "Data models" → Map to: `data-models`
+  - "Business logic" → Map to: `business-logic`
+  - "APIs & integrations" → Map to: `apis`
+- If none selected: Default to `["architecture", "business-logic"]`
+
+## Step 3: Build JSON and Call CLI Non-Interactively
+
+After collecting answers:
+
+1. Map the answers:
+   - `projectName`: Answer from Q1
+   - `projectType`: Always `"legacy-brownfield"` (hardcoded)
+   - `goal`: Full description text from Q2
+   - `focusAreas`: Mapped array from Q3
+
+2. Build JSON string with proper escaping
+
+3. Execute:
    ```bash
-   deepfield start
+   deepfield start --non-interactive --answers-json '<JSON_STRING_HERE>'
    ```
 
-   This will launch an interactive prompt asking questions about the project
-
-3. **Handle the result**:
-   - If exit code is 0 (success):
-     - Confirm configuration was saved
-     - Emphasize the importance of filling out brief.md
-     - Explain what information to add to the brief
-   - If exit code is 3 (state error):
-     - If deepfield/ not found, suggest running `/df-init` first
-   - If exit code is non-zero (other error):
-     - Display the error message
-     - Provide troubleshooting suggestions
-
-4. **Guide next steps**:
-   - Open `deepfield/brief.md` and show the user what needs to be filled in:
-     - Project context and purpose
-     - Technical overview and architecture
-     - Pain points and areas of confusion
-     - Exploration priorities
-     - Questions to answer
-   - Explain that the brief guides the AI's exploration process
-   - Suggest running `/df-status` to check progress
-
-## Success Output Example
-
+**Example:**
+```bash
+deepfield start --non-interactive --answers-json '{"projectName":"my-app","projectType":"legacy-brownfield","goal":"Generate comprehensive documentation for the entire project","focusAreas":["architecture","business-logic"]}'
 ```
-✅ Project configured successfully!
 
-📝 Important: Fill out deepfield/brief.md with:
-   - Project context and architecture details
-   - Pain points and areas of confusion
-   - Questions you want answered
-
-The more context you provide, the better the knowledge base will be.
-
-Run /df-status to check your progress.
-```
+4. Display success message and next steps
 
 ## Error Handling
 
-- **deepfield/ not found**: Suggest running `/df-init` first
-- **Configuration already exists**: Inform user they're reconfiguring
-- **CLI not found**: Provide installation instructions
+- **deepfield/ not found**: Exit with error, suggest /df-init
+- **User cancels AskUserQuestion**: Exit gracefully, no file changes
+- **CLI fails**: Display error and troubleshooting steps
 
-## About brief.md
+## Success Output
 
-The brief.md file is crucial for guiding AI exploration. Encourage the user to provide:
+```
+✅ Project setup complete!
 
-- **Context**: What the project does, why it exists, key stakeholders
-- **Technical Overview**: Architecture, core technologies, dependencies
-- **Pain Points**: Known issues, unclear areas, technical debt
-- **Priorities**: What areas to investigate first
-- **Questions**: Specific questions they want answered
+📝 Next steps:
+  1. Review and edit deepfield/brief.md with project details
+  2. When ready, run /df-continue to begin learning
+```
 
-## Tips for Claude
+---
 
-- After successful setup, emphasize filling out the brief.md
-- The quality of the knowledge base depends on the quality of the brief
-- Offer to help the user fill out the brief if they ask
+**CRITICAL**: NEVER call `deepfield start` without `--non-interactive` flag. It will block waiting for stdin and fail in Claude Code.

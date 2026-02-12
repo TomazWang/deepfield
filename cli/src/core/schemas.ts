@@ -45,6 +45,36 @@ export const RunConfigSchema = z.object({
 export type RunConfig = z.infer<typeof RunConfigSchema>;
 
 /**
+ * Schema for non-interactive start command answers
+ * Used with --answers-json flag
+ */
+export const StartAnswersSchema = z.object({
+  projectName: z.string().min(1, 'Project name is required'),
+  projectType: z.enum([
+    'legacy-brownfield',
+    'team-onboarding',
+    'documentation',
+    'modernization',
+    'integration',
+    'other'
+  ]).default('other'),
+  goal: z.string().min(1, 'Goal is required'),
+  focusAreas: z.array(z.enum([
+    'architecture',
+    'data-models',
+    'business-logic',
+    'apis',
+    'security',
+    'performance',
+    'testing',
+    'deployment'
+  ])).default([]),
+  maxRuns: z.number().int().min(1).max(999).default(5).optional(),
+});
+
+export type StartAnswers = z.infer<typeof StartAnswersSchema>;
+
+/**
  * Workflow states for status command
  */
 export enum WorkflowState {

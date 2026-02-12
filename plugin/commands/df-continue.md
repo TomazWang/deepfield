@@ -1,6 +1,8 @@
 ---
 name: df-continue
 description: Context-aware progression - do the next right thing for your knowledge base
+allowed-tools:
+  - Bash
 arguments:
   - name: --once
     description: Run single iteration instead of autonomous loop
@@ -67,42 +69,42 @@ done
 
 # Detect current state
 detect_state() {
-  # EMPTY: No kb/ directory
+  # EMPTY: No deepfield/ directory
   if [ ! -d "./kb" ]; then
     echo "EMPTY"
     return
   fi
 
-  # INITIALIZED: kb/ exists but no config
-  if [ ! -f "./kb/project.config.json" ]; then
+  # INITIALIZED: deepfield/ exists but no config
+  if [ ! -f "./deepfield/project.config.json" ]; then
     echo "INITIALIZED"
     return
   fi
 
   # BRIEF_CREATED: config exists but brief is empty/incomplete
-  if [ ! -f "./kb/source/baseline/brief.md" ]; then
+  if [ ! -f "./deepfield/source/baseline/brief.md" ]; then
     echo "BRIEF_CREATED"
     return
   fi
 
   # Check if brief is filled out (heuristic: >50 lines)
-  BRIEF_LINES=$(wc -l < "./kb/source/baseline/brief.md" 2>/dev/null || echo 0)
+  BRIEF_LINES=$(wc -l < "./deepfield/source/baseline/brief.md" 2>/dev/null || echo 0)
   if [ "$BRIEF_LINES" -lt 50 ]; then
     echo "BRIEF_CREATED"
     return
   fi
 
   # BRIEF_READY: brief filled but no Run 0
-  if [ ! -d "./kb/wip/run-0" ]; then
+  if [ ! -d "./deepfield/wip/run-0" ]; then
     echo "BRIEF_READY"
     return
   fi
 
   # LEARNING: Run 0 exists, learning in progress
   # Check if learning plan is complete
-  if [ -f "./kb/wip/learning-plan.md" ]; then
+  if [ -f "./deepfield/wip/learning-plan.md" ]; then
     # Simple check: look for "Status: Complete" in learning plan
-    if grep -q "Status:.*Complete" "./kb/wip/learning-plan.md" 2>/dev/null; then
+    if grep -q "Status:.*Complete" "./deepfield/wip/learning-plan.md" 2>/dev/null; then
       echo "COMPLETE"
       return
     fi
@@ -122,7 +124,7 @@ case $STATE in
   EMPTY)
     echo "❌ Error: No knowledge base found"
     echo ""
-    echo "Please run /df-init first to initialize the kb/ structure."
+    echo "Please run /df-init first to initialize the deepfield/ structure."
     exit 1
     ;;
 
@@ -144,7 +146,7 @@ case $STATE in
     echo "📋 Brief needs to be filled out"
     echo ""
     echo "Please fill out the project brief at:"
-    echo "  kb/source/baseline/brief.md"
+    echo "  deepfield/source/baseline/brief.md"
     echo ""
     echo "The brief should include:"
     echo "  - Repository URLs and branches"
@@ -179,9 +181,9 @@ case $STATE in
 
   LEARNING)
     # Check for new input in staging area
-    CURRENT_RUN=$(find ./kb/wip -maxdepth 1 -type d -name "run-*" | wc -l)
+    CURRENT_RUN=$(find ./deepfield/wip -maxdepth 1 -type d -name "run-*" | wc -l)
     NEXT_RUN=$((CURRENT_RUN + 1))
-    STAGING_DIR="./kb/source/run-${NEXT_RUN}-staging"
+    STAGING_DIR="./deepfield/source/run-${NEXT_RUN}-staging"
 
     HAS_NEW_INPUT=false
     if [ -d "$STAGING_DIR" ]; then
@@ -253,8 +255,8 @@ esac
 
 | State | Conditions | Action |
 |-------|-----------|---------|
-| **EMPTY** | No `kb/` directory | Error: run /df-init |
-| **INITIALIZED** | `kb/` exists, no `project.config.json` | Launch /df-start |
+| **EMPTY** | No `deepfield/` directory | Error: run /df-init |
+| **INITIALIZED** | `deepfield/` exists, no `project.config.json` | Launch /df-start |
 | **BRIEF_CREATED** | Config exists, brief empty (<50 lines) | Prompt to fill brief |
 | **BRIEF_READY** | Brief filled, no run-0/ | Launch bootstrap skill |
 | **LEARNING + new input** | Run-N-staging has files | Launch iterate skill |
@@ -263,11 +265,11 @@ esac
 
 ## Error Handling
 
-### No kb/ Directory
+### No deepfield/ Directory
 ```
 Error: No knowledge base found
 
-Please run /df-init first to initialize the kb/ structure.
+Please run /df-init first to initialize the deepfield/ structure.
 ```
 
 ### Brief Not Filled
@@ -275,7 +277,7 @@ Please run /df-init first to initialize the kb/ structure.
 Brief needs to be filled out
 
 Please fill out the project brief at:
-  kb/source/baseline/brief.md
+  deepfield/source/baseline/brief.md
 
 Once complete, run /df-continue again.
 ```
@@ -285,8 +287,8 @@ Once complete, run /df-continue again.
 Learning paused - No new input
 
 Add feedback or sources to continue:
-  kb/source/run-3-staging/feedback.md
-  kb/source/run-3-staging/sources/
+  deepfield/source/run-3-staging/feedback.md
+  deepfield/source/run-3-staging/sources/
 
 Or check current state: /df-status
 ```
