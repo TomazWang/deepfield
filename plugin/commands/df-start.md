@@ -26,15 +26,19 @@ if [ ! -d "./deepfield" ]; then
   exit 1
 fi
 
-# Check if already configured (project.config.json exists)
+# Check if already configured (project.config.json has projectName filled in)
 if [ -f "./deepfield/project.config.json" ]; then
-  echo "⚠️  Project configuration already exists"
-  echo ""
-  echo "The deepfield/ directory is already configured."
-  echo "You can edit deepfield/brief.md directly to update project details."
-  echo ""
-  echo "To reconfigure, delete deepfield/project.config.json and run /df-start again."
-  exit 0
+  PROJECT_NAME=$(grep -o '"projectName"[[:space:]]*:[[:space:]]*"[^"]\+"' ./deepfield/project.config.json | grep -o '"[^"]\+$' | tr -d '"')
+  if [ -n "$PROJECT_NAME" ]; then
+    echo "⚠️  Project configuration already exists"
+    echo ""
+    echo "Project: $PROJECT_NAME"
+    echo "The deepfield/ directory is already configured."
+    echo "You can edit deepfield/brief.md directly to update project details."
+    echo ""
+    echo "To reconfigure, delete deepfield/project.config.json and run /df-start again."
+    exit 0
+  fi
 fi
 
 echo "Let's set up your deepfield knowledge base!"
