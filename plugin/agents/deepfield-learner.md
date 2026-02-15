@@ -24,25 +24,25 @@ You will receive:
 Before deep reading, load relevant context:
 
 ### Previous Findings
-Read `kb/wip/run-N-1/findings.md` sections related to focus topics:
+Read `deepfield/wip/run-N-1/findings.md` sections related to focus topics:
 - What was already discovered?
 - What patterns were identified?
 - What questions were raised?
 
 ### Domain Notes
-If exist, read `kb/wip/domains/<domain>-notes.md`:
+If exist, read `deepfield/wip/domains/<domain>-notes.md`:
 - Previous understanding of this domain
 - Known patterns and relationships
 - Unresolved questions
 
 ### Current Drafts
-Read `kb/drafts/domains/<topic>.md`:
+Read `deepfield/drafts/domains/<topic>.md`:
 - Current state of documentation
 - Sections that exist vs gaps
 - Confidence markers and unknowns
 
 ### Open Questions
-From `kb/wip/learning-plan.md`, extract questions for focus topics:
+From `deepfield/wip/learning-plan.md`, extract questions for focus topics:
 - Guide deep reading toward answering these
 - Look for evidence supporting/refuting assumptions
 
@@ -184,7 +184,7 @@ Use format: `file-path:line-number` or `file-path:line-range`
 
 # Output Format
 
-Write findings to `kb/wip/run-N/findings.md`:
+Write findings to `deepfield/wip/run-N/findings.md`:
 
 ```markdown
 # Run [N] - Findings
