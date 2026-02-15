@@ -21,7 +21,7 @@ Invoke this skill when:
 
 Before running, verify:
 1. Bootstrap complete (Run 0 exists)
-2. Learning plan exists (`kb/wip/learning-plan.md`)
+2. Learning plan exists (`deepfield/wip/learning-plan.md`)
 3. Project config has maxRuns setting
 4. Previous run completed successfully
 
@@ -47,7 +47,7 @@ While should_continue:
 
 ```javascript
 // Check existing runs
-const runs = glob('kb/wip/run-*/')
+const runs = glob('deepfield/wip/run-*/')
 const runNumbers = runs.map(r => parseInt(r.match(/run-(\d+)/)[1]))
 const nextRun = Math.max(...runNumbers) + 1
 ```
@@ -55,12 +55,12 @@ const nextRun = Math.max(...runNumbers) + 1
 ### 2. Create Run Directory
 
 ```bash
-mkdir -p kb/wip/run-${nextRun}/domains
+mkdir -p deepfield/wip/run-${nextRun}/domains
 ```
 
 ### 3. Initialize Run Config
 
-Create `kb/wip/run-${nextRun}/run-${nextRun}.config.json`:
+Create `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json`:
 ```json
 {
   "runNumber": ${nextRun},
@@ -76,7 +76,7 @@ Create `kb/wip/run-${nextRun}/run-${nextRun}.config.json`:
 
 ### Read Learning Plan
 
-Load `kb/wip/learning-plan.md`:
+Load `deepfield/wip/learning-plan.md`:
 - Current confidence levels per topic
 - Open questions
 - Priorities
@@ -84,14 +84,14 @@ Load `kb/wip/learning-plan.md`:
 
 ### Read Previous Run
 
-Load `kb/wip/run-${nextRun-1}/run-${nextRun-1}.config.json`:
+Load `deepfield/wip/run-${nextRun-1}/run-${nextRun-1}.config.json`:
 - Previous file hashes
 - Focus topics
 - Confidence changes
 
 ### Check for New User Input
 
-Check if `kb/source/run-${nextRun}-staging/` exists with content:
+Check if `deepfield/source/run-${nextRun}-staging/` exists with content:
 - Read `feedback.md` if present
 - List new sources in `sources/` directory
 - Classify new sources via classifier agent
@@ -132,15 +132,15 @@ Learning plan has:
 For each baseline repository:
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/hash-files.js \
-  ./kb/source/baseline/repos/<repo-name> \
-  --output ./kb/wip/run-${nextRun}/hashes-<repo-name>.json
+  ./deepfield/source/baseline/repos/<repo-name> \
+  --output ./deepfield/wip/run-${nextRun}/hashes-<repo-name>.json
 ```
 
 ### Compare with Previous Run
 
 ```javascript
-const prevHashes = readJSON(`kb/wip/run-${nextRun-1}/hashes-*.json`)
-const currHashes = readJSON(`kb/wip/run-${nextRun}/hashes-*.json`)
+const prevHashes = readJSON(`deepfield/wip/run-${nextRun-1}/hashes-*.json`)
+const currHashes = readJSON(`deepfield/wip/run-${nextRun}/hashes-*.json`)
 
 const changed = []
 const new_files = []
@@ -180,16 +180,16 @@ Launch: deepfield-learner
 Input: {
   "focus_topics": ["API Structure", "Data Flow"],
   "files_to_read": filesToRead,
-  "previous_findings": "kb/wip/run-${nextRun-1}/findings.md",
-  "domain_notes": "kb/wip/domains/*.md",
-  "current_drafts": "kb/drafts/domains/*.md",
+  "previous_findings": "deepfield/wip/run-${nextRun-1}/findings.md",
+  "domain_notes": "deepfield/wip/domains/*.md",
+  "current_drafts": "deepfield/drafts/domains/*.md",
   "open_questions": <from learning plan>
 }
 ```
 
 ### Process Learner Output
 
-Learner writes findings to `kb/wip/run-${nextRun}/findings.md`:
+Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 - Discoveries about focus topics
 - Cross-references and relationships
 - Patterns observed
@@ -204,19 +204,19 @@ Learner writes findings to `kb/wip/run-${nextRun}/findings.md`:
 ```
 Launch: deepfield-knowledge-synth
 Input: {
-  "findings": "kb/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "kb/drafts/domains/*.md",
-  "unknowns": "kb/drafts/cross-cutting/unknowns.md",
-  "changelog": "kb/drafts/_changelog.md"
+  "findings": "deepfield/wip/run-${nextRun}/findings.md",
+  "existing_drafts": "deepfield/drafts/domains/*.md",
+  "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
+  "changelog": "deepfield/drafts/_changelog.md"
 }
 ```
 
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `kb/drafts/domains/<topic>.md` - Updated with new knowledge
-- `kb/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
-- `kb/drafts/_changelog.md` - Append run summary
+- `deepfield/drafts/domains/<topic>.md` - Updated with new knowledge
+- `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
+- `deepfield/drafts/_changelog.md` - Append run summary
 
 ## Step 6: Update Learning Plan
 
@@ -247,7 +247,7 @@ If dependency discovered:
 
 ### Write Updated Plan
 
-Overwrite `kb/wip/learning-plan.md` with updated plan.
+Overwrite `deepfield/wip/learning-plan.md` with updated plan.
 
 ## Step 7: Finalize Run
 
@@ -368,17 +368,17 @@ When loop exits, create staging for next run:
 ### Create Directory Structure
 
 ```bash
-mkdir -p kb/source/run-${nextRun+1}-staging/sources
+mkdir -p deepfield/source/run-${nextRun+1}-staging/sources
 ```
 
 ### Copy Templates
 
 ```bash
 cp ${CLAUDE_PLUGIN_ROOT}/templates/staging-readme.md \
-   kb/source/run-${nextRun+1}-staging/README.md
+   deepfield/source/run-${nextRun+1}-staging/README.md
 
 cp ${CLAUDE_PLUGIN_ROOT}/templates/feedback.md \
-   kb/source/run-${nextRun+1}-staging/feedback.md
+   deepfield/source/run-${nextRun+1}-staging/feedback.md
 ```
 
 ### Populate Feedback Template
@@ -418,9 +418,9 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 🔗 Contradictions Found: [N]
 
 📁 Documentation Updated:
-  - kb/drafts/domains/authentication.md
-  - kb/drafts/domains/api-structure.md
-  - kb/drafts/domains/data-flow.md
+  - deepfield/drafts/domains/authentication.md
+  - deepfield/drafts/domains/api-structure.md
+  - deepfield/drafts/domains/data-flow.md
 
 🔍 Next Steps:
 
@@ -437,11 +437,11 @@ HIGH Priority Complete: [X]/[Y] topics >80%
   ⏸️  Paused after [N] consecutive runs (max: [M])
 
   Please review:
-    - kb/drafts/ - Updated documentation
-    - kb/wip/learning-plan.md - Current state
+    - deepfield/drafts/ - Updated documentation
+    - deepfield/wip/learning-plan.md - Current state
 
   Add feedback or sources to:
-    kb/source/run-${nextRun+1}-staging/
+    deepfield/source/run-${nextRun+1}-staging/
 
   Then run /df-continue to continue learning
 
@@ -452,7 +452,7 @@ HIGH Priority Complete: [X]/[Y] topics >80%
     - [Topic]: Needs [specific sources]
 
   Please add to:
-    kb/source/run-${nextRun+1}-staging/sources/
+    deepfield/source/run-${nextRun+1}-staging/sources/
 
   Then run /df-continue
 
@@ -461,7 +461,7 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 
   Suggestions:
     - Add new sources with different perspectives
-    - Review kb/drafts/cross-cutting/unknowns.md
+    - Review deepfield/drafts/cross-cutting/unknowns.md
     - Consider adjusting focus areas
     - Run /df-distill to snapshot current knowledge
 
@@ -470,7 +470,7 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 
   Domain structure has changed significantly.
   Please review:
-    kb/wip/domain-index.md
+    deepfield/wip/domain-index.md
 
   Confirm new structure before continuing.
 

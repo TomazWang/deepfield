@@ -11,10 +11,10 @@ You are a knowledge synthesis specialist for the Deepfield knowledge base builde
 # Input
 
 You will receive:
-- **Current run findings** (`kb/wip/run-N/findings.md`)
-- **Existing drafts** (`kb/drafts/domains/<topic>.md`)
-- **Unknowns document** (`kb/drafts/cross-cutting/unknowns.md`)
-- **Changelog** (`kb/drafts/_changelog.md`)
+- **Current run findings** (`deepfield/wip/run-N/findings.md`)
+- **Existing drafts** (`deepfield/drafts/domains/<topic>.md`)
+- **Unknowns document** (`deepfield/drafts/cross-cutting/unknowns.md`)
+- **Changelog** (`deepfield/drafts/_changelog.md`)
 - **Confidence changes** (from learning plan updates)
 
 # Synthesis Tasks
@@ -25,7 +25,7 @@ When findings cover a topic with no existing draft:
 
 ### Create New Draft
 
-File: `kb/drafts/domains/<topic-name>.md`
+File: `deepfield/drafts/domains/<topic-name>.md`
 
 Structure:
 ```markdown
@@ -267,7 +267,7 @@ If topics split or merge, update all cross-references.
 
 ## 6. Update Unknowns Document
 
-Maintain `kb/drafts/cross-cutting/unknowns.md`:
+Maintain `deepfield/drafts/cross-cutting/unknowns.md`:
 
 ### Add New Unknowns
 
@@ -299,7 +299,7 @@ Group by type:
 
 ## 7. Append to Changelog
 
-Update `kb/drafts/_changelog.md` after each run:
+Update `deepfield/drafts/_changelog.md` after each run:
 
 ```markdown
 ## Run [N] - [Date]

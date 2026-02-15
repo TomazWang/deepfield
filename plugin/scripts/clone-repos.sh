@@ -4,9 +4,9 @@
 # Usage: clone-repos.sh <repo-url> <destination> [branch|tag]
 #
 # Examples:
-#   clone-repos.sh https://github.com/org/repo ./kb/source/baseline/repos/repo
-#   clone-repos.sh https://github.com/org/repo ./kb/source/baseline/repos/repo main
-#   clone-repos.sh https://github.com/org/repo ./kb/source/baseline/repos/repo v1.0.0
+#   clone-repos.sh https://github.com/org/repo ./deepfield/source/baseline/repos/repo
+#   clone-repos.sh https://github.com/org/repo ./deepfield/source/baseline/repos/repo main
+#   clone-repos.sh https://github.com/org/repo ./deepfield/source/baseline/repos/repo v1.0.0
 
 set -euo pipefail
 

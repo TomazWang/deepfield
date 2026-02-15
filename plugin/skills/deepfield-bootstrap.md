@@ -12,7 +12,7 @@ This skill orchestrates Run 0 (bootstrap) for the Deepfield knowledge base. It r
 # When to Use
 
 Invoke this skill when:
-- User has filled out `kb/source/baseline/brief.md`
+- User has filled out `deepfield/source/baseline/brief.md`
 - Project state is BRIEF_READY
 - No Run 0 has been executed yet
 - User runs `/df-continue` from BRIEF_READY state
@@ -20,16 +20,16 @@ Invoke this skill when:
 # Prerequisites
 
 Before running, verify:
-1. `kb/` directory exists (from `/df-init`)
-2. `kb/source/baseline/brief.md` exists and is filled out
-3. `kb/project.config.json` exists
-4. No `kb/wip/run-0/` directory exists (not already bootstrapped)
+1. `deepfield/` directory exists (from `/df-init`)
+2. `deepfield/source/baseline/brief.md` exists and is filled out
+3. `deepfield/project.config.json` exists
+4. No `deepfield/wip/run-0/` directory exists (not already bootstrapped)
 
 # Workflow
 
 ## Step 1: Read and Parse brief.md
 
-Read `kb/source/baseline/brief.md` to extract:
+Read `deepfield/source/baseline/brief.md` to extract:
 - Project name and description
 - Primary goal (onboarding, audit, decomposition, etc.)
 - Repository URLs with branches/tags
@@ -64,7 +64,7 @@ For each source listed in brief.md:
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/scripts/clone-repos.sh \
      <repo-url> \
-     ./kb/source/baseline/repos/<repo-name> \
+     ./deepfield/source/baseline/repos/<repo-name> \
      <branch-or-tag>
    ```
 
@@ -86,14 +86,14 @@ For each source listed in brief.md:
    - Domains: Note suggestions
 
 3. **File documentation:**
-   - If trusted/reference → `kb/source/baseline/trusted-docs/`
-   - If exploratory → `kb/source/run-0/`
+   - If trusted/reference → `deepfield/source/baseline/trusted-docs/`
+   - If exploratory → `deepfield/source/run-0/`
 
 ### For User-Provided Context
 
 If brief includes meeting notes, tribal knowledge, or informal context:
 
-1. Save as markdown file in `kb/source/run-0/context.md`
+1. Save as markdown file in `deepfield/source/run-0/context.md`
 2. Classify as type "conversation", trust "exploratory"
 
 ## Step 3: Scan Project Structure
@@ -104,7 +104,7 @@ For each cloned repository:
    ```
    Launch: deepfield-scanner
    Input: {
-     "path": "./kb/source/baseline/repos/<repo-name>",
+     "path": "./deepfield/source/baseline/repos/<repo-name>",
      "context": <brief-context>
    }
    ```
@@ -117,7 +117,7 @@ For each cloned repository:
    - Key files (README, schemas, specs)
 
 3. **Write scan results:**
-   Save to `kb/wip/run-0/scan-<repo-name>.md`
+   Save to `deepfield/wip/run-0/scan-<repo-name>.md`
 
 ## Step 4: Detect Domains
 
@@ -139,11 +139,11 @@ Using all classification and scan results:
    - Identify suggested decompositions
 
 3. **Generate domain-index.md:**
-   Write structured domain index to `kb/wip/domain-index.md`
+   Write structured domain index to `deepfield/wip/domain-index.md`
 
 ## Step 5: Generate Initial Project Map
 
-Create high-level project map in `kb/wip/project-map.md`:
+Create high-level project map in `deepfield/wip/project-map.md`:
 
 ```markdown
 # Project Map
@@ -193,17 +193,17 @@ Run 1 will focus on: [HIGH priority topics from plan]
    - List needed sources
 
 3. **Write learning-plan.md:**
-   Save to `kb/wip/learning-plan.md`
+   Save to `deepfield/wip/learning-plan.md`
 
 ## Step 7: Create Run 0 Directory and Findings
 
 1. **Create directory structure:**
    ```bash
-   mkdir -p kb/wip/run-0/domains
+   mkdir -p deepfield/wip/run-0/domains
    ```
 
 2. **Write initial findings.md:**
-   Create `kb/wip/run-0/findings.md`:
+   Create `deepfield/wip/run-0/findings.md`:
    ```markdown
    # Run 0 - Bootstrap Findings
 
@@ -230,8 +230,8 @@ Run 1 will focus on: [HIGH priority topics from plan]
 1. **For each repository, compute hashes:**
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/scripts/hash-files.js \
-     ./kb/source/baseline/repos/<repo-name> \
-     --output ./kb/wip/run-0/hashes-<repo-name>.json
+     ./deepfield/source/baseline/repos/<repo-name> \
+     --output ./deepfield/wip/run-0/hashes-<repo-name>.json
    ```
 
 2. **Merge all hashes into single object**
@@ -241,7 +241,7 @@ Run 1 will focus on: [HIGH priority topics from plan]
 
 ## Step 9: Write Run 0 Configuration
 
-Create `kb/wip/run-0/run-0.config.json`:
+Create `deepfield/wip/run-0/run-0.config.json`:
 
 ```json
 {
@@ -265,7 +265,7 @@ Use `${CLAUDE_PLUGIN_ROOT}/scripts/update-json.js` for atomic write.
 For each HIGH priority domain detected:
 
 1. **Create skeleton draft:**
-   Create `kb/drafts/domains/<domain-name>.md`:
+   Create `deepfield/drafts/domains/<domain-name>.md`:
    ```markdown
    # [Domain Name]
 
@@ -287,7 +287,7 @@ For each HIGH priority domain detected:
    ```
 
 2. **Update changelog:**
-   Append to `kb/drafts/_changelog.md`:
+   Append to `deepfield/drafts/_changelog.md`:
    ```markdown
    ## Run 0 - Bootstrap
 
@@ -298,7 +298,7 @@ For each HIGH priority domain detected:
 
 ## Step 11: Update Project Config
 
-Update `kb/project.config.json`:
+Update `deepfield/project.config.json`:
 
 ```json
 {
@@ -332,15 +332,15 @@ Display summary to user:
   Open Questions: [N]
 
 📁 Artifacts Created:
-  - kb/wip/project-map.md
-  - kb/wip/domain-index.md
-  - kb/wip/learning-plan.md
-  - kb/wip/run-0/findings.md
-  - kb/drafts/domains/[domain].md (skeletons)
+  - deepfield/wip/project-map.md
+  - deepfield/wip/domain-index.md
+  - deepfield/wip/learning-plan.md
+  - deepfield/wip/run-0/findings.md
+  - deepfield/drafts/domains/[domain].md (skeletons)
 
 🚀 Next Steps:
   Run /df-continue to start autonomous learning
-  Or add more sources to kb/source/run-1-staging/ first
+  Or add more sources to deepfield/source/run-1-staging/ first
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -350,7 +350,7 @@ Display summary to user:
 ## If brief.md not found
 
 ```
-Error: Brief not found at kb/source/baseline/brief.md
+Error: Brief not found at deepfield/source/baseline/brief.md
 
 Please run /df-start to generate the brief template, then fill it out
 with your project information before running bootstrap.
@@ -366,7 +366,7 @@ Bootstrap needs:
   - Primary goal selected
   - Focus areas indicated
 
-Please fill out kb/source/baseline/brief.md and try again.
+Please fill out deepfield/source/baseline/brief.md and try again.
 ```
 
 ## If repository clone fails

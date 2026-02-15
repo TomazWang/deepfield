@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# scaffold-kb.sh - Create complete kb/ directory structure with four-space architecture
+# scaffold-kb.sh - Create complete deepfield/ directory structure with four-space architecture
 # Usage: scaffold-kb.sh [target_dir]
-# Default target_dir: ./kb
+# Default target_dir: ./deepfield
 
 set -e
 
-# Use first argument as target, default to ./kb
-TARGET_DIR="${1:-./kb}"
+# Use first argument as target, default to ./deepfield
+TARGET_DIR="${1:-./deepfield}"
 
 # Get script directory for accessing template files
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -32,7 +32,7 @@ fi
 # Create four-space directory structure
 echo "Creating directory structure..."
 
-# Main kb/ directory
+# Main deepfield/ directory
 mkdir -p "$TARGET_DIR"
 
 # source/ - Raw inputs
