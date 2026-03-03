@@ -11,24 +11,27 @@ allowed-tools:
   - Task
 arguments:
   - name: source
-    description: Path to file, directory, or git URL to add as a source
-    required: true
+    description: Path to file, directory, or git URL to add as a source (omit for inline text)
+    required: false
   - name: --type
     description: "Override source type: code, doc, config, schema, conversation, spec"
     required: false
   - name: --trust
     description: "Override trust level: trusted, reference, exploratory"
     required: false
+  - name: --branch
+    description: "Branch or tag to clone (git URLs only)"
+    required: false
 ---
 
 # /df-input - Add and Classify Sources
 
-Add new source materials (files, directories, git repositories, or inline text) to the knowledge base. Sources are classified by type and trust level, then filed into the appropriate staging area for the next learning run.
+Add new source materials (files, directories, git repositories, or inline text) to the knowledge base. Sources are classified by type and trust level, then filed into the appropriate location based on classification.
 
 ## Prerequisites
 
-1. **deepfield/ directory exists**
-2. **Bootstrap (Run 0) is complete** — sources need a staging area to land in
+1. **`deepfield/` directory exists** (from `/df-init`)
+2. **Bootstrap (Run 0) is complete** — sources need a staging area
 
 If prerequisites fail:
 - No `deepfield/`: "Run `/df-init` first."
@@ -50,7 +53,7 @@ fi
 
 ## Determine Staging Area
 
-Find or create the current staging area:
+Find or create the staging area for the next run:
 
 ```bash
 # Find the highest completed run number
@@ -64,92 +67,160 @@ mkdir -p "${STAGING_DIR}/sources"
 
 ## Source Processing
 
-### Git Repository URL
+### Step 1: Determine Source Kind
 
-When source is a git URL (starts with `https://` or `git@`):
+| Input | Kind |
+|-------|------|
+| Starts with `https://` or `git@` | **git-repo** |
+| Existing file or directory path | **local-path** |
+| No source argument provided | **inline-text** (prompt user for content) |
 
-1. **Classify** via classifier agent (or use `--type`/`--trust` overrides)
-2. **Clone** to staging:
-   ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/clone-repos.sh \
-     <repo-url> \
-     ${STAGING_DIR}/sources/<repo-name> \
-     [branch]
-   ```
-3. **Report** classification and location
+### Step 2: Classify
 
-### File or Directory Path
-
-When source is a local path:
-
-1. **Verify** path exists
-2. **Classify** via classifier agent (or use overrides)
-3. **Copy** to staging:
-   ```bash
-   cp -r <source-path> ${STAGING_DIR}/sources/
-   ```
-4. **Report** classification and location
-
-### Inline Text (No Path)
-
-When user provides context directly (meeting notes, descriptions, etc.):
-
-1. **Ask** for a filename or generate one from content
-2. **Classify** as type "conversation", trust "exploratory"
-3. **Write** to staging:
-   ```bash
-   echo "<content>" > ${STAGING_DIR}/sources/<filename>.md
-   ```
-4. **Report** location
-
-## Classification
-
-Unless overridden with `--type` and `--trust`, invoke the classifier agent:
+Unless BOTH `--type` and `--trust` are provided, invoke the classifier agent:
 
 ```
 Launch: deepfield-classifier
 Input: {
   "source": "<path-or-url>",
-  "context": <brief-context-from-project-config>
+  "context": <brief-context-from-deepfield/source/baseline/brief.md>
 }
 ```
 
-Display classification result to user:
+If `--type` is provided, use it instead of the classifier's type.
+If `--trust` is provided, use it instead of the classifier's trust level.
+
+### Step 3: File the Source
+
+Filing destination depends on the final classification:
+
+| Trust Level | Type | Destination |
+|-------------|------|-------------|
+| trusted | code (git repo) | `deepfield/source/baseline/repos/<repo-name>/` |
+| trusted or reference | doc, spec, config, schema | `deepfield/source/baseline/trusted-docs/<name>` |
+| exploratory | any | `${STAGING_DIR}/sources/<name>` |
+| reference | code | `${STAGING_DIR}/sources/<name>` |
+
+**Rationale**: Trusted/reference sources persist across runs in `baseline/`. Exploratory sources are ephemeral and scoped to the next run.
+
+#### Git Repository
+
+1. Determine destination from classification table above
+2. Clone:
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/scripts/clone-repos.sh \
+     <repo-url> \
+     <destination> \
+     [branch]
+   ```
+
+#### File or Directory
+
+1. Verify path exists (error if not)
+2. Determine destination from classification table above
+3. Copy:
+   ```bash
+   cp -r <source-path> <destination>
+   ```
+
+#### Inline Text
+
+1. Prompt user for content (or accept piped input)
+2. Ask for a descriptive filename or generate one (e.g., `meeting-notes-2024-01-15.md`)
+3. Always classify as type `conversation`, trust `exploratory`
+4. Write to `${STAGING_DIR}/sources/<filename>.md`
+
+### Step 4: Update Source Manifest
+
+After filing, update `deepfield/source/sources.json` to track the addition.
+
+If the file doesn't exist, create it with this structure:
+
+```json
+{
+  "sources": []
+}
 ```
-Source classified:
-  Type:  [code/doc/config/schema/conversation/spec]
-  Trust: [trusted/reference/exploratory]
-  Domains: [domain1, domain2]
 
-Filed to: deepfield/source/run-N-staging/sources/<name>
+Append an entry:
+
+```json
+{
+  "path": "<filed-destination-relative-to-deepfield/>",
+  "origin": "<original-path-or-url>",
+  "type": "<classified-type>",
+  "trustLevel": "<classified-trust>",
+  "domains": ["<domain1>", "<domain2>"],
+  "addedAt": "<ISO-timestamp>",
+  "addedInRun": "<run-number or 'pre-run-N'>"
+}
 ```
 
-## Output
+Use `${CLAUDE_PLUGIN_ROOT}/scripts/update-json.js` for atomic write if available, otherwise write directly.
 
-### On Success
+### Step 5: Display Result
 
 ```
-✅ Source added successfully
+Source added successfully
 
-  Source: [path or URL]
-  Type:  [type]
-  Trust: [trust level]
-  Filed: deepfield/source/run-2-staging/sources/[name]
+  Source: <original path or URL>
+  Type:  <type>
+  Trust: <trust level>
+  Filed: <destination path>
 
   Run /df-iterate or /df-continue to process this source.
 ```
 
-### On Validation Failure
+## Error Handling
+
+### Source path doesn't exist
 
 ```
-Cannot add source: [reason]
-[Suggestion]
+Error: Source not found: <path>
+
+Please verify the path and try again.
+```
+
+### Invalid git URL or clone failure
+
+```
+Error: Failed to clone repository: <url>
+
+Possible causes:
+  - Invalid URL format
+  - Network issues
+  - Authentication required (private repos need credentials)
+
+Please verify the URL and try again.
+```
+
+### Source already exists at destination
+
+If the destination already contains a source with the same name:
+
+```
+Warning: Source already exists at <destination>
+Skipping — source was previously added.
+```
+
+Do not overwrite. Report the existing entry.
+
+### No source argument and not interactive
+
+If no source is provided and the session is non-interactive:
+
+```
+Error: No source specified.
+
+Usage: /df-input <path-or-url> [--type=<type>] [--trust=<level>]
 ```
 
 ## Tips for Claude
 
-- Multiple sources can be added before running iterate
-- Each source goes to the same staging area until the next run starts
-- If the user provides text directly, save it as a markdown file
+- Multiple sources can be added before running iterate — each call appends to the manifest
+- Each source goes to the appropriate location based on classification
+- If the user provides text directly (no path), save it as a markdown file in staging
 - After adding sources, suggest running `/df-continue` or `/df-iterate`
 - Trust level matters: only "trusted" sources become ground truth
+- When classifying directories, sample a few files to determine type
+- Always read `deepfield/source/baseline/brief.md` for context before classifying
