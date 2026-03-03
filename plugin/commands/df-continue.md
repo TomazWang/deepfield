@@ -70,7 +70,7 @@ done
 # Detect current state
 detect_state() {
   # EMPTY: No deepfield/ directory
-  if [ ! -d "./kb" ]; then
+  if [ ! -d "./deepfield" ]; then
     echo "EMPTY"
     return
   fi
@@ -170,13 +170,8 @@ case $STATE in
     echo ""
 
     # Invoke deepfield-bootstrap skill
-    # This would launch the skill via Claude Code's skill system
-    # For now, show what would happen
     echo "Invoking deepfield-bootstrap skill..."
     echo ""
-    echo "⚠️  Bootstrap skill invocation not yet implemented"
-    echo "    (This is where the skill would be launched)"
-    exit 1
     ;;
 
   LEARNING)
@@ -207,9 +202,6 @@ case $STATE in
       echo ""
       echo "Invoking deepfield-iterate skill..."
       echo ""
-      echo "⚠️  Iterate skill invocation not yet implemented"
-      echo "    (This is where the skill would be launched)"
-      exit 1
     else
       echo "⏸️  Learning paused - No new input"
       echo ""
@@ -293,19 +285,19 @@ Add feedback or sources to continue:
 Or check current state: /df-status
 ```
 
-## Integration with Skills
+## Skill Routing Instructions
 
-When state is BRIEF_READY:
-- Invoke: `deepfield-bootstrap` skill
-- Wait for completion
-- Display results
+**IMPORTANT:** When this command detects state and reaches a skill invocation point, Claude MUST invoke the corresponding skill directly. Do not just print messages — actually execute the skill.
 
-When state is LEARNING + new input:
-- Invoke: `deepfield-iterate` skill
-- Pass `--once` flag if specified
-- Pass `--focus` domain if specified
-- Wait for completion
-- Display results
+### BRIEF_READY → `deepfield-bootstrap`
+
+When state is BRIEF_READY, invoke the `deepfield-bootstrap` skill from `plugin/skills/deepfield-bootstrap.md`. Follow that skill's full workflow (classify sources, scan structure, detect domains, generate learning plan, etc.). No additional arguments needed.
+
+### LEARNING (with new input) → `deepfield-iterate`
+
+When state is LEARNING and new input is detected, invoke the `deepfield-iterate` skill from `plugin/skills/deepfield-iterate.md`. Pass through these flags:
+- If `--once` was specified: run in single-run mode (one iteration, no autonomous loop)
+- If `--focus=<domain>` was specified: focus iteration on that specific domain
 
 ## Future Enhancements
 
