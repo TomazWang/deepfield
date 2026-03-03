@@ -49,7 +49,18 @@ Or install locally in a project:
 npm install --save-dev deepfield
 ```
 
-### With Claude Code Plugin
+### With Claude Code Plugin (via Marketplace)
+
+The easiest way to install the Claude Code plugin:
+
+```
+/plugin marketplace add TomazWang/deepfield
+/plugin install deepfield@deepfield
+```
+
+That's it. The plugin is now available in Claude Code with all `df-*` commands.
+
+### With Claude Code Plugin (manual)
 
 1. **Install CLI** (see above)
 
