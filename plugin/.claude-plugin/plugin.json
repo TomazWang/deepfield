@@ -7,7 +7,7 @@
     "email": "contributors@deepfield.dev"
   },
   "homepage": "https://github.com/TomazWang/deepfield",
-  "repository": "https://github.com/TomazWang/deepfield",
+  "repository": "https://github.com/TomazWang/deepfield.git",
   "license": "MIT",
   "keywords": [
     "knowledge-base",

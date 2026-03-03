@@ -67,7 +67,14 @@ npm run build
 ln -s $(pwd)/plugin ~/.claude/plugins/deepfield
 ```
 
-3. **Restart Claude Code** to load the plugin
+3. **Verify plugin is linked:**
+
+```bash
+ls -la ~/.claude/plugins/deepfield
+# Should show a symlink to your plugin directory
+```
+
+4. **Restart Claude Code** to load the plugin
 
 ## Quick Start
 
@@ -153,21 +160,6 @@ Script (robust file operations)
 Agent (specialized AI workers)
 ```
 
-## Quick Start
-
-```bash
-# Phase 1 (Foundation) - IMPLEMENTED ✅
-/df-init      # Initialize the knowledge base structure
-/df-start     # Interactive Q&A and brief.md generation
-/df-status    # Check current state
-
-# Phase 2+ (Learning) - COMING SOON
-/df-bootstrap # Bootstrap the learning process
-/df-input     # Add sources
-/df-iterate   # Run autonomous learning cycles
-/df-output    # Snapshot current knowledge
-```
-
 ## Implementation Status
 
 ### Phase 1: Foundation ✅ **COMPLETE**
@@ -205,57 +197,52 @@ Future phases:
 - Knowledge synthesis
 - `/df-output` - Versioned snapshots
 
-## Installation
-
-Install as a Claude Code plugin:
-
-```bash
-# Clone or copy the plugin to your Claude plugins directory
-cp -r .claude/plugins/deepfield ~/.claude/plugins/
-
-# Or create a symlink for development
-ln -s $(pwd)/.claude/plugins/deepfield ~/.claude/plugins/deepfield
-```
-
-**Requirements:**
-- Node.js v16+ (for JSON manipulation scripts)
-- Bash shell (for scaffolding scripts)
-
 ## Commands
 
-### Phase 1 Commands (Implemented ✅)
+### Phase 1 Commands (Fully Implemented ✅)
+
+**These commands are complete and ready to use:**
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
-| `/df-init` | Create kb/ directory with four-space architecture | Run once to initialize |
+| `/df-init` | Create deepfield/ directory with four-space architecture | Run once to initialize |
 | `/df-start` | Interactive Q&A + generate brief.md for user to fill | Run once after init |
 | `/df-status` | Display current state and suggest next actions | Run anytime to check progress |
 
 **Example workflow:**
 ```bash
-/df-init                    # Creates ./kb/ with structure
+/df-init                    # Creates ./deepfield/ with structure
 /df-start                   # Asks questions, generates brief.md
-# (Fill out kb/source/baseline/brief.md)
+# (Fill out deepfield/source/baseline/brief.md)
 /df-status                  # Check state: "BRIEF_CREATED"
 ```
 
-### Phase 2+ Commands (Planned)
+### Phase 2+ Commands (Designed But NOT Implemented ⚠️)
 
-| Command | Purpose | When |
-|---------|---------|------|
-| `/df-bootstrap` | Classify sources, initial scan, generate first plan | Once (Run 0) |
-| `/df-input` | Add source → AI classifies → files appropriately | Anytime |
-| `/df-iterate` | Run autonomous learning loop until stop condition | Anytime |
-| `/df-output` | Snapshot `drafts/` → `output/v{N}/` | Anytime |
+**These commands have design documents but are NOT functional yet:**
+
+| Command | Design Status | Implementation Status |
+|---------|--------------|----------------------|
+| `/df-bootstrap` | ✅ Complete | ❌ Agents not implemented |
+| `/df-input` | ✅ Complete | ❌ Classifier not implemented |
+| `/df-iterate` | ✅ Complete | ❌ Learning loop not implemented |
+| `/df-output` | ✅ Complete | ❌ Polish skill not implemented |
+| `/df-continue` | ✅ Complete | ❌ Orchestration not implemented |
+
+**Why they don't work:**
+- Command wrappers exist and will validate prerequisites
+- Skills are orchestration documents, not executable code
+- Required agents (classifier, scanner, learner, etc.) are not implemented
+- Attempting to run these commands will validate state but won't execute fully
 
 ### Command Details
 
 #### `/df-init`
 
-Creates the complete kb/ directory structure:
+Creates the complete deepfield/ directory structure:
 
 ```
-kb/
+deepfield/
 ├── source/baseline/    # Persistent sources (repos, trusted docs)
 ├── source/run-N/       # Per-run ephemeral sources
 ├── wip/                # AI's workspace (maps, plans, findings)
@@ -271,7 +258,7 @@ kb/
 **Example:**
 ```bash
 /df-init
-# ✅ Knowledge base initialized at: ./kb/
+# ✅ Knowledge base initialized at: ./deepfield/
 # Next: Run /df-start to begin setup
 ```
 
@@ -279,8 +266,8 @@ kb/
 
 Interactive setup that:
 1. Asks essential questions about your project
-2. Generates `kb/source/baseline/brief.md` with answers prefilled
-3. Creates `kb/project.config.json` with timestamps
+2. Generates `deepfield/source/baseline/brief.md` with answers prefilled
+3. Creates `deepfield/project.config.json` with timestamps
 
 **Questions asked:**
 - What is this project? (legacy takeover, onboarding, integration, etc.)
@@ -289,7 +276,7 @@ Interactive setup that:
 
 **Features:**
 - Resumable (detects existing brief.md and prompts for action)
-- Validates kb/ exists (requires /df-init first)
+- Validates deepfield/ exists (requires /df-init first)
 - Generates comprehensive brief.md template for you to fill out
 
 **Example:**
@@ -299,7 +286,7 @@ Interactive setup that:
 # A: Legacy codebase I'm taking over
 # Q: What's your goal?
 # A: Understand architecture and data flow
-# ✅ Brief created at: kb/source/baseline/brief.md
+# ✅ Brief created at: deepfield/source/baseline/brief.md
 # Next: Fill out the brief, then run /df-bootstrap (Phase 2)
 ```
 
@@ -336,10 +323,10 @@ Displays current knowledge base state:
 
 ## KB Directory Structure
 
-After running `/df-init`, your `kb/` directory contains:
+After running `/df-init`, your `deepfield/` directory contains:
 
 ```
-kb/
+deepfield/
 ├── project.config.json         # Project configuration and metadata
 ├── source/                     # Raw inputs
 │   ├── baseline/               # Persistent sources
@@ -386,12 +373,12 @@ The workflow progresses through these states:
 ```
 EMPTY
   → /df-init
-INITIALIZED (kb/ exists, no project.config.json)
+INITIALIZED (deepfield/ exists, no project.config.json)
   → /df-start
 BRIEF_CREATED (config + brief.md exist)
   → (user fills out brief.md)
 BRIEF_READY (brief filled out)
-  → /df-bootstrap (Phase 2)
+  → /df-bootstrap (Phase 2 - not yet implemented)
 ```
 
 Use `/df-status` to check your current state anytime.
@@ -412,13 +399,13 @@ VERSIONED
 
 ## Troubleshooting
 
-### "Error: kb/ directory not found"
+### "Error: deepfield/ directory not found"
 
 **Problem:** Trying to run `/df-start` or `/df-status` without initializing first.
 
 **Fix:**
 ```bash
-/df-init    # Creates kb/ directory
+/df-init    # Creates deepfield/ directory
 ```
 
 ### "Error: No write permission"
@@ -444,7 +431,7 @@ chmod u+w .
 /df-start   # This will recreate the config
 
 # Option 2: Manual fix
-# Edit kb/project.config.json and ensure valid JSON
+# Edit deepfield/project.config.json and ensure valid JSON
 ```
 
 ### Brief.md already exists
@@ -693,8 +680,8 @@ This is not a simple plugin — it's a full system.
 ## Project Status
 
 **Version**: 1.0.0
-**Status**: Phase 1 Implementation (CLI + Plugin Foundation)
-**Last Updated**: 2026-02-11
+**Status**: Phase 1 Implementation Complete (CLI + Plugin Foundation)
+**Last Updated**: 2026-03-03
 
 **Phase 1 Complete (Current):**
 - ✅ CLI tool with init, start, status commands
