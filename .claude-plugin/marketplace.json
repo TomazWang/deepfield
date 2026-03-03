@@ -1,0 +1,23 @@
+{
+  "name": "deepfield",
+  "owner": {
+    "name": "TomazWang"
+  },
+  "metadata": {
+    "description": "AI-driven knowledge base builder for understanding brownfield codebases"
+  },
+  "plugins": [
+    {
+      "name": "deepfield",
+      "source": "./plugin",
+      "description": "Iteratively learns your codebase and distills institutional knowledge. Provides df-* commands for autonomous knowledge base building.",
+      "author": {
+        "name": "TomazWang"
+      },
+      "homepage": "https://github.com/TomazWang/deepfield",
+      "repository": "https://github.com/TomazWang/deepfield",
+      "license": "MIT",
+      "keywords": ["knowledge-base", "brownfield", "documentation", "ai-assistant"]
+    }
+  ]
+}
