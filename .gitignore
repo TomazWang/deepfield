@@ -37,3 +37,4 @@ coverage/
 
 # Claude Code plugin local settings
 .claude/*.local.md
+TASK.md
