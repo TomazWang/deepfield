@@ -363,7 +363,9 @@ if (shouldContinue) {
 
 ## Step 9: Create Staging Area (On Stop)
 
-When loop exits, create staging for next run:
+**CRITICAL: This step MUST be completed before reporting completion. Always create a staging area when the loop exits, regardless of stop reason.**
+
+When the loop exits, create staging for the next run so the user has a place to add sources and feedback:
 
 ### Create Directory Structure
 
@@ -371,22 +373,23 @@ When loop exits, create staging for next run:
 mkdir -p deepfield/source/run-${nextRun+1}-staging/sources
 ```
 
-### Copy Templates
+Where `${nextRun}` is the last completed run number (e.g., if Runs 1-3 completed, create `run-4-staging/`).
 
-```bash
-cp ${CLAUDE_PLUGIN_ROOT}/templates/staging-readme.md \
-   deepfield/source/run-${nextRun+1}-staging/README.md
+### Create README
 
-cp ${CLAUDE_PLUGIN_ROOT}/templates/feedback.md \
-   deepfield/source/run-${nextRun+1}-staging/feedback.md
-```
+Write a `deepfield/source/run-${nextRun+1}-staging/README.md` explaining:
+- This is where the user adds new sources and feedback
+- Drop files into `sources/` subdirectory
+- Edit `feedback.md` to answer questions or provide guidance
+- Run `/df-continue` when ready
 
-### Populate Feedback Template
+### Create Feedback Template
 
-Update feedback.md with:
+Write a `deepfield/source/run-${nextRun+1}-staging/feedback.md` populated with:
 - Current open questions from learning plan
 - Topics that need more focus
 - Specific sources that would help
+- Any contradictions the AI wants the user to clarify
 
 ## Step 10: Report Completion
 

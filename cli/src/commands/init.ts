@@ -86,12 +86,12 @@ async function initCommand(options: { force?: boolean; yes?: boolean }): Promise
   console.log('  └── output/          # Final knowledge base artifacts');
 
   console.log(chalk.blue('\n📝 Template files created:'));
-  console.log('  • project.config.json  # Project configuration');
-  console.log('  • brief.md            # Project brief and context');
-  console.log('  • project-map.md      # Structural map');
-  console.log('  • domain-index.md     # Domain organization');
-  console.log('  • unknowns.md         # Questions and uncertainties');
-  console.log('  • _changelog.md       # Run history');
+  console.log('  • project.config.json                  # Project configuration');
+  console.log('  • brief.md                             # Project brief and context');
+  console.log('  • project-map.md                       # Structural map');
+  console.log('  • domain-index.md                      # Domain organization');
+  console.log('  • drafts/cross-cutting/unknowns.md     # Questions and uncertainties');
+  console.log('  • drafts/_changelog.md                 # Run history');
 
   console.log(chalk.green('\n🎯 Next steps:'));
   console.log(chalk.white('  1. Run'), chalk.cyan('deepfield start'), chalk.white('to begin interactive setup'));

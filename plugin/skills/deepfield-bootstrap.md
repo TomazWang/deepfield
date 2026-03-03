@@ -309,7 +309,35 @@ Update `deepfield/project.config.json`:
 }
 ```
 
-## Step 12: Report Completion
+## Step 12: Create Staging Area for Next Run
+
+**IMPORTANT: This step MUST be completed before reporting.**
+
+Create the staging directory where users can add sources and feedback for Run 1:
+
+```bash
+mkdir -p deepfield/source/run-1-staging/sources
+```
+
+Create a README in the staging area:
+
+```markdown
+# Run 1 Staging Area
+
+Add new sources and feedback here before running `/df-continue`.
+
+## How to use
+
+- Drop source files into `sources/` subdirectory
+- Edit `feedback.md` to answer questions or provide guidance
+- Run `/df-continue` when ready
+```
+
+Write this to `deepfield/source/run-1-staging/README.md`.
+
+Create a feedback template at `deepfield/source/run-1-staging/feedback.md` with the open questions from the learning plan.
+
+## Step 13: Report Completion
 
 Display summary to user:
 
@@ -406,6 +434,7 @@ Bootstrap is successful when:
 - ✓ Initial drafts created
 - ✓ Run 0 config written
 - ✓ File hashes computed
+- ✓ Staging area created (`deepfield/source/run-1-staging/`)
 
 # State Transition
 

@@ -4,8 +4,7 @@
   "description": "CLI tool for AI-driven knowledge base building",
   "main": "dist/cli.js",
   "bin": {
-    "deepfield": "./dist/cli.js",
-    "df": "./dist/cli.js"
+    "deepfield": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsup src/cli.ts --format cjs --dts --clean --sourcemap && npm run copy:templates",

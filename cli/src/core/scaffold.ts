@@ -99,6 +99,8 @@ export async function scaffold(
     'deepfield/source/baseline/repos',
     'deepfield/wip',
     'deepfield/drafts',
+    'deepfield/drafts/domains',
+    'deepfield/drafts/cross-cutting',
     'deepfield/output',
   ];
 
@@ -120,21 +122,20 @@ export async function scaffold(
     }
   }
 
-  // Copy template files
+  // Copy template files (source template name → destination relative to deepfield/)
   const templatesDir = getTemplatesDir();
-  const templateFiles = [
-    'project.config.json',
-    'run.config.json',
-    'brief.md',
-    'project-map.md',
-    'domain-index.md',
-    'unknowns.md',
-    '_changelog.md',
+  const templateMappings: Array<{ src: string; dest: string }> = [
+    { src: 'project.config.json', dest: 'project.config.json' },
+    { src: 'brief.md', dest: 'brief.md' },
+    { src: 'project-map.md', dest: 'project-map.md' },
+    { src: 'domain-index.md', dest: 'domain-index.md' },
+    { src: 'unknowns.md', dest: 'drafts/cross-cutting/unknowns.md' },
+    { src: '_changelog.md', dest: 'drafts/_changelog.md' },
   ];
 
-  for (const templateFile of templateFiles) {
-    const sourcePath = join(templatesDir, templateFile);
-    const destPath = join(deepfieldDir, templateFile);
+  for (const { src, dest } of templateMappings) {
+    const sourcePath = join(templatesDir, src);
+    const destPath = join(deepfieldDir, dest);
 
     try {
       // Skip if file exists and force is not enabled
