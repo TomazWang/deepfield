@@ -70,6 +70,23 @@ The script handles all bootstrap steps automatically:
 9. Creates `deepfield/source/run-1-staging/` with README and feedback template
 10. Updates `deepfield/project.config.json` (bootstrapCompleted: true)
 
+## Step 2.5: Initialize Terminology Glossary
+
+After the bootstrap runner script completes, create the empty terminology glossary:
+
+```bash
+# Create the cross-cutting drafts directory if it doesn't exist
+mkdir -p deepfield/drafts/cross-cutting
+
+# Copy the terminology template to initialize the empty glossary
+cp "${CLAUDE_PLUGIN_ROOT}/templates/terminology.md" \
+   deepfield/drafts/cross-cutting/terminology.md
+```
+
+This establishes the glossary file so that Run 1 can immediately start appending discovered terms without needing to create the file from scratch.
+
+If the glossary already exists (e.g., re-running bootstrap), skip this step to preserve any previously discovered terms.
+
 ## Step 3: Verify Output
 
 After the script completes, verify these files exist:
@@ -81,6 +98,7 @@ After the script completes, verify these files exist:
 - `deepfield/wip/run-0/findings.md` — Bootstrap findings summary
 - `deepfield/source/run-1-staging/README.md` — Staging area guide
 - `deepfield/source/run-1-staging/feedback.md` — Open questions template
+- `deepfield/drafts/cross-cutting/terminology.md` — Empty terminology glossary (initialized from template)
 
 ## Step 4: Report Completion
 
@@ -166,6 +184,7 @@ Bootstrap is successful when:
 - `deepfield/wip/domain-index.md` exists
 - `deepfield/wip/learning-plan.md` exists
 - `deepfield/project.config.json` has `bootstrapCompleted: true`
+- `deepfield/drafts/cross-cutting/terminology.md` exists (initialized from template)
 
 # State Transition
 

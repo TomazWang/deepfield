@@ -394,6 +394,69 @@ Synthesizer updates:
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
+## Step 5.5: Extract Terminology
+
+After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
+
+### Prepare File List
+
+Write the list of files analyzed this run to a temporary JSON file:
+
+```bash
+# filesToRead was built in Step 3 (Incremental Scanning)
+node -e "
+const fs = require('fs');
+fs.writeFileSync(
+  'deepfield/wip/run-${nextRun}/files-analyzed.json',
+  JSON.stringify({ files: filesToRead })
+);
+"
+```
+
+### Run Term Extraction Script
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-terminology.js" \
+  --run ${nextRun} \
+  --files-json deepfield/wip/run-${nextRun}/files-analyzed.json \
+  --glossary deepfield/drafts/cross-cutting/terminology.md
+```
+
+This writes `deepfield/wip/run-${nextRun}/term-extraction-input.json` and a placeholder `deepfield/wip/run-${nextRun}/new-terms.md`.
+
+### Invoke Term Extractor Agent
+
+```
+Launch: deepfield-term-extractor
+Input: {
+  "run_number": ${nextRun},
+  "manifest": "deepfield/wip/run-${nextRun}/term-extraction-input.json",
+  "files_to_scan": <filesToRead>,
+  "previous_glossary": "deepfield/drafts/cross-cutting/terminology.md",
+  "output_path": "deepfield/wip/run-${nextRun}/new-terms.md"
+}
+```
+
+The agent reads source files and writes discovered terms to `deepfield/wip/run-${nextRun}/new-terms.md`.
+
+### Merge Into Cumulative Glossary
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/merge-glossary.js" \
+  --run ${nextRun} \
+  --new-terms deepfield/wip/run-${nextRun}/new-terms.md \
+  --glossary deepfield/drafts/cross-cutting/terminology.md \
+  --template "${CLAUDE_PLUGIN_ROOT}/templates/terminology.md"
+```
+
+This merges per-run discoveries into `deepfield/drafts/cross-cutting/terminology.md`.
+
+### Error Handling
+
+If extraction or merge fails:
+- Log a warning: `Warning: Terminology extraction failed for Run ${nextRun}: <error>`
+- Continue to Step 6 — terminology extraction is non-blocking
+
 ## Step 6: Update Learning Plan
 
 ### Calculate Confidence Changes
