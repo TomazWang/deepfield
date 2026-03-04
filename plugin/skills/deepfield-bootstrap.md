@@ -337,6 +337,36 @@ Write this to `deepfield/source/run-1-staging/README.md`.
 
 Create a feedback template at `deepfield/source/run-1-staging/feedback.md` with the open questions from the learning plan.
 
+## Step 12.5: Collect and Apply User Feedback
+
+**Dependencies (import at top of bootstrap runner):**
+```javascript
+import { runFeedbackLoop } from '${CLAUDE_PLUGIN_ROOT}/scripts/collect-feedback.js';
+import { applyFeedbackToLearningPlan } from '${CLAUDE_PLUGIN_ROOT}/scripts/apply-feedback.js';
+```
+
+After the staging area is created (Step 12), pause to let the user review findings
+and provide feedback before the final report.
+
+**Workflow:**
+
+1. Run the interactive feedback loop:
+   ```javascript
+   const feedback = await runFeedbackLoop(0);
+   ```
+
+2. If feedback was provided (not null), apply it to the learning plan:
+   ```javascript
+   if (feedback) {
+     applyFeedbackToLearningPlan(feedback);
+   }
+   ```
+
+3. Continue to Step 13 (report completion) regardless of whether feedback was given.
+
+**Note:** This step is optional from the user's perspective — they may skip the
+feedback prompt. The skill must not block or fail if feedback is skipped.
+
 ## Step 13: Report Completion
 
 Display summary to user:
@@ -364,6 +394,7 @@ Display summary to user:
   - deepfield/wip/domain-index.md
   - deepfield/wip/learning-plan.md
   - deepfield/wip/run-0/findings.md
+  - deepfield/wip/run-0/feedback.md (if feedback was provided)
   - deepfield/drafts/domains/[domain].md (skeletons)
 
 🚀 Next Steps:
@@ -371,6 +402,13 @@ Display summary to user:
   Or add more sources to deepfield/source/run-1-staging/ first
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If user feedback was collected and applied, append this note after the summary:
+
+```
+💡 Feedback incorporated into deepfield/wip/learning-plan.md
+   The next run will take your corrections and priorities into account.
 ```
 
 # Error Handling
