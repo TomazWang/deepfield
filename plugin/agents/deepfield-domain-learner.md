@@ -115,6 +115,13 @@ After reading all files, count the observable signals that feed the deterministi
 
 Items with no tag are treated as `[weak]` by the formula.
 
+**Human-provided answers must also be tagged.** When a question is answered by something a human told you (via the open questions context, session notes, or any conversational input), apply the same evidence strength rules based on corroboration:
+- `[strong]` — the human's answer is confirmed by code or tests you read in your file list
+- `[medium]` — the human's answer is plausible and consistent with what you read, but not directly confirmed
+- `[weak]` — the human's answer is the only evidence; no code, test, or document corroborates it
+
+A human-provided answer alone is never `[strong]`. People misremember, describe older behavior, or give ambiguous answers. Recording the correct tag ensures that the `evidence_strength` component of the confidence formula reflects the true reliability of what is claimed — a human answer with no corroboration scores as `[weak]` and will appropriately discount overall domain confidence.
+
 Count the following for the Confidence Inputs section of the Findings file:
 - **answeredQuestions**: number of open questions from the learning plan that you answered with evidence
 - **unansweredQuestions**: number of open questions that remain unanswered after reading your file list

@@ -39,7 +39,9 @@ Each component maps to a distinct, observable gap in knowledge. Together they co
 
 **`questions_answered` (40%)** — "Do we know what we need to know?"
 
-This is the most direct signal. The learning agent maintains an explicit list of questions about each domain. If 70% of those questions have no answer, the domain knowledge is incomplete by definition — no amount of strong evidence or broad source coverage can compensate. It is measurable without interpretation: the agent either has an answer or it does not. That directness justifies the highest weight.
+This is the most direct signal. The learning agent maintains an explicit list of questions about each domain. If 70% of those questions have no answer, the domain knowledge is incomplete by definition — no amount of strong evidence or broad source coverage can compensate.
+
+"Answered" here means "answered with evidence", not "a human said so". Human-provided answers are fallible: people misremember, recall behavior from an older version, or give ambiguous responses. A question whose only support is a human statement with no corroborating code or tests should not count the same as a question confirmed by source code and tests. To handle this, the learner agent tags human-provided answers with an evidence strength marker — `[strong]` if the answer is confirmed by code or tests, `[medium]` if plausible but unconfirmed, `[weak]` if stated only by a human with no other evidence. These tags feed directly into the `evidence_strength` component (30%), which naturally discounts weak answers. A human statement classified as `[weak]` can still move a question from "unanswered" to "answered" in the `questions_answered` numerator — incrementally improving coverage — but the low evidence tag limits its contribution to overall confidence through the evidence_strength component. This separation keeps the formula honest without discarding human input entirely.
 
 **`evidence_strength` (30%)** — "Can we trust what we claim to know?"
 
