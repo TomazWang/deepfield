@@ -45,7 +45,22 @@ if deepfield/wip/run-0/run-0.config.json exists with status "completed":
   → Error: Bootstrap already completed. Run /df-continue to start Run 1.
 ```
 
-## Step 2: Run Bootstrap Script
+## Step 2: Load DEEPFIELD.md Configuration
+
+Before running the bootstrap script, load project-specific learning configuration:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/parse-deepfield-config.js" deepfield/DEEPFIELD.md
+```
+
+Parse the JSON output into a config object. If `deepfield/DEEPFIELD.md` does not exist, the script returns defaults (`exists: false`) — this is fine, bootstrap continues with defaults.
+
+Store the config for use in subsequent steps:
+- `deepfieldConfig.language` — output language for all documentation
+- `deepfieldConfig.priorities.exclude` — glob patterns to skip during scanning
+- `deepfieldConfig.domainInstructions` — per-domain instructions to pass to agents
+
+## Step 3: Run Bootstrap Script
 
 Execute the bootstrap runner script:
 
@@ -61,7 +76,7 @@ Optional flags:
 The script handles all bootstrap steps automatically:
 1. Parses `brief.md` (project name, repos, focus areas, topics)
 2. Clones each repository with `--depth 1` shallow clone
-3. Scans repository directory structure
+3. Scans repository directory structure (**skip files matching `deepfieldConfig.priorities.exclude` patterns**)
 4. Generates `deepfield/wip/project-map.md`
 5. Generates `deepfield/wip/domain-index.md`
 6. Generates `deepfield/wip/learning-plan.md`
@@ -70,7 +85,44 @@ The script handles all bootstrap steps automatically:
 9. Creates `deepfield/source/run-1-staging/` with README and feedback template
 10. Updates `deepfield/project.config.json` (bootstrapCompleted: true)
 
-## Step 3: Verify Output
+### Applying Exclusion Patterns
+
+After scanning, filter out any files whose paths match a pattern in `deepfieldConfig.priorities.exclude` before creating the project map and domain index:
+
+```javascript
+// Example: deepfieldConfig.priorities.exclude = ['/legacy/**', '/vendor/**']
+// Use minimatch or simple prefix matching to filter scanned file list
+const includedFiles = scannedFiles.filter(filePath => {
+  return !deepfieldConfig.priorities.exclude.some(pattern => {
+    // Simple prefix match for path patterns like /legacy/**
+    const prefix = pattern.replace('/**', '');
+    return filePath.startsWith(prefix);
+  });
+});
+```
+
+If no exclusion patterns are configured, include all files.
+
+## Step 4: Inject Domain Instructions into Domain Analysis
+
+When generating the domain index and initial domain notes, for each detected domain check whether `deepfieldConfig.domainInstructions[domainName]` exists. If it does, include those instructions in the context when the AI analyzes that domain.
+
+Format for injection into domain analysis context:
+
+```markdown
+## Domain-Specific Instructions (from DEEPFIELD.md)
+
+<instructions text from deepfieldConfig.domainInstructions[domainName]>
+```
+
+Also apply the configured output language to all generated markdown files:
+
+```
+Output language: <deepfieldConfig.language>
+Write all documentation in <deepfieldConfig.language>.
+```
+
+## Step 6: Verify Output
 
 After the script completes, verify these files exist:
 
@@ -82,7 +134,7 @@ After the script completes, verify these files exist:
 - `deepfield/source/run-1-staging/README.md` — Staging area guide
 - `deepfield/source/run-1-staging/feedback.md` — Open questions template
 
-## Step 4: Report Completion
+## Step 7: Report Completion
 
 Display the bootstrap summary from the script output, then add:
 

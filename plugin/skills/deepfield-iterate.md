@@ -43,6 +43,22 @@ While should_continue:
 
 ## Pre-Run Setup
 
+### 0. Load DEEPFIELD.md Configuration
+
+Before anything else, load project-specific learning configuration:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/parse-deepfield-config.js" deepfield/DEEPFIELD.md
+```
+
+Parse the JSON output into a `deepfieldConfig` object. If `deepfield/DEEPFIELD.md` does not exist, the script returns defaults (`exists: false`) — continue with defaults.
+
+Key config fields for this run:
+- `deepfieldConfig.language` — output language for all documentation
+- `deepfieldConfig.priorities.high` / `.medium` / `.low` — domain priority lists (used in Step 2)
+- `deepfieldConfig.priorities.exclude` — glob patterns to skip during scanning (used in Step 3)
+- `deepfieldConfig.domainInstructions` — per-domain instructions to pass to agents (used in Step 4)
+
 ### 1. Determine Run Number
 
 ```javascript
@@ -103,19 +119,33 @@ From learning plan, select 1-3 focus topics:
 
 ### Selection Criteria
 
-1. **Highest priority** (HIGH before MEDIUM before LOW)
-2. **Lowest confidence** among same priority
-3. **Related topics** (select topics that connect)
-4. **User feedback** (prioritize topics user mentioned)
+1. **DEEPFIELD.md priority override** — If `deepfieldConfig.priorities.high` lists specific domains, those domains are treated as HIGH priority regardless of the learning plan's priority field. Similarly, `.medium` and `.low` lists override the plan's default priority for listed domains.
+2. **Highest priority tier** (HIGH before MEDIUM before LOW, using the potentially-overridden priorities from above)
+3. **Lowest confidence** among same priority tier
+4. **Related topics** (select topics that connect)
+5. **User feedback** (prioritize topics user mentioned in staging feedback)
+
+### Priority Override Logic
+
+```javascript
+function getEffectivePriority(topicName, learningPlanPriority, deepfieldConfig) {
+  const name = topicName.toLowerCase().replace(/\s+/g, '-');
+  if (deepfieldConfig.priorities.high.includes(name)) return 'HIGH';
+  if (deepfieldConfig.priorities.medium.includes(name)) return 'MEDIUM';
+  if (deepfieldConfig.priorities.low.includes(name)) return 'LOW';
+  // No override — use learning plan priority
+  return learningPlanPriority;
+}
+```
 
 ### Example Selection
 
 Learning plan has:
-- Authentication (HIGH, 65%)
-- API Structure (HIGH, 50%)
-- Data Flow (MEDIUM, 30%)
+- Authentication (plan: MEDIUM, 65%) → DEEPFIELD.md high priority → effective: HIGH
+- API Structure (plan: HIGH, 50%)
+- Data Flow (plan: MEDIUM, 30%)
 
-**Select:** API Structure (HIGH + lowest) + Data Flow (related to API)
+**Select:** Authentication (overridden to HIGH + good depth needed) + API Structure (HIGH + lowest)
 
 ### Update Run Config
 
@@ -154,9 +184,26 @@ for (const [file, hash] of Object.entries(currHashes)) {
 }
 ```
 
+### Apply Exclusion Patterns
+
+Before filtering by focus topics, remove any files matching `deepfieldConfig.priorities.exclude` patterns:
+
+```javascript
+// Filter out excluded paths
+const nonExcluded = allFiles.filter(filePath => {
+  return !deepfieldConfig.priorities.exclude.some(pattern => {
+    // Handle glob patterns like /legacy/** by prefix matching
+    const prefix = pattern.replace('/**', '').replace('/*', '');
+    return filePath.startsWith(prefix) || filePath === prefix;
+  });
+});
+```
+
+If no exclusion patterns are configured, skip this filter.
+
 ### Filter by Focus Topics
 
-Only include files relevant to focus topics:
+Only include files relevant to focus topics from the non-excluded set:
 - Check file paths for focus-related keywords
 - Use domain mapping from domain-index.md
 - Include cross-cutting files (shared, common, utils)
@@ -173,6 +220,17 @@ const filesToRead = [
 
 ## Step 4: Deep Learning
 
+### Inject Domain-Specific Instructions
+
+For each focus topic, check whether `deepfieldConfig.domainInstructions` has an entry for that domain:
+
+```javascript
+const domainKey = topicName.toLowerCase().replace(/\s+/g, '-');
+const domainInstructions = deepfieldConfig.domainInstructions[domainKey] || null;
+```
+
+If instructions exist, they will be passed to the agent as additional context. If no instructions exist for a domain, omit the section from the agent prompt.
+
 ### Invoke Learner Agent
 
 ```
@@ -183,8 +241,30 @@ Input: {
   "previous_findings": "deepfield/wip/run-${nextRun-1}/findings.md",
   "domain_notes": "deepfield/wip/domains/*.md",
   "current_drafts": "deepfield/drafts/domains/*.md",
-  "open_questions": <from learning plan>
+  "open_questions": <from learning plan>,
+  "output_language": deepfieldConfig.language,
+  "domain_instructions": {
+    "api-structure": <deepfieldConfig.domainInstructions["api-structure"] or null>,
+    "data-flow": <deepfieldConfig.domainInstructions["data-flow"] or null>
+  }
 }
+```
+
+The learner agent should include the following in its system context for each domain that has instructions:
+
+```markdown
+## Domain-Specific Instructions (from DEEPFIELD.md)
+
+<domain instructions text>
+```
+
+And for output language (when not English):
+
+```markdown
+## Output Language
+
+Write all documentation in <deepfieldConfig.language>.
+If technical terms have no <language> equivalent, keep the English term with a <language> explanation in parentheses.
 ```
 
 ### Process Learner Output
