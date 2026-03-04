@@ -43,11 +43,13 @@ program
 import { createInitCommand } from './commands/init.js';
 import { createStartCommand } from './commands/start.js';
 import { createStatusCommand } from './commands/status.js';
+import { createBootstrapCommand } from './commands/bootstrap.js';
 
 // Register commands
 program.addCommand(createInitCommand());
 program.addCommand(createStartCommand());
 program.addCommand(createStatusCommand());
+program.addCommand(createBootstrapCommand());
 
 // Global error handler
 process.on('uncaughtException', (error: Error) => {
