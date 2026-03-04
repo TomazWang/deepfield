@@ -135,6 +135,12 @@ Before implementing, use `/opsx:explore` to:
 
 ## Development Guidelines
 
+### Temporary Working Files
+
+- If temporary files are needed during development (for example: status summaries, scratch notes, or files used to communicate with the user), create them under `dev-support/wip/`
+- Do not leave resolved temporary files in `dev-support/wip/`
+- When a temporary file is resolved/completed, move it to `dev-support/archive/`
+
 ### When Writing Commands
 
 - Commands are user-facing entry points

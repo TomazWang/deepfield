@@ -37,6 +37,8 @@ Together, they help you understand brownfield projects through structured explor
 
 ### CLI Only (Universal Usage)
 
+**For Published Package (Coming Soon):**
+
 Install the CLI globally:
 
 ```bash
@@ -48,6 +50,32 @@ Or install locally in a project:
 ```bash
 npm install --save-dev deepfield
 ```
+
+**For Local Development/Testing:**
+
+```bash
+# Clone the repository
+git clone https://github.com/TomazWang/deepfield.git
+cd deepfield
+
+# Install dependencies
+npm install
+
+# Build the CLI
+npm run build
+
+# Link CLI globally
+cd cli && npm link
+
+# Verify installation
+deepfield --version
+
+# If 'command not found', add npm global bin to PATH:
+echo 'export PATH="$(npm prefix -g)/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Now you can use `deepfield` or `df` commands anywhere.
 
 ### With Claude Code Plugin (via Marketplace)
 
