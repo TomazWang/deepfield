@@ -133,6 +133,74 @@ Before implementing, use `/opsx:explore` to:
    - Draft generator skill
    - Knowledge synthesizer skill
 
+## Plugin vs CLI Guidelines
+
+### One-Way Dependency Rule
+
+> **Architectural Invariant — not a guideline.**
+>
+> **The Plugin MAY invoke the CLI. The CLI SHALL NEVER invoke or depend on the Plugin.**
+
+This rule exists because:
+
+- **Headless environments**: The CLI runs in CI pipelines and terminals where Claude Code is absent. Any CLI code that calls back into the plugin would break in these environments.
+- **Circular dependency prevention**: The Plugin is built on top of the CLI for deterministic work. Allowing the reverse direction creates a circular dependency between the two layers.
+- **Determinism boundary**: The CLI is a predictable, testable Node.js process. The Plugin is a non-deterministic AI runtime. Coupling the CLI to the Plugin contaminates the deterministic layer.
+
+Code review MUST reject any CLI code that imports, shells out to, or otherwise depends on plugin-layer artifacts.
+
+### Decision Tree
+
+Use this four-question tree to classify any feature as Plugin-only, CLI-only, or Hybrid. Answer the questions in order — stop at the first decisive answer.
+
+**Q1: Does the feature require AI reasoning, natural-language interpretation, or access to Claude's context window?**
+- Yes → **Plugin-only.** The CLI has no AI access.
+- No → continue to Q2.
+
+**Q2: Must the feature work in a headless environment (CI, terminal, no Claude Code running)?**
+- Yes → **CLI-only.** Plugin code cannot run without Claude Code.
+- No → continue to Q3.
+
+**Q3: Is the operation deterministic and repeatable — same input always produces same output?**
+- No (output varies by AI judgment) → **Plugin-only.**
+- Yes → continue to Q4.
+
+**Q4: Does the operation write files or mutate persistent state?**
+- Yes, and the operation is purely mechanical (scaffold, copy, hash, write JSON) → **CLI-only.** Use a script.
+- Yes, but the content depends on AI interpretation → **Hybrid.** Plugin decides content; CLI script performs the write.
+- No → **CLI-only** for simple queries, **Plugin-only** if output requires AI synthesis.
+
+**If none of the above gives a clear answer:** Default to CLI for anything deterministic and Plugin for anything that requires AI judgment. Propose new criteria via an openspec change.
+
+### Classification Examples
+
+| Feature | Classification | Decisive criterion |
+|---------|---------------|-------------------|
+| `/df-init` folder scaffolding | CLI-only | Deterministic; mechanical file creation; must work headlessly |
+| `deepfield status` project state display | CLI-only | Deterministic; reads JSON and reports; no AI needed |
+| Source classifier (type + trust inference) | Plugin-only | Requires AI reasoning to interpret file content |
+| Learning agent (gap analysis, synthesis) | Plugin-only | Requires AI; non-deterministic by design |
+| `/df-input` source filing | Hybrid | Classification needs AI; file copy + manifest write are CLI |
+| `/df-bootstrap` initial scan + plan | Hybrid | Domain detection needs AI; folder creation + hash recording are CLI |
+
+### Hybrid Ownership Boundaries
+
+When a feature is Hybrid, the boundary is always: **Plugin skill calls CLI helper.** The reverse direction is prohibited by the One-Way Dependency Rule.
+
+For `/df-input` (the canonical hybrid example):
+
+| Concern | Owner | Why |
+|---------|-------|-----|
+| Parse command arguments | Plugin command | Entry point lives in plugin layer |
+| Classify source type and trust level | Plugin (classifier agent) | Requires AI reasoning |
+| Clone git repository | CLI script (`clone-repos.sh`) | Deterministic; must work headlessly |
+| Copy local files to destination | Plugin via `cp` shell call | Simple; no CLI wrapper needed |
+| Write/update `sources.json` manifest | CLI script (`update-json.js`) | Atomic write; deterministic; testable |
+| Display result summary to user | Plugin command | Output is conversational, in Claude Code context |
+| Suggest next action | Plugin command | Context-aware; depends on session state |
+
+The Plugin skill invokes CLI scripts for the deterministic steps. The CLI scripts know nothing about the Plugin that called them.
+
 ## Development Guidelines
 
 ### Temporary Working Files
