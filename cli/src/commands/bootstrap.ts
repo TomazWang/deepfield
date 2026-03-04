@@ -4,6 +4,7 @@ import { join } from 'path';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { StateError } from '../core/errors.js';
+import { enforceVersionCompatibility } from '../utils/version-guard.js';
 
 // Internal type for prerequisite errors with suggestions
 interface PrerequisiteError {
@@ -21,6 +22,7 @@ export function createBootstrapCommand(): Command {
     .option('-y, --yes', 'Answer yes to all prompts', false)
     .option('--debug', 'Show debug output', false)
     .action(async (options) => {
+      await enforceVersionCompatibility(process.cwd());
       try {
         await bootstrapCommand(options);
         process.exit(0);

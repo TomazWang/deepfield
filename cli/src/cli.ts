@@ -44,12 +44,16 @@ import { createInitCommand } from './commands/init.js';
 import { createStartCommand } from './commands/start.js';
 import { createStatusCommand } from './commands/status.js';
 import { createBootstrapCommand } from './commands/bootstrap.js';
+import { createUpgradeCommand } from './commands/upgrade.js';
+import { createRollbackCommand } from './commands/rollback.js';
 
 // Register commands
 program.addCommand(createInitCommand());
 program.addCommand(createStartCommand());
 program.addCommand(createStatusCommand());
 program.addCommand(createBootstrapCommand());
+program.addCommand(createUpgradeCommand());
+program.addCommand(createRollbackCommand());
 
 // Global error handler
 process.on('uncaughtException', (error: Error) => {
