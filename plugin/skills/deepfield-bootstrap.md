@@ -109,7 +109,7 @@ If no exclusion patterns are configured, include all files.
 
 1. Identify logical sections in the document
 2. Move the largest section(s) to sub-files under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
-3. Replace moved content in the primary file with a brief summary
+3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
 4. Add a **"See also"** section at the bottom of the primary file linking to each sub-file:
    ```
    ## See also

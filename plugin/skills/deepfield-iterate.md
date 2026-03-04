@@ -303,9 +303,9 @@ If technical terms have no <language> equivalent, keep the English term with a <
 
 **IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the learner agent should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
 
-1. Move the largest logical section(s) to a sub-file named `{domain}/{section}.md` under `drafts/domains/` (e.g., `drafts/domains/authentication/flows.md`)
-2. Replace moved content in the primary file with a brief summary
-3. Add a **"See also"** section linking to sub-files:
+1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+3. Add a **"See also"** section in the primary file linking to any sub-files:
    ```
    ## See also
    - [Authentication Flows](flows.md)
@@ -519,7 +519,7 @@ Synthesizer updates:
 
 1. Identify the logical sections in the document
 2. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`, `drafts/domains/authentication/api.md`)
-3. Replace the moved content in the primary file with a brief summary
+3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
 4. Add a **"See also"** section at the bottom of the primary file with markdown links to each sub-file
 
 **Example:**
