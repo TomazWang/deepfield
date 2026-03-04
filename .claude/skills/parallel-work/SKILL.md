@@ -123,6 +123,10 @@ For each draft PR, review:
 
 6. **Once the user gives the go-ahead:**
    - Comment on each approved PR: `"Spec approved — proceeding to implementation."`
+   - Update each draft PR title to remove the `[SPEC REVIEW]` prefix:
+     ```bash
+     gh pr edit <N> --title "<original title without [SPEC REVIEW] prefix>"
+     ```
 
 Do not proceed to Phase 4 until the user gives the go-ahead.
 
