@@ -27,9 +27,11 @@ const { execSync } = require('child_process');
 const { parseBrief } = require('./parse-brief.js');
 const { scanAllRepos } = require('./scan-structure.js');
 const { generateProjectMap } = require('./generate-project-map.js');
-const { generateDomainIndex, detectDomains } = require('./generate-domain-index.js');
 const { generateLearningPlan } = require('./generate-learning-plan.js');
 const { createRunState } = require('./create-run-state.js');
+
+// generate-domain-index.js is CLI-only (merged from main via PR #23)
+// It is invoked via execSync rather than require().
 
 const SCRIPT_DIR = __dirname;
 const CLONE_SCRIPT = path.join(SCRIPT_DIR, 'clone-repos.sh');
@@ -304,9 +306,29 @@ async function runBootstrap() {
   const projectMapPath = generateProjectMap(brief, repos);
   console.log(`  Written: ${projectMapPath}`);
 
-  // Step 5: Generate domain-index.md
+  // Step 5: Generate domain-index.md (via CLI — generate-domain-index.js has no module.exports)
   console.log('\nStep 5/9: Generating domain-index.md...');
-  const domainIndexPath = generateDomainIndex(brief, repos);
+  const domainIndexPath = path.resolve('./deepfield/wip/domain-index.md');
+  fs.mkdirSync(path.dirname(domainIndexPath), { recursive: true });
+
+  // Write brief JSON for the CLI to consume
+  const briefJsonPath = path.resolve('./deepfield/wip/run-0/.brief-tmp.json');
+  fs.mkdirSync(path.dirname(briefJsonPath), { recursive: true });
+  fs.writeFileSync(briefJsonPath, JSON.stringify({ focusAreas: brief.focusAreas }), 'utf-8');
+
+  // Build repos arg: array of { name, path } objects pointing to cloned repos
+  const reposBaseDir = path.resolve('./deepfield/source/baseline/repos');
+  const reposArg = repos.map(r => ({ name: r.name, path: path.join(reposBaseDir, r.name) }));
+
+  const generateDomainIndexScript = path.join(SCRIPT_DIR, 'generate-domain-index.js');
+  execSync(
+    `node "${generateDomainIndexScript}" --repos '${JSON.stringify(reposArg)}' --brief "${briefJsonPath}" --output "${domainIndexPath}"`,
+    { stdio: 'inherit' }
+  );
+
+  // Clean up temp file
+  try { fs.unlinkSync(briefJsonPath); } catch { /* ignore */ }
+
   console.log(`  Written: ${domainIndexPath}`);
 
   // Step 6: Generate learning-plan.md
@@ -336,8 +358,8 @@ async function runBootstrap() {
   updateProjectConfig(brief);
   console.log('  Updated: deepfield/project.config.json');
 
-  // Summary
-  const domains = detectDomains(repos, brief);
+  // Summary — count domains detected (repos + brief focus areas as rough estimate)
+  const detectedDomainCount = brief.focusAreas.length + repos.reduce((acc, r) => acc + (r.modules ? r.modules.length : 0), 0);
   const artifacts = [
     projectMapPath,
     domainIndexPath,
@@ -348,7 +370,7 @@ async function runBootstrap() {
     path.join(stagingDir, 'feedback.md'),
   ];
 
-  printSummary(brief, repos, domains, cloneStats, artifacts);
+  printSummary(brief, repos, { length: detectedDomainCount }, cloneStats, artifacts);
 }
 
 // Run
