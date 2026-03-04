@@ -173,7 +173,13 @@ const filesToRead = [
 
 ## Step 4: Deep Learning
 
-### Invoke Learner Agent
+Choose between **Parallel Mode** (when `--parallel` flag was passed) and **Sequential Mode** (default).
+
+---
+
+### Sequential Mode (default)
+
+#### Invoke Learner Agent
 
 ```
 Launch: deepfield-learner
@@ -187,7 +193,7 @@ Input: {
 }
 ```
 
-### Process Learner Output
+#### Process Learner Output
 
 Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 - Discoveries about focus topics
@@ -196,6 +202,176 @@ Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 - Contradictions detected
 - Questions answered
 - New questions raised
+
+---
+
+### Parallel Mode (`--parallel` flag)
+
+Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently, then consolidates all findings before synthesis. This can reduce total run time by 3-5x on projects with 4+ domains.
+
+#### 4a. Read Domain Index
+
+Load `deepfield/wip/domain-index.md` to get the list of all known domains and their associated file lists.
+
+```javascript
+// Parse domain-index.md to extract:
+// [{ name: "auth", files: ["src/auth/...", ...] }, ...]
+const allDomains = parseDomainIndex("deepfield/wip/domain-index.md")
+```
+
+If `domain-index.md` does not exist, fall back to sequential mode and log a warning:
+```
+Warning: domain-index.md not found — falling back to sequential learning.
+Run /df-bootstrap first to generate the domain index.
+```
+
+#### 4b. Prepare Agent Tasks
+
+For each domain, prepare the inputs for its `deepfield-domain-learner` agent:
+
+```javascript
+const maxAgents = options.maxAgents || 5  // default: 5
+
+const agentTasks = allDomains.map(domain => ({
+  domainName: domain.name,
+  fileList: domain.files,
+  previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
+  findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
+  unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
+  openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
+  currentDraftPath: `deepfield/drafts/domains/${domain.name}.md`,
+}))
+```
+
+#### 4c. Progress Report — Before Launch
+
+Display the parallel execution plan:
+
+```
+Parallel Learning Mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Domains to analyze: <N>
+Max concurrent agents: <maxAgents>
+Batches: <ceil(N / maxAgents)>
+
+Domains:
+  - auth     (X files)
+  - api      (X files)
+  - database (X files)
+  ...
+
+Launching batch 1 of <total-batches>...
+```
+
+#### 4d. Launch Agents in Batches
+
+Split domains into batches of `maxAgents`. For each batch:
+
+1. **Report batch start:**
+   ```
+   Batch 1/2: launching agents for [auth, api, database, ui, cache]
+   ```
+
+2. **Launch all agents in the batch as parallel background Tasks:**
+
+   ```
+   Launch (background): deepfield-domain-learner
+   Input: {
+     "domain_name": "auth",
+     "file_list": ["src/auth/login.ts", ...],
+     "previous_findings_path": "deepfield/wip/run-N-1/domains/auth-findings.md",
+     "findings_output_path": "deepfield/wip/run-N/domains/auth-findings.md",
+     "unknowns_output_path": "deepfield/wip/run-N/domains/auth-unknowns.md",
+     "open_questions": [...],
+     "current_draft_path": "deepfield/drafts/domains/auth.md"
+   }
+
+   Launch (background): deepfield-domain-learner
+   Input: { "domain_name": "api", ... }
+
+   Launch (background): deepfield-domain-learner
+   Input: { "domain_name": "database", ... }
+   ```
+
+3. **Wait for all agents in this batch to complete** before starting the next batch.
+
+4. **Report batch completion:**
+   ```
+   Batch 1/2 complete.
+   ```
+
+5. Repeat for each remaining batch.
+
+#### 4e. Verify Agent Outputs (Failure Handling)
+
+After all batches complete, check which domain findings files were actually written:
+
+```javascript
+const successDomains = []
+const failedDomains = []
+
+for (const task of agentTasks) {
+  if (fileExists(task.findingsOutputPath)) {
+    successDomains.push(task.domainName)
+  } else {
+    failedDomains.push(task.domainName)
+  }
+}
+```
+
+**If failures occurred**, display a warning (do NOT abort the run):
+
+```
+⚠️  Warning: Some domain agents did not produce findings:
+  - auth       (deepfield/wip/run-N/domains/auth-findings.md missing)
+  - payments   (deepfield/wip/run-N/domains/payments-findings.md missing)
+
+Proceeding with findings from: api, database, ui
+Confidence for failed domains will remain unchanged this run.
+```
+
+Update the run config to record partial results:
+
+```json
+{
+  "parallelMode": true,
+  "domainsAnalyzed": ["api", "database", "ui"],
+  "domainsFailed": ["auth", "payments"],
+  "partialResults": true
+}
+```
+
+**If ALL agents failed** (no findings files exist at all), abort and mark the run as failed:
+
+```
+Error: All domain learning agents failed to produce findings.
+Run marked as failed. Check agent logs for details.
+Suggestions:
+  - Verify domain-index.md has valid file paths
+  - Check deepfield/source/baseline/ has accessible files
+  - Try /df-iterate without --parallel to diagnose
+```
+
+Mark run config `"status": "failed"` and stop execution.
+
+#### 4f. Consolidate Findings
+
+Run the `gather-domain-findings.js` script to merge per-domain findings into the canonical `findings.md`:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/gather-domain-findings.js \
+  ./deepfield/wip/run-${nextRun} \
+  --domains=${allDomains.map(d => d.name).join(',')}
+```
+
+This writes `deepfield/wip/run-${nextRun}/findings.md` with all domain findings concatenated under clear domain-header delimiters.
+
+```
+Consolidating findings from <N> domains...
+Consolidated findings written to: deepfield/wip/run-N/findings.md
+```
+
+After consolidation, parallel mode rejoins the sequential workflow at **Step 5: Synthesize Knowledge**. The synthesizer reads the consolidated `findings.md` exactly as in sequential mode — no changes needed downstream.
 
 ## Step 5: Synthesize Knowledge
 
