@@ -41,7 +41,15 @@ Each component maps to a distinct, observable gap in knowledge. Together they co
 
 This is the most direct signal. The learning agent maintains an explicit list of questions about each domain. If 70% of those questions have no answer, the domain knowledge is incomplete by definition — no amount of strong evidence or broad source coverage can compensate.
 
-"Answered" here means "answered with evidence", not "a human said so". Human-provided answers are fallible: people misremember, recall behavior from an older version, or give ambiguous responses. A question whose only support is a human statement with no corroborating code or tests should not count the same as a question confirmed by source code and tests. To handle this, the learner agent tags human-provided answers with an evidence strength marker — `[strong]` if the answer is confirmed by code or tests, `[medium]` if plausible but unconfirmed, `[weak]` if stated only by a human with no other evidence. These tags feed directly into the `evidence_strength` component (30%), which naturally discounts weak answers. A human statement classified as `[weak]` can still move a question from "unanswered" to "answered" in the `questions_answered` numerator — incrementally improving coverage — but the low evidence tag limits its contribution to overall confidence through the evidence_strength component. This separation keeps the formula honest without discarding human input entirely.
+"Answered" means "the agent has verified the answer", not merely "a human stated something". Human-provided answers are the starting point, not the finish line. The agent records every human answer as `[weak]` by default — the human does not need to tag anything — and then verifies it against source code and reasoning. Verification can promote the answer:
+
+- Confirmed by code or tests → `[strong]`
+- Plausible and uncontradicted → `[medium]`
+- No corroboration found → remains `[weak]`
+
+A special case: humans sometimes correctly override what source code appears to show. Developers know when code is future scaffolding — written ahead of time, feature-flagged off, or present but never called. When a human says "we don't use that" and the code shows unused imports, disabled feature flags, or uncalled functions, the agent validates the scaffolding pattern and promotes the human answer to `[medium]` or `[strong]`, noting "likely future scaffolding". If the code is clearly active, the contradiction is flagged and the answer remains `[weak]` pending resolution.
+
+These tags feed directly into the `evidence_strength` component (30%), which naturally discounts unverified answers. A human statement kept at `[weak]` can still move a question from "unanswered" to "answered" in the `questions_answered` numerator — incrementally improving coverage — but the low evidence tag limits its contribution to overall confidence through the evidence_strength component. This separation keeps the formula honest without discarding human input entirely.
 
 **`evidence_strength` (30%)** — "Can we trust what we claim to know?"
 

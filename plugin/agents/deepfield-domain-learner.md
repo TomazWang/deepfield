@@ -115,12 +115,25 @@ After reading all files, count the observable signals that feed the deterministi
 
 Items with no tag are treated as `[weak]` by the formula.
 
-**Human-provided answers must also be tagged.** When a question is answered by something a human told you (via the open questions context, session notes, or any conversational input), apply the same evidence strength rules based on corroboration:
+**Human-provided answers** — when a question is answered by something a human told you (via the open questions context, session notes, or any conversational input), record it as `[weak]` by default. The human does NOT need to tag anything. You must then verify the answer against source code and reasoning, and promote it if warranted:
+
 - `[strong]` — the human's answer is confirmed by code or tests you read in your file list
 - `[medium]` — the human's answer is plausible and consistent with what you read, but not directly confirmed
-- `[weak]` — the human's answer is the only evidence; no code, test, or document corroborates it
+- `[weak]` — the human's answer cannot be corroborated; remains as recorded
 
-A human-provided answer alone is never `[strong]`. People misremember, describe older behavior, or give ambiguous answers. Recording the correct tag ensures that the `evidence_strength` component of the confidence formula reflects the true reliability of what is claimed — a human answer with no corroboration scores as `[weak]` and will appropriately discount overall domain confidence.
+**Human override of source code**: When a human answer *contradicts* what source code appears to show, do not automatically discount the human. Developers sometimes know that code is future scaffolding — written ahead of time, not yet wired in, or intentionally disabled. Evaluate the code for scaffolding signals:
+
+- Unused imports or unreferenced functions
+- Feature flags set to `false` or `off`
+- TODO/FIXME comments indicating future intent
+- Functions defined but never called in the active path
+- Tests absent or skipped for the feature
+
+If scaffolding signals are present → trust the human answer, promote to `[medium]` (or `[strong]` if the human's explanation is detailed and code confirms the dormant pattern), and note in findings: `"Code exists but human indicates not in active use — likely future scaffolding"`.
+
+If the code is clearly active (called, tested, configured, live in a code path) → flag as contradiction, keep `[weak]`, and add to unknowns for resolution.
+
+A human answer alone is never `[strong]` without code corroboration. People misremember, describe older behavior, or give ambiguous answers. The tagging process ensures that the `evidence_strength` component reflects the true reliability of what is claimed.
 
 Count the following for the Confidence Inputs section of the Findings file:
 - **answeredQuestions**: number of open questions from the learning plan that you answered with evidence
