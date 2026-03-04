@@ -2,7 +2,7 @@
 
 ### Requirement: Run configuration SHALL track per-run metadata
 
-Each run MUST have a configuration file at `kb/wip/run-N/run-N.config.json` containing:
+Each run MUST have a configuration file at `deepfield/wip/run-N/run-N.config.json` containing:
 - `runNumber`: Integer run number
 - `startedAt`: ISO timestamp
 - `completedAt`: ISO timestamp (when run finishes)
