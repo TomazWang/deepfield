@@ -154,7 +154,7 @@ Wait for **all** implementation agents to complete before proceeding.
 
 ---
 
-## Phase 5 — Implementation review (orchestrator)
+## Phase 5 — Implementation review (orchestrator + human)
 
 For each ready PR:
 
@@ -165,9 +165,29 @@ For each ready PR:
    - Merge conflicts: `gh pr view <N> --json mergeable -q .mergeable` must be `MERGEABLE`
    - All `tasks.md` checkboxes marked `[x]`
 
-3. **Decision:**
-   - ✅ **LGTM** → Leave approval comment and merge: `gh pr merge <N> --merge`
-   - 🔁 **Fix needed** → Comment specific issues. Resume the agent. Re-review until clean.
+3. **If fixes needed** → Comment specific issues. Resume the agent. Re-review until clean.
+
+4. **Once all PRs pass the orchestrator review**, present a summary to the user:
+
+   | PR | Task | Status | Notes |
+   |----|------|--------|-------|
+   | #N | change-name | ✅ LGTM | ... |
+
+   Then ask:
+   > "I've reviewed all implementation PRs above. Would you like to review them on GitHub before I merge, or should I go ahead?"
+   >
+   > Options: **"Merge them"** | **"I'll review — let me know when to merge"**
+
+5. **If user wants to review:**
+   - Wait for the user's signal. They can approve either:
+     - On GitHub (PR review approval), then say "go ahead" or "merge"
+     - Directly in Claude Code (e.g. "looks good, merge")
+   - If user requests changes, comment on the PR, resume the agent to fix, re-review, then ask again.
+
+6. **Once the user gives the go-ahead**, merge each approved PR:
+   ```bash
+   gh pr merge <N> --merge
+   ```
 
 ---
 
