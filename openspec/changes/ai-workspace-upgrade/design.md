@@ -2,15 +2,18 @@
 
 The current `deepfield upgrade` command (cli/src/commands/upgrade.ts) couples orchestration and migration logic together. Migrations are hard-coded JavaScript modules in `cli/migrations/index.js` that must be written and shipped by a developer for every new version pair. The CLI consumes this registry directly via `getRequiredMigrations` and `runMigrations`.
 
-This design replaces the static migration registry with an AI-driven plugin skill that analyzes what needs to change and applies atomic operations using CLI helper scripts. The CLI becomes a pure orchestrator and atomic-operation provider; the plugin skill becomes the intelligence layer.
+This design replaces the static migration registry with an AI-driven plugin skill invoked via a new `/df-upgrade` plugin command. The plugin skill is the entry point and intelligence layer; the CLI provides only atomic helper operations callable from bash. The CLI never calls or depends on the plugin.
+
+**Architectural constraint**: The plugin (AI layer) can invoke CLI commands. The CLI MUST NEVER invoke or depend on the plugin. This is a one-way dependency: CLI → (none); Plugin → CLI helpers.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Remove the hard-coded migration registry (`cli/migrations/index.js`) and its coupling in `upgrade.ts`
-- Refactor CLI `upgrade` command into an orchestrator: detect versions → backup → invoke skill → validate → update version
-- Expose atomic CLI helper operations (as sub-commands or scripts) callable from bash by the plugin skill
-- Add a new `deepfield-upgrade` plugin skill that reasons about workspace diff and applies changes via the CLI helpers
+- Add a new `/df-upgrade` plugin command as the user-facing entry point for AI-driven workspace upgrade
+- Add a new `deepfield-upgrade` plugin skill that reasons about workspace diff and applies changes via CLI helpers
+- Expose atomic CLI helper operations (as sub-commands) callable from bash by the plugin skill
+- Refactor CLI `upgrade` command to perform only deterministic, non-AI operations (detect versions, backup, validate, update version) — it MUST NOT invoke the plugin or any AI
 - Maintain backup-first safety guarantees and rollback path
 
 **Non-Goals:**
@@ -21,25 +24,30 @@ This design replaces the static migration registry with an AI-driven plugin skil
 
 ## Decisions
 
-### Decision 1: CLI as atomic helper provider, skill as intelligence layer
+### Decision 1: Plugin command is the entry point; CLI is a pure atomic helper provider
 
-**Choice**: CLI exposes small, single-purpose helper sub-commands (e.g., `deepfield upgrade:detect-version`, `deepfield upgrade:backup`, `deepfield upgrade:apply-op`, `deepfield upgrade:validate`, `deepfield upgrade:set-version`). Plugin skill calls these via bash.
+**Choice**: The user-facing entry point for AI-driven upgrade is the `/df-upgrade` plugin command (not the CLI). The plugin command invokes the `deepfield-upgrade` skill, which does all AI reasoning and calls CLI helper sub-commands (e.g., `deepfield upgrade:detect-version`, `deepfield upgrade:backup`, `deepfield upgrade:apply-op`, `deepfield upgrade:validate`, `deepfield upgrade:set-version`) via bash for all filesystem operations.
+
+The CLI `deepfield upgrade` command (if retained) becomes a thin, non-AI wrapper that performs only deterministic steps: detect versions, create backup, validate, update version. It MUST NOT call the plugin skill or any AI endpoint.
+
+**Dependency rule**: Plugin → CLI helpers (allowed). CLI → Plugin (NEVER allowed).
 
 **Alternatives considered**:
+- CLI as orchestrator that invokes the plugin skill → rejected: violates the one-way dependency rule; CLI must not depend on plugin
 - Skill reads/writes files directly without CLI helpers → rejected: bypasses atomic guarantees, duplicates path logic
 - CLI calls AI inline (e.g., via API) → rejected: creates network dependency in CLI, complicates testing
 
-**Rationale**: The skill is the right place for AI reasoning. The CLI is the right place for filesystem operations. Keeping them separate makes both independently testable.
+**Rationale**: The plugin is the correct entry point for AI features. The CLI is a deterministic tool that the plugin can use as a helper. Inverting this (CLI calling plugin) would couple the CLI to the AI runtime, breaking the architectural boundary and making the CLI untestable in isolation.
 
-### Decision 2: Skill receives structured diff, not raw files
+### Decision 2: Skill receives structured diff via plugin command, not raw files
 
-**Choice**: When the CLI orchestrator invokes the skill, it passes a structured JSON diff (`{from, to, workspaceSummary}`) describing the workspace state. The skill reasons about what needs to change and emits a list of file operations.
+**Choice**: The `/df-upgrade` plugin command calls `deepfield upgrade:detect-version` to gather version information, then passes a structured JSON diff (`{from, to, workspaceSummary}`) to the `deepfield-upgrade` skill. The skill reasons about what needs to change and emits a list of file operations.
 
 **Alternatives considered**:
 - Skill reads workspace directly → acceptable, but creates coupling between skill and CLI path conventions
-- CLI generates a file manifest and skill reads it → adds a temp file coordination step
+- Plugin command generates a file manifest and skill reads it → adds a temp file coordination step
 
-**Rationale**: Passing a structured diff keeps the skill focused on reasoning, not file discovery. The CLI already knows paths and versions.
+**Rationale**: Passing a structured diff keeps the skill focused on reasoning, not file discovery. The plugin command gathers the diff using the CLI helper, then hands off to the skill.
 
 ### Decision 3: Helper operations are bash sub-commands, not separate scripts
 
@@ -71,14 +79,15 @@ This design replaces the static migration registry with an AI-driven plugin skil
 ## Migration Plan
 
 1. Add `upgrade:<action>` helper sub-commands to CLI (`upgrade.ts` or a new `upgrade-helpers.ts`)
-2. Refactor `upgrade.ts` orchestration (remove `runMigrations`/`getRequiredMigrations` calls)
-3. Add `deepfield-upgrade.md` plugin skill
-4. Delete `cli/migrations/index.js` and `cli/migrations/` directory
-5. Update `cli/src/cli.ts` to register any new sub-commands
-6. Rollback strategy: restore `cli/migrations/` from git if regression found; the backup utility is unchanged
+2. Refactor `upgrade.ts` to remove all migration logic and any plugin/AI invocation (deterministic ops only)
+3. Add `/df-upgrade` plugin command (`plugin/commands/df-upgrade.md`)
+4. Add `deepfield-upgrade.md` plugin skill (`plugin/skills/deepfield-upgrade.md`)
+5. Delete `cli/migrations/index.js` and `cli/migrations/` directory
+6. Update `cli/src/cli.ts` to register any new sub-commands
+7. Rollback strategy: restore `cli/migrations/` from git if regression found; the backup utility is unchanged
 
 ## Open Questions
 
-- Should the skill be invoked via `claude --skill` flag or via a skill launch instruction embedded in the orchestrator output? (Depends on how Claude Code plugin invocation works from CLI context.)
-- What is the exact JSON schema for the workspace diff payload passed to the skill?
+- What is the exact JSON schema for the workspace diff payload passed from the `/df-upgrade` command to the skill?
 - Should `upgrade:validate` compare against a schema file (versioned) or use heuristics?
+- Should the CLI `deepfield upgrade` command be kept as a thin non-AI wrapper, or removed entirely in favor of `/df-upgrade` as the sole entry point?
