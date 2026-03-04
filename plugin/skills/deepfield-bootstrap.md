@@ -105,17 +105,17 @@ If no exclusion patterns are configured, include all files.
 
 ## Step 4: Document Length Rule for Bootstrap-generated Drafts
 
-**IMPORTANT**: Any AI agent or script generating draft documents in `deepfield/drafts/` during bootstrap MUST keep each file to a maximum of approximately 200 lines. If content would exceed ~200 lines:
+**IMPORTANT**: Any AI agent or script generating draft documents in `deepfield/drafts/` during bootstrap should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If content would significantly exceed ~350 prose lines, consider splitting:
 
 1. Identify logical sections in the document
-2. Move the largest section(s) to sub-files named `{domain}-{section}.md` in `drafts/domains/`
+2. Move the largest section(s) to sub-files under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
 3. Replace moved content in the primary file with a brief summary
 4. Add a **"See also"** section at the bottom of the primary file linking to each sub-file:
    ```
    ## See also
-   - [Authentication Flows](authentication-flows.md) — detailed flow diagrams
+   - [Authentication Flows](flows.md) — detailed flow diagrams
    ```
-Sub-files are also subject to the 200-line limit and may be split further using `{domain}-{section}-{subsection}.md`.
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
 
 ## Step 4b: Inject Domain Instructions into Domain Analysis
 

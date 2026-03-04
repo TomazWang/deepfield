@@ -301,16 +301,16 @@ If technical terms have no <language> equivalent, keep the English term with a <
 
 #### Document Length Rule for Learner Agent
 
-**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the learner agent MUST keep each file to a maximum of approximately 200 lines. If adding content would push a file past ~200 lines, split it:
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the learner agent should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
 
-1. Move the largest logical section(s) to a sub-file named `{domain}-{section}.md` in `drafts/domains/`
+1. Move the largest logical section(s) to a sub-file named `{domain}/{section}.md` under `drafts/domains/` (e.g., `drafts/domains/authentication/flows.md`)
 2. Replace moved content in the primary file with a brief summary
 3. Add a **"See also"** section linking to sub-files:
    ```
    ## See also
-   - [Authentication Flows](authentication-flows.md)
+   - [Authentication Flows](flows.md)
    ```
-Sub-files are also subject to the 200-line limit.
+Sub-files follow the same 350-line prose guideline.
 
 #### Process Learner Output
 
@@ -515,10 +515,10 @@ Synthesizer updates:
 
 ### Document Length Rule for Synthesizer Agent
 
-**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the synthesizer agent MUST keep each file to a maximum of approximately 200 lines. If adding content would push a file past ~200 lines, split it as follows:
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the synthesizer agent should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it as follows:
 
 1. Identify the logical sections in the document
-2. Move the largest section(s) to a sub-file named `{domain}-{section}.md` in the same `drafts/domains/` directory (e.g., `authentication-flows.md`, `api-endpoints.md`)
+2. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`, `drafts/domains/authentication/api.md`)
 3. Replace the moved content in the primary file with a brief summary
 4. Add a **"See also"** section at the bottom of the primary file with markdown links to each sub-file
 
@@ -526,11 +526,11 @@ Synthesizer updates:
 ```
 ## See also
 
-- [Authentication Flows](authentication-flows.md) — detailed OAuth and session flow diagrams
-- [Authentication API](authentication-api.md) — endpoint reference
+- [Authentication Flows](flows.md) — detailed OAuth and session flow diagrams
+- [Authentication API](api.md) — endpoint reference
 ```
 
-Sub-files themselves are also subject to the 200-line limit and may be split further using the same convention (`{domain}-{section}-{subsection}.md`).
+Sub-files follow the same 350-line prose guideline and may be split further using the same convention (`drafts/domains/{domain}/{section}/{subsection}.md`).
 
 ## Step 5.5: Generate Readability Documents
 
