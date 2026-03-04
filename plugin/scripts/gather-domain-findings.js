@@ -1,0 +1,233 @@
+'use strict';
+
+/**
+ * gather-domain-findings.js
+ *
+ * Consolidates per-domain findings files from a parallel learning run into
+ * the canonical findings.md file consumed by the knowledge synthesizer.
+ *
+ * Usage:
+ *   node gather-domain-findings.js <run-dir> [--domains=auth,api,db]
+ *
+ * Arguments:
+ *   <run-dir>         Path to the run directory (e.g. deepfield/wip/run-3)
+ *   --domains=<list>  Optional comma-separated list of expected domain names.
+ *                     Used to report which domains are missing findings.
+ *                     If omitted, all *.md files in domains/ are included.
+ *
+ * Output:
+ *   Writes <run-dir>/findings.md with all domain findings concatenated.
+ *   Exits 0 on success (even if some domains are missing).
+ *   Exits 1 if NO domain findings exist at all.
+ *   Exits 2 on argument/filesystem errors.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// ---------------------------------------------------------------------------
+// Parse arguments
+// ---------------------------------------------------------------------------
+
+const args = process.argv.slice(2);
+
+if (args.length === 0 || args[0].startsWith('--')) {
+  console.error('Usage: node gather-domain-findings.js <run-dir> [--domains=domain1,domain2]');
+  process.exit(2);
+}
+
+const runDir = path.resolve(args[0]);
+let expectedDomains = null; // null means "discover from filesystem"
+
+for (let i = 1; i < args.length; i++) {
+  const match = args[i].match(/^--domains=(.+)$/);
+  if (match) {
+    expectedDomains = match[1].split(',').map(d => d.trim()).filter(Boolean);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Validate run directory
+// ---------------------------------------------------------------------------
+
+if (!fs.existsSync(runDir)) {
+  console.error(`Error: Run directory does not exist: ${runDir}`);
+  process.exit(2);
+}
+
+const domainsDir = path.join(runDir, 'domains');
+
+if (!fs.existsSync(domainsDir)) {
+  console.error(`Error: domains/ subdirectory not found in: ${runDir}`);
+  console.error('Expected: ' + domainsDir);
+  process.exit(2);
+}
+
+// ---------------------------------------------------------------------------
+// Discover domain findings files
+// ---------------------------------------------------------------------------
+
+/**
+ * List all *-findings.md files in the domains directory.
+ * Returns an array of { domain, filePath } objects sorted by domain name.
+ */
+function discoverFindingsFiles(dir) {
+  const entries = fs.readdirSync(dir);
+  const findings = [];
+
+  for (const entry of entries) {
+    const match = entry.match(/^(.+)-findings\.md$/);
+    if (match) {
+      findings.push({
+        domain: match[1],
+        filePath: path.join(dir, entry),
+      });
+    }
+  }
+
+  findings.sort((a, b) => a.domain.localeCompare(b.domain));
+  return findings;
+}
+
+// ---------------------------------------------------------------------------
+// Build the consolidated findings content
+// ---------------------------------------------------------------------------
+
+/**
+ * Read a domain findings file and return its content.
+ * Returns null if the file cannot be read.
+ */
+function readFindingsFile(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Build a section delimiter for a domain in the consolidated output.
+ */
+function domainSectionHeader(domain) {
+  const separator = '='.repeat(72);
+  return `\n${separator}\n# DOMAIN: ${domain}\n${separator}\n`;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function main() {
+  const foundFiles = discoverFindingsFiles(domainsDir);
+  const foundDomains = new Set(foundFiles.map(f => f.domain));
+
+  // Report missing domains if caller provided an expected list
+  const missingDomains = [];
+  if (expectedDomains !== null) {
+    for (const domain of expectedDomains) {
+      if (!foundDomains.has(domain)) {
+        missingDomains.push(domain);
+      }
+    }
+  }
+
+  if (missingDomains.length > 0) {
+    console.warn('Warning: The following domains did not produce findings:');
+    for (const domain of missingDomains) {
+      console.warn(`  - ${domain} (expected at domains/${domain}-findings.md)`);
+    }
+  }
+
+  if (foundFiles.length === 0) {
+    console.error('Error: No domain findings files found in ' + domainsDir);
+    console.error('Expected files matching: <domain>-findings.md');
+    process.exit(1);
+  }
+
+  console.log(`Found ${foundFiles.length} domain findings file(s): ${foundFiles.map(f => f.domain).join(', ')}`);
+
+  // Build consolidated output
+  const runName = path.basename(runDir);
+  const timestamp = new Date().toISOString();
+  const sections = [];
+
+  sections.push(
+    `# Consolidated Findings — ${runName}\n` +
+    `\n` +
+    `*Generated by gather-domain-findings.js*  \n` +
+    `*Timestamp: ${timestamp}*  \n` +
+    `*Domains included: ${foundFiles.map(f => f.domain).join(', ')}*` +
+    (missingDomains.length > 0
+      ? `  \n*Domains with missing findings: ${missingDomains.join(', ')}*`
+      : '') +
+    '\n'
+  );
+
+  let successCount = 0;
+  const failedReads = [];
+
+  for (const { domain, filePath } of foundFiles) {
+    const content = readFindingsFile(filePath);
+    if (content === null) {
+      console.warn(`Warning: Could not read findings file for domain "${domain}": ${filePath}`);
+      failedReads.push(domain);
+      continue;
+    }
+
+    sections.push(domainSectionHeader(domain) + '\n' + content.trim() + '\n');
+    successCount++;
+  }
+
+  if (successCount === 0) {
+    console.error('Error: All domain findings files were unreadable.');
+    process.exit(1);
+  }
+
+  // Append a summary table
+  sections.push(
+    '\n' + '='.repeat(72) + '\n' +
+    '# Summary\n' +
+    '='.repeat(72) + '\n\n' +
+    `| Domain | Status |\n` +
+    `|--------|--------|\n` +
+    foundFiles.map(f => {
+      if (failedReads.includes(f.domain)) {
+        return `| ${f.domain} | ERROR: unreadable |`;
+      }
+      return `| ${f.domain} | included |`;
+    }).join('\n') +
+    (missingDomains.length > 0
+      ? '\n' + missingDomains.map(d => `| ${d} | MISSING: no findings file |`).join('\n')
+      : '') +
+    '\n'
+  );
+
+  // Write consolidated findings.md
+  const outputPath = path.join(runDir, 'findings.md');
+  const consolidated = sections.join('\n');
+
+  // Atomic write: temp file then rename
+  const tmpPath = outputPath + '.tmp.' + process.pid;
+  try {
+    fs.writeFileSync(tmpPath, consolidated, 'utf8');
+    fs.renameSync(tmpPath, outputPath);
+  } catch (err) {
+    // Clean up temp file if rename failed
+    try { fs.unlinkSync(tmpPath); } catch (_) {}
+    console.error('Error: Failed to write consolidated findings:', err.message);
+    process.exit(2);
+  }
+
+  console.log(`Consolidated findings written to: ${outputPath}`);
+  console.log(`Domains included: ${successCount}`);
+
+  if (missingDomains.length > 0 || failedReads.length > 0) {
+    const problemDomains = [...missingDomains, ...failedReads];
+    console.warn(`Partial results: ${problemDomains.length} domain(s) did not contribute findings: ${problemDomains.join(', ')}`);
+  }
+
+  // Exit 0 — partial success is still success; caller reports warnings
+  process.exit(0);
+}
+
+main();

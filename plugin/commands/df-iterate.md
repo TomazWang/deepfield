@@ -16,6 +16,12 @@ arguments:
   - name: --focus
     description: Focus on a specific domain (e.g. --focus=authentication)
     required: false
+  - name: --parallel
+    description: Run domain-learning agents concurrently (one agent per domain, in parallel)
+    required: false
+  - name: --max-agents
+    description: Maximum number of domain agents to run concurrently in parallel mode (default 5)
+    required: false
 ---
 
 # /df-iterate - Autonomous Learning Iterations
@@ -66,6 +72,8 @@ After validation passes, invoke the **deepfield-iterate** skill with the followi
 
 - **Mode**: autonomous (default) or single (`--once`)
 - **Focus domain**: value of `--focus` if provided, otherwise let skill select from learning plan
+- **Parallel mode**: `true` if `--parallel` flag is present, otherwise `false`
+- **Max agents**: value of `--max-agents` if provided (default: 5), only relevant in parallel mode
 - **Working directory**: current directory (where `deepfield/` lives)
 
 ### Invoke Skill
@@ -100,6 +108,24 @@ When `--focus=domain` is passed:
 - The skill should select topics related to that domain
 - Other topics may still be included if closely related
 
+### --parallel
+
+When `--parallel` is passed:
+- Tell the skill to use parallel domain-learning mode
+- The skill will spawn one `deepfield-domain-learner` agent per domain, running concurrently
+- All agents run in background Tasks simultaneously (up to `--max-agents` limit)
+- Findings are consolidated from all domain agents before synthesis
+- Display parallel mode status: "Parallel mode: X domains, max Y concurrent agents"
+- Cannot be combined with `--focus` (parallel mode learns all domains; use `--focus` for sequential targeted learning)
+
+### --max-agents=N
+
+When `--max-agents=N` is passed alongside `--parallel`:
+- Set the maximum number of domain agents running concurrently to N
+- If domain count exceeds N, agents are batched: each batch of N runs in parallel, batches run sequentially
+- Default is 5 if `--parallel` is used without `--max-agents`
+- Minimum value: 1 (effectively sequential, but using the parallel code path)
+
 ## Output
 
 The command itself produces minimal output — just validation messages and then hands off to the skill. The skill produces the detailed progress and completion reports.
@@ -108,6 +134,7 @@ The command itself produces minimal output — just validation messages and then
 
 ```
 Invoking autonomous learning...
+[Parallel mode: X domains, max Y agents concurrent]   ← only shown when --parallel
 
 [Skill takes over and produces detailed output]
 ```
@@ -130,3 +157,5 @@ Cannot run iterations: [specific reason]
 - If the user seems confused about workflow order, suggest `/df-continue` instead
 - After completion, suggest reviewing `deepfield/drafts/` for updated documentation
 - If stopped due to BLOCKED, highlight which sources are needed
+- If user passes both `--parallel` and `--focus`, explain they are mutually exclusive and ask which behavior they prefer
+- Recommend `--parallel` for projects with 4+ domains; mention the typical speedup (3-5x)
