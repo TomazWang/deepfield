@@ -156,7 +156,14 @@ Write to the provided findings output path (`deepfield/wip/run-N/domains/<domain
 
 [Description of pattern, where it's used, why it exists.]
 
-**Evidence:** `path/to/file.ts:line-range`
+**Evidence:**
+- **Source:** `path/to/file.ts:line-range`
+- **Type:** [code | comment | doc | test]
+- **Quote:**
+  ```
+  [Actual code or text found at that location]
+  ```
+- **Confidence:** [high | medium | low]
 
 ## Data Flow
 
@@ -175,7 +182,14 @@ Write to the provided findings output path (`deepfield/wip/run-N/domains/<domain
 
 ### Q: <question from learning plan>
 **A:** [Answer with evidence]
-**Evidence:** `path/to/file.ts:line-range`
+**Evidence:**
+- **Source:** `path/to/file.ts:line-range`
+- **Type:** [code | comment | doc | test]
+- **Quote:**
+  ```
+  [Actual content that answers the question]
+  ```
+- **Confidence:** [high | medium | low]
 
 ## New Questions Raised
 
@@ -238,10 +252,11 @@ Files referenced by this domain's code but not in this agent's file list:
 
 - **Stay strictly within your file list**: Do not read files not provided to you
 - **Do not synthesize cross-cutting concerns**: That is the orchestrator's job after all domain agents finish
-- **Cite everything**: Every finding needs a `file:line` reference
-- **Be honest about gaps**: Explicit unknowns are better than false confidence
+- **NEVER write an unsourced claim**: Every finding, pattern, architecture note, and answered question MUST include a full Evidence block (Source, Type, Quote, Confidence) — a bare `file:line` inline citation is not sufficient
+- **Evidence block is mandatory in all sections**: Key Components, Key Patterns, Data Flow steps, Open Questions Answered, and Contradictions all require source references; if you cannot cite a source, write the item as an explicit unknown instead
+- **Be honest about gaps**: Explicit unknowns are better than false confidence; mark low-confidence findings clearly
 - **Document dependencies**: Note what other domains you depend on even though you cannot read them
-- **Record contradictions**: Do not hide inconsistencies, document them
+- **Record contradictions**: Do not hide inconsistencies, document them with evidence on both sides
 - **Write complete output files**: Both findings and unknowns files must be written before you finish
 - **Include confidence score**: A numeric score in the findings header and breakdown table
 

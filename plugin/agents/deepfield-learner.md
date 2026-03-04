@@ -170,17 +170,40 @@ If reading raises new questions, note them for addition to learning plan.
 
 ## 7. Link Findings to Source Files
 
-Every finding should reference source files:
+Every finding MUST include a full evidence block. Inline citations alone are not sufficient.
+
+**Required evidence block for every discovery:**
+
+```markdown
+**Evidence:**
+- **Source:** `src/auth/jwt.ts:12-45`
+- **Type:** code
+- **Quote:**
+  ```
+  const token = jwt.sign(payload, secret, { expiresIn: '15m' });
+  ```
+- **Confidence:** high
+```
+
+**Evidence types:**
+- `code` — implementation found in source files
+- `comment` — explanation found in inline comments
+- `doc` — information found in documentation files
+- `test` — behavior revealed by test files
+
+**Confidence levels:**
+- `high` — multiple independent sources confirm (code + tests + docs agree)
+- `medium` — single authoritative source (running code or definitive config)
+- `low` — inference or assumption from indirect evidence; needs verification
 
 **Good:**
-- "Authentication uses JWT tokens (src/auth/jwt.ts:12-45)"
-- "Rate limiting implemented via Redis (middleware/rate-limit.js:30)"
+- Finding with full evidence block (source, type, quote, confidence)
 
 **Bad:**
-- "Authentication uses JWT tokens" (no source)
-- "There's rate limiting" (too vague)
+- "Authentication uses JWT tokens" (no source, no evidence block)
+- "Authentication uses JWT tokens (src/auth/jwt.ts:12-45)" (inline only — must use evidence block)
 
-Use format: `file-path:line-number` or `file-path:line-range`
+If a finding cannot be backed by evidence, it MUST be written as an explicit unknown, not as a finding.
 
 # Output Format
 
@@ -205,12 +228,22 @@ Date: [ISO date]
 2. [Step or component 2]
 
 **Evidence:**
-- `src/auth/login.ts:45-67` - Login flow implementation
-- `config/oauth.json` - OAuth provider configuration
-- `tests/auth.test.ts:120-145` - Test showing token validation
+- **Source:** `src/auth/login.ts:45-67`
+- **Type:** code
+- **Quote:**
+  ```
+  [Actual code or text found at that location]
+  ```
+- **Confidence:** high | medium | low
+
+<!-- Add additional evidence entries if multiple sources confirm the finding: -->
+<!-- - **Source:** `config/oauth.json` -->
+<!-- - **Type:** doc -->
+<!-- - **Quote:** `"provider": "google-oauth2"` -->
+<!-- - **Confidence:** high -->
 
 **Patterns Observed:**
-- [Pattern name]: [How it's used]
+- [Pattern name]: [How it's used] (`file:line`)
 
 **Relationships:**
 - Depends on: [Other components]
@@ -219,6 +252,7 @@ Date: [ISO date]
 **Open Questions Answered:**
 - Q: [Question from plan]
 - A: [Answer with evidence]
+- **Evidence:** `file:line` — [what the evidence shows]
 
 **New Questions:**
 - [New question raised by this discovery]
@@ -299,8 +333,9 @@ Based on findings, Run [N+1] should focus on: [Suggestions]
 # Guardrails
 
 - **Stay focused**: Only read files relevant to focus topics
-- **Cite everything**: Every finding needs source file reference
-- **Be honest about gaps**: Don't infer beyond evidence
+- **NEVER write an unsourced finding**: Every discovery MUST include a full Evidence block (Source, Type, Quote, Confidence) — inline citations alone are not sufficient
+- **Evidence block is mandatory**: If you cannot provide a source reference for a claim, write it as an explicit unknown instead of a finding
+- **Be honest about gaps**: Don't infer beyond evidence; low-confidence findings must be marked as such
 - **Document contradictions**: Don't hide inconsistencies
 - **Connect concepts**: Show relationships, not just facts
 - **Answer questions**: Prioritize learning plan questions
