@@ -299,6 +299,19 @@ Write all documentation in <deepfieldConfig.language>.
 If technical terms have no <language> equivalent, keep the English term with a <language> explanation in parentheses.
 ```
 
+#### Document Length Rule for Learner Agent
+
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the learner agent MUST keep each file to a maximum of approximately 200 lines. If adding content would push a file past ~200 lines, split it:
+
+1. Move the largest logical section(s) to a sub-file named `{domain}-{section}.md` in `drafts/domains/`
+2. Replace moved content in the primary file with a brief summary
+3. Add a **"See also"** section linking to sub-files:
+   ```
+   ## See also
+   - [Authentication Flows](authentication-flows.md)
+   ```
+Sub-files are also subject to the 200-line limit.
+
 #### Process Learner Output
 
 Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
@@ -499,6 +512,72 @@ Synthesizer updates:
 - `deepfield/drafts/domains/<topic>.md` - Updated with new knowledge
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
+
+### Document Length Rule for Synthesizer Agent
+
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the synthesizer agent MUST keep each file to a maximum of approximately 200 lines. If adding content would push a file past ~200 lines, split it as follows:
+
+1. Identify the logical sections in the document
+2. Move the largest section(s) to a sub-file named `{domain}-{section}.md` in the same `drafts/domains/` directory (e.g., `authentication-flows.md`, `api-endpoints.md`)
+3. Replace the moved content in the primary file with a brief summary
+4. Add a **"See also"** section at the bottom of the primary file with markdown links to each sub-file
+
+**Example:**
+```
+## See also
+
+- [Authentication Flows](authentication-flows.md) — detailed OAuth and session flow diagrams
+- [Authentication API](authentication-api.md) — endpoint reference
+```
+
+Sub-files themselves are also subject to the 200-line limit and may be split further using the same convention (`{domain}-{section}-{subsection}.md`).
+
+## Step 5.5: Generate Readability Documents
+
+After the synthesizer has written domain drafts and updated the changelog, generate the three readability documents. These are supplementary — failures must NOT abort the run.
+
+### 5.5.1 Generate Drafts Index
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/README.md \
+  --unknowns   deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.2 Generate Domain Companion READMEs
+
+For every domain file that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+
+```bash
+# For each domain file: deepfield/drafts/domains/<domain>.md
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
+  --domain     <domain> \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/domains/<domain>/README.md
+```
+
+Enumerate domain files by listing all `*.md` files in `deepfield/drafts/domains/` and deriving the domain name by stripping the `.md` extension.
+
+### 5.5.3 Generate Run Review Guide
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-run-review-guide.js" \
+  --run           ${nextRun} \
+  --run-config    deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output        deepfield/wip/run-${nextRun}/review-guide.md \
+  --learning-plan deepfield/wip/learning-plan.md \
+  --unknowns      deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.4 Error Handling
+
+If any of the three generation scripts exit with a non-zero status:
+- Log a warning: `Warning: Readability document generation failed: <script> — <error>`
+- Continue with Step 5.5 (terminology extraction) — do NOT abort the run
+- These documents are supplementary; their absence does not affect core learning output
 
 ## Step 5.5: Extract Terminology
 
