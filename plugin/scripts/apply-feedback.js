@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 /**
  * apply-feedback.js
  *
@@ -6,12 +7,12 @@
  * it into the learning plan for the next run.
  *
  * Usage (API):
- *   import { readFeedback, applyFeedbackToLearningPlan, applyFeedbackToDomains }
- *     from './apply-feedback.js'
+ *   const { readFeedback, applyFeedbackToLearningPlan, applyFeedbackToDomains }
+ *     = require('./apply-feedback')
  */
 
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,11 +26,8 @@ import path from 'path';
  * @returns {string|null}   Section body, or null if the heading is not found
  */
 function extractSection(content, heading) {
-  // Match the section header (case-insensitive, allows trailing whitespace)
-  const headerPattern = new RegExp(
-    `^##\\s+${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
-    'im',
-  );
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const headerPattern = new RegExp(`^##\\s+${escaped}\\s*$`, 'im');
 
   const match = content.match(headerPattern);
   if (!match) return null;
@@ -37,7 +35,6 @@ function extractSection(content, heading) {
   const start = match.index + match[0].length;
   const rest = content.slice(start);
 
-  // Find the next ## heading (or end of string)
   const nextSection = rest.match(/^##\s/m);
   const end = nextSection ? nextSection.index : rest.length;
 
@@ -86,7 +83,6 @@ function readFeedback(runNumber) {
 function applyFeedbackToLearningPlan(feedback) {
   if (!feedback) return;
 
-  // Nothing meaningful to append
   const hasContent = feedback.corrections || feedback.additions
     || feedback.priorities || feedback.comments;
   if (!hasContent) return;
@@ -107,7 +103,7 @@ function applyFeedbackToLearningPlan(feedback) {
   }
 
   let appendix = '\n\n## User Feedback Incorporated\n\n';
-  appendix += `*Applied from user feedback*\n\n`;
+  appendix += '*Applied from user feedback*\n\n';
 
   if (feedback.corrections) {
     appendix += `### Corrections Applied\n\n${feedback.corrections}\n\n`;
@@ -147,4 +143,4 @@ function applyFeedbackToDomains(feedback) {
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-export { readFeedback, applyFeedbackToLearningPlan, applyFeedbackToDomains };
+module.exports = { readFeedback, applyFeedbackToLearningPlan, applyFeedbackToDomains };

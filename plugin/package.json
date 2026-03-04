@@ -2,7 +2,6 @@
   "name": "deepfield-plugin",
   "version": "1.0.0",
   "description": "Claude Code plugin for Deepfield knowledge base builder",
-  "type": "module",
   "private": true,
   "peerDependencies": {
     "deepfield": "^1.0.0"

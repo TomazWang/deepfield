@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 /**
  * collect-feedback.js
  *
@@ -7,15 +8,14 @@
  * after a Deepfield learning run completes.
  *
  * Usage (CLI):  node collect-feedback.js <runNumber>
- * Usage (API):  import { runFeedbackLoop } from './collect-feedback.js'
+ * Usage (API):  const { runFeedbackLoop } = require('./collect-feedback')
  */
 
-import inquirer from 'inquirer';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
+const inquirer = require('inquirer');
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
  * Prompt using an editor, falling back to a plain input if editor fails
@@ -30,8 +30,7 @@ async function editorOrInput(name, message, defaultText) {
       default: defaultText,
     }]);
     return result[name];
-  } catch {
-    // Fall back to plain text input
+  } catch (_) {
     const result = await inquirer.prompt([{
       type: 'input',
       name,
@@ -41,7 +40,7 @@ async function editorOrInput(name, message, defaultText) {
   }
 }
 
-// ─── Core ────────────────────────────────────────────────────────────────────
+// ─── Core ─────────────────────────────────────────────────────────────────────
 
 /**
  * Interactively collect user feedback for the given run.
@@ -157,7 +156,6 @@ function saveFeedback(runNumber, feedback) {
   const feedbackDir = path.join('deepfield', 'wip', `run-${runNumber}`);
   const feedbackPath = path.join(feedbackDir, 'feedback.md');
 
-  // Ensure directory exists
   fs.mkdirSync(feedbackDir, { recursive: true });
 
   let content = `# Feedback for Run ${runNumber}\n\n`;
@@ -200,16 +198,17 @@ function saveFeedback(runNumber, feedback) {
  * @param {number} runNumber
  * @returns {Promise<object|null>} The feedback object, or null if skipped
  */
-export async function runFeedbackLoop(runNumber) {
+async function runFeedbackLoop(runNumber) {
   const feedback = await collectFeedback(runNumber);
   saveFeedback(runNumber, feedback);
   return feedback;
 }
 
+module.exports = { runFeedbackLoop };
+
 // ─── CLI entry point ──────────────────────────────────────────────────────────
 
-const isMain = process.argv[1] === fileURLToPath(import.meta.url);
-if (isMain) {
+if (require.main === module) {
   const runNumber = parseInt(process.argv[2], 10);
   if (isNaN(runNumber)) {
     console.error('Usage: node collect-feedback.js <runNumber>');
