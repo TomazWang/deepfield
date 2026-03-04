@@ -12,6 +12,18 @@ export const RepositorySchema = z.object({
 export type Repository = z.infer<typeof RepositorySchema>;
 
 /**
+ * Schema for a single migration history entry
+ */
+export const MigrationHistoryEntrySchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  date: z.string(),
+  changes: z.string(),
+});
+
+export type MigrationHistoryEntry = z.infer<typeof MigrationHistoryEntrySchema>;
+
+/**
  * Schema for project configuration
  * Stored in: deepfield/project.config.json
  */
@@ -24,6 +36,11 @@ export const ProjectConfigSchema = z.object({
   repositories: z.array(RepositorySchema).default([]),
   createdAt: z.string().datetime(),
   lastModified: z.string().datetime(),
+  // Version tracking fields (added in v1.0 upgrade system)
+  deepfieldVersion: z.string().optional(),
+  createdWith: z.string().optional(),
+  lastUpgraded: z.string().optional(),
+  migrationHistory: z.array(MigrationHistoryEntrySchema).default([]),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;

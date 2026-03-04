@@ -4,6 +4,7 @@ import { join } from 'path';
 import chalk from 'chalk';
 import { readProjectConfig, StateError } from '../core/state.js';
 import { WorkflowState } from '../core/schemas.js';
+import { enforceVersionCompatibility } from '../utils/version-guard.js';
 
 /**
  * Create the status command
@@ -13,6 +14,7 @@ export function createStatusCommand(): Command {
     .description('Display current project state')
     .option('-v, --verbose', 'Show detailed information', false)
     .action(async (options) => {
+      await enforceVersionCompatibility(process.cwd());
       try {
         await statusCommand(options);
         process.exit(0);
@@ -69,7 +71,7 @@ async function detectWorkflowState(deepfieldDir: string): Promise<WorkflowState>
 /**
  * Format workflow state for display
  */
-function formatWorkflowState(state: WorkflowState): { emoji: string; text: string; color: typeof chalk.Color } {
+function formatWorkflowState(state: WorkflowState): { emoji: string; text: string; color: ((...text: unknown[]) => string) } {
   switch (state) {
     case WorkflowState.EMPTY:
       return { emoji: '⭕', text: 'Not initialized', color: chalk.gray };

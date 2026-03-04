@@ -1,9 +1,24 @@
 import { Command } from 'commander';
-import { pathExists } from 'fs-extra';
+import { pathExists, readJson, writeJson } from 'fs-extra';
 import { join } from 'path';
+import { readFileSync } from 'fs';
+import { dirname } from 'path';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { scaffold, formatScaffoldResult, PermissionError } from '../core/scaffold.js';
+
+/**
+ * Get current CLI version from package.json
+ */
+function getCurrentVersion(): string {
+  try {
+    const pkgPath = join(dirname(dirname(__filename)), 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    return pkg.version ?? '1.0.0';
+  } catch {
+    return '1.0.0';
+  }
+}
 
 /**
  * Create the init command
@@ -73,6 +88,25 @@ async function initCommand(options: { force?: boolean; yes?: boolean }): Promise
   if (result.errors.length > 0) {
     console.log(chalk.red(`\n❌ Initialization completed with ${result.errors.length} error(s)`));
     process.exit(1);
+  }
+
+  // Stamp version fields into project.config.json
+  const configPath = join(deepfieldDir, 'project.config.json');
+  if (await pathExists(configPath)) {
+    try {
+      const config = await readJson(configPath);
+      const now = new Date().toISOString();
+      const cliVersion = getCurrentVersion();
+      config.deepfieldVersion = cliVersion;
+      config.createdWith = cliVersion;
+      config.lastUpgraded = now;
+      if (!config.migrationHistory) {
+        config.migrationHistory = [];
+      }
+      await writeJson(configPath, config, { spaces: 2 });
+    } catch {
+      // Non-fatal: version stamp failed but scaffold succeeded
+    }
   }
 
   // Success message

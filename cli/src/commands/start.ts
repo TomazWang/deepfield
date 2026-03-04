@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { writeProjectConfig, StateError } from '../core/state.js';
 import { ProjectConfig, StartAnswersSchema, StartAnswers } from '../core/schemas.js';
 import { z } from 'zod';
+import { enforceVersionCompatibility } from '../utils/version-guard.js';
 
 /**
  * Create the start command
@@ -17,6 +18,7 @@ export function createStartCommand(): Command {
     .option('--answers-json <json>', 'Provide answers as JSON string')
     .option('--answers-file <path>', 'Read answers from JSON file')
     .action(async (options) => {
+      await enforceVersionCompatibility(process.cwd());
       try {
         await startCommand(options);
         process.exit(0);
@@ -212,6 +214,7 @@ async function startCommand(options: { nonInteractive?: boolean; answersJson?: s
     repositories: [],
     createdAt: now,
     lastModified: now,
+    migrationHistory: [],
   };
 
   // Write config
