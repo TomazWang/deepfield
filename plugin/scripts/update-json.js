@@ -30,7 +30,16 @@ try {
     data = JSON.parse(content);
   }
 
-  // Merge updates into existing data
+  // Deep-merge confidenceScores if present (merge per-domain records instead of overwriting)
+  if (updates.confidenceScores && typeof updates.confidenceScores === 'object') {
+    if (!data.confidenceScores || typeof data.confidenceScores !== 'object') {
+      data.confidenceScores = {};
+    }
+    Object.assign(data.confidenceScores, updates.confidenceScores);
+    delete updates.confidenceScores;
+  }
+
+  // Merge remaining updates into existing data
   Object.assign(data, updates);
 
   // Add automatic lastModified timestamp if not already in updates

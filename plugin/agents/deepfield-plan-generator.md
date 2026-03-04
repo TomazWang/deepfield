@@ -42,15 +42,13 @@ Set priorities based on:
 - **MEDIUM**: Important domains that enhance understanding
 - **LOW**: Supporting domains, nice-to-have context
 
-### Initial Confidence Estimation
+### Initial Confidence Estimation (Run 0 only)
 
-Assign baseline confidence based on bootstrap scan:
-- **<20%**: Barely scanned, minimal understanding
-- **20-40%**: Structural understanding from scan, no deep knowledge
-- **40-60%**: Would indicate some code reading (not applicable for Run 0)
-- **>60%**: Would indicate deep understanding (not applicable for Run 0)
+For Run 0, domain learner agents have not yet run, so `wip/confidence-scores.md` does not yet exist. Use the following placeholder guidance to set initial confidence in the plan:
+- **~20%**: Barely scanned, minimal files indexed — structural understanding only
+- **~30%**: A domain with clear directory structure and identifiable entry points
 
-For Run 0, most topics start at 20-30% confidence.
+These are placeholders only. Starting from Run 1, confidence values come from `calculate-confidence.js` via `wip/confidence-scores.md` and must not be overridden.
 
 ### Generate Open Questions
 
@@ -73,12 +71,14 @@ Update existing plan based on learnings:
 
 ### Update Confidence Levels
 
-Adjust confidence based on findings:
-- **+10-20%**: Light progress, some patterns understood
-- **+20-40%**: Significant progress, core concepts clear
-- **+40-60%**: Major breakthrough, deep understanding achieved
+Confidence levels in the learning plan are **read from `wip/confidence-scores.md`**, which is written by `calculate-confidence.js` after each run. Do NOT estimate or adjust confidence percentages subjectively in the plan.
 
-**Never decrease except on contradictions discovered.**
+To update confidence levels in the plan:
+1. Read `wip/confidence-scores.md` for each domain's current aggregate score (expressed as a percentage, e.g., 0.734 → 73%)
+2. Copy the aggregate percentage from that file into the plan's confidence tracking table
+3. The delta (change from previous run) is already shown in `confidence-scores.md` — reference it in the run history section
+
+Confidence can increase OR decrease between runs depending on the formula inputs. Do not apply a floor — if the score decreased, record the lower value.
 
 ### Add Newly Discovered Topics
 
