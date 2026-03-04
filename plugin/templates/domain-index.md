@@ -13,19 +13,22 @@ A domain is a cohesive area of the codebase, typically:
 
 <!-- Auto-detected and refined by AI -->
 
-| Domain | Confidence | File Count | Status | Notes |
-|--------|-----------|------------|--------|-------|
-| | | | | |
+| Domain | Confidence | File Count | Status | Detection Sources | Repositories |
+|--------|-----------|------------|--------|-------------------|--------------|
+| | | | | | |
+
+## How Domains Were Detected
+
+<!-- Auto-populated by generate-domain-index.js — lists each domain's signal sources and score -->
 
 ## Domain Detection Signals
 
-**How domains are identified:**
-- Directory structure (e.g., `src/auth/`, `services/payment/`)
-- Service boundaries (microservices architecture)
-- API route grouping (e.g., `/api/v1/auth/*`)
-- Database ownership (separate databases/schemas)
-- CODEOWNERS file entries
-- Team ownership patterns
+**How domains are identified (priority order):**
+1. Monorepo manifests (lerna.json, nx.json, settings.gradle, pom.xml modules)
+2. Framework dependencies (package.json, requirements.txt, pom.xml)
+3. Directory structure (folder name patterns matching known domain types)
+4. README files (H1 heading per sub-directory)
+5. Brief hints (user-provided focus areas, lowest weight)
 
 ## Domain Relationships
 
