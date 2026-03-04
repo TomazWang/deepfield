@@ -218,6 +218,32 @@ const filesToRead = [
 ]
 ```
 
+### Scan User-Provided Source Documents
+
+After building the initial `filesToRead` list, run the source-doc scanner to extract text from any user-provided documents in `deepfield/source/` (PDFs, DOCX, PPTX, plain text files — excluding `baseline/repos/` and staging directories):
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/scan-source-docs.js" \
+  --source-dir deepfield/source \
+  --run-dir    deepfield/wip/run-${nextRun} \
+  --output-index deepfield/wip/run-${nextRun}/source-docs-index.json
+```
+
+The script prints a human-readable summary of every file it found, extracted, warned about, or skipped — display this output to the user as part of the scan report.
+
+Then read the generated index and append any extracted markdown files to `filesToRead`:
+
+```javascript
+const sourceDocs = fs.existsSync(`deepfield/wip/run-${nextRun}/source-docs-index.json`)
+  ? JSON.parse(fs.readFileSync(`deepfield/wip/run-${nextRun}/source-docs-index.json`, 'utf8'))
+  : [];
+
+// sourceDocs is an array of absolute paths; append to filesToRead
+filesToRead.push(...sourceDocs);
+```
+
+If `source-docs-index.json` does not exist or is empty, continue without error — it simply means no source documents are present.
+
 ## Step 4: Deep Learning
 
 ### Inject Domain-Specific Instructions
