@@ -5,6 +5,21 @@ trigger_mode: command
 user_invocable: false
 ---
 
+# Document Length Rule
+
+**IMPORTANT**: Any AI agent or script generating draft documents in `deepfield/drafts/` should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If content would significantly exceed ~350 prose lines, consider splitting:
+
+1. Identify logical sections in the document
+2. Move the largest section(s) to sub-files under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
+3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+4. Add a **"See also"** section at the bottom of the primary file linking to each sub-file:
+   ```
+   ## See also
+   - [Authentication Flows](flows.md) — detailed flow diagrams
+   ```
+
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+
 # Purpose
 
 This skill orchestrates Run 0 (bootstrap) for the Deepfield knowledge base. It reads the user's filled `brief.md`, clones repositories, scans project structure, detects domains, and generates the first learning plan — all using scripts and templates.
@@ -105,17 +120,7 @@ If no exclusion patterns are configured, include all files.
 
 ## Step 4: Document Length Rule for Bootstrap-generated Drafts
 
-**IMPORTANT**: Any AI agent or script generating draft documents in `deepfield/drafts/` during bootstrap should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If content would significantly exceed ~350 prose lines, consider splitting:
-
-1. Identify logical sections in the document
-2. Move the largest section(s) to sub-files under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
-3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
-4. Add a **"See also"** section at the bottom of the primary file linking to each sub-file:
-   ```
-   ## See also
-   - [Authentication Flows](flows.md) — detailed flow diagrams
-   ```
-Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+> Follow the [Document Length Rule](#document-length-rule) defined above.
 
 ## Step 4b: Inject Domain Instructions into Domain Analysis
 

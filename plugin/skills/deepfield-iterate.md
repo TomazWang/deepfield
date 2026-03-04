@@ -39,6 +39,20 @@ While should_continue:
        Report and exit
 ```
 
+# Document Length Rule
+
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
+
+1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+3. Add a **"See also"** section in the primary file linking to any sub-files:
+   ```
+   ## See also
+   - [Authentication Flows](flows.md)
+   ```
+
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+
 # Single Run Workflow (Run N)
 
 ## Pre-Run Setup
@@ -301,16 +315,7 @@ If technical terms have no <language> equivalent, keep the English term with a <
 
 #### Document Length Rule for Learner Agent
 
-**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the learner agent should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
-
-1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
-2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
-3. Add a **"See also"** section in the primary file linking to any sub-files:
-   ```
-   ## See also
-   - [Authentication Flows](flows.md)
-   ```
-Sub-files follow the same 350-line prose guideline.
+> Follow the [Document Length Rule](#document-length-rule) defined above.
 
 #### Process Learner Output
 
@@ -515,22 +520,7 @@ Synthesizer updates:
 
 ### Document Length Rule for Synthesizer Agent
 
-**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, the synthesizer agent should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it as follows:
-
-1. Identify the logical sections in the document
-2. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`, `drafts/domains/authentication/api.md`)
-3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
-4. Add a **"See also"** section at the bottom of the primary file with markdown links to each sub-file
-
-**Example:**
-```
-## See also
-
-- [Authentication Flows](flows.md) — detailed OAuth and session flow diagrams
-- [Authentication API](api.md) — endpoint reference
-```
-
-Sub-files follow the same 350-line prose guideline and may be split further using the same convention (`drafts/domains/{domain}/{section}/{subsection}.md`).
+> Follow the [Document Length Rule](#document-length-rule) defined above.
 
 ## Step 5.5: Generate Readability Documents
 
