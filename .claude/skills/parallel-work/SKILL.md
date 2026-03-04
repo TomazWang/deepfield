@@ -90,9 +90,9 @@ Wait for **all** spec agents to complete before proceeding.
 
 ---
 
-## Phase 3 — Spec review (orchestrator + human)
+## Phase 3 — Spec review (orchestrator)
 
-For each draft PR, do a quick sanity check:
+For each draft PR, review:
 
 1. Read the spec artifacts from the worktree:
    - `proposal.md` — Is the why clear? Does scope match the issue?
@@ -102,37 +102,35 @@ For each draft PR, do a quick sanity check:
 
 2. Check architecture alignment (see [architecture-rules.md](architecture-rules.md)).
 
-3. **Present findings to the user** — summarize each spec with:
-   - Draft PR URL
-   - 2-3 bullet summary of what the spec proposes
-   - Any concerns spotted
+3. **Decision:**
+   - ✅ **Approved** → Add to approved list.
+   - 🔁 **Changes needed** → Leave specific comments on the PR. Resume the agent to revise the spec artifacts, re-push, and notify when done. Re-review until approved.
 
-4. **Ask the user:**
-   > "I've reviewed all spec PRs above. Would you like to review them yourself before I proceed to implementation, or should I go ahead?"
+4. **After reviewing all specs**, present a summary to the user:
+
+   | Task | Draft PR | Status | Notes |
+   |------|----------|--------|-------|
+   | change-name | #N | ✅ Looks good | ... |
+
+   Then ask:
+   > "I've reviewed all spec PRs above. Would you like to review them on GitHub before I start implementing, or should I go ahead?"
    >
-   > Options: **"Go ahead"** | **"I'll review — wait for my signal"**
+   > Options: **"Go ahead"** | **"I'll review — let me know when to proceed"**
 
 5. **If user wants to review:**
-   - Wait for the user to review the draft PRs on GitHub and signal back (e.g. "looks good, proceed").
-   - If user requests changes, leave specific comments on the PR, resume the agent to revise, re-push, then ask again.
+   - Wait for the user's signal (e.g. "looks good, proceed" or specific change requests).
+   - If user requests changes, leave comments on the PR, resume the agent to revise, re-push, and repeat from step 3.
 
-6. **Once user approves all specs:**
-   - Comment on each PR: `"Spec approved — proceeding to implementation."`
+6. **Once the user gives the go-ahead:**
+   - Comment on each approved PR: `"Spec approved — proceeding to implementation."`
 
-Do not proceed to Phase 4 until the user has approved all specs.
+Do not proceed to Phase 4 until the user gives the go-ahead.
 
 ---
 
 ## Phase 4 — Implementation phase (parallel agents)
 
-**Before launching agents**, ask the user:
-> "All specs are approved. Ready to start implementation on all tasks in parallel?"
->
-> Options: **"Yes, implement all"** | **"Implement specific tasks only"** | **"Hold off for now"**
-
-If "Implement specific tasks only", ask which tasks to proceed with.
-
-For each approved spec to implement, launch or resume an agent:
+For each approved spec, launch or resume an agent:
 
 **Agent instructions (implementation phase):**
 
