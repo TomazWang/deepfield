@@ -21,6 +21,22 @@ Currently CLAUDE.md describes each component in isolation but provides no classi
 - Defining testing strategies for either layer
 - Covering third-party plugin integrations
 
+## Architectural Constraint: One-Way Dependency Rule
+
+**The Plugin MAY invoke the CLI. The CLI MUST NEVER invoke or depend on the Plugin.**
+
+This is not a guideline — it is an architectural invariant. The CLI is a standalone Node.js process with no AI access and no knowledge of Claude Code internals. Allowing the CLI to call into the plugin would:
+
+- Create a circular dependency between layers
+- Break CLI usage in headless/CI environments (where Claude Code is absent)
+- Couple a deterministic layer to a non-deterministic AI runtime
+
+**Enforcement:**
+
+- Any hybrid feature that crosses the boundary MUST be implemented as: Plugin calls CLI helpers (scripts, commands). Never the reverse.
+- Code review MUST reject any CLI code that imports, shells out to, or otherwise depends on plugin-layer artifacts.
+- The decision tree explicitly models the hybrid pattern as "Plugin calls CLI helpers", with no path where CLI calls plugin.
+
 ## Decisions
 
 ### Decision 1: Guidelines live in CLAUDE.md, not a separate doc

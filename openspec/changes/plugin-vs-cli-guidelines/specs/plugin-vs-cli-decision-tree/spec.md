@@ -1,5 +1,18 @@
 ## ADDED Requirements
 
+### Requirement: One-way dependency rule is a hard architectural invariant
+CLAUDE.md SHALL state, as a clearly labelled constraint separate from the decision tree, that the Plugin MAY invoke the CLI but the CLI SHALL NEVER invoke or depend on the Plugin.
+
+The constraint SHALL use "SHALL NEVER" language (not "should avoid" or "is discouraged") to signal that it is non-negotiable.
+
+#### Scenario: Hybrid feature always routes CLI helpers → Plugin, never Plugin → CLI
+- **WHEN** a contributor designs a Hybrid feature that requires both AI reasoning and deterministic file operations
+- **THEN** the implementation pattern SHALL be: Plugin skill calls CLI script/command; the CLI component SHALL NOT call back into any plugin skill, agent, or command
+
+#### Scenario: CLI code that depends on plugin is rejected in review
+- **WHEN** a code reviewer encounters CLI code that imports, shells out to, or references any plugin-layer artifact
+- **THEN** the reviewer SHALL reject the change as a violation of the one-way dependency rule, citing the CLAUDE.md constraint
+
 ### Requirement: Decision tree classifies any feature into Plugin, CLI, or Hybrid
 CLAUDE.md SHALL contain a decision tree section titled "Plugin vs CLI Guidelines" that allows a contributor to classify any proposed feature by answering at most four yes/no questions in order.
 
@@ -25,6 +38,10 @@ The questions SHALL be:
 #### Scenario: Non-deterministic non-AI feature is flagged as Hybrid
 - **WHEN** a contributor evaluates a feature that is neither AI-required nor cleanly deterministic
 - **THEN** the decision tree SHALL classify it as Hybrid and require an explicit ownership boundary table
+
+#### Scenario: Hybrid pattern direction is always Plugin calls CLI, never CLI calls Plugin
+- **WHEN** a contributor reads the Hybrid section of the decision tree
+- **THEN** the hybrid implementation pattern SHALL be described as "Plugin skill invokes CLI helper", and the reverse direction (CLI invoking Plugin) SHALL be explicitly prohibited
 
 ### Requirement: CLAUDE.md includes concrete classification examples
 CLAUDE.md SHALL include a table with at least six examples — two Plugin-only, two CLI-only, and two Hybrid — each showing the feature name, its classification, and the deciding criterion.

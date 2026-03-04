@@ -1,8 +1,9 @@
 ## 1. Draft Decision Tree Section for CLAUDE.md
 
+- [ ] 1.0 Add a clearly labelled "One-Way Dependency Rule" constraint block at the top of the "Plugin vs CLI Guidelines" section, before the decision tree, stating: "The Plugin MAY invoke the CLI. The CLI SHALL NEVER invoke or depend on the Plugin." Include a brief rationale (headless environments, circular dependency prevention) and state that it is an architectural invariant, not a guideline.
 - [ ] 1.1 Write the four-question decision tree in prose under a new "Plugin vs CLI Guidelines" section in CLAUDE.md
 - [ ] 1.2 Add the classification examples table (minimum six rows: two Plugin-only, two CLI-only, two Hybrid) immediately after the decision tree
-- [ ] 1.3 Add the Hybrid ownership boundary subsection with an ownership table and `df-input` as the primary worked example
+- [ ] 1.3 Add the Hybrid ownership boundary subsection with an ownership table and `df-input` as the primary worked example. The subsection MUST describe the hybrid call direction as "Plugin skill calls CLI helper" and MUST include a note that the reverse direction is prohibited by the one-way dependency rule.
 
 ## 2. Inline Rationale Comments
 
