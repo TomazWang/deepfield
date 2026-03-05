@@ -564,29 +564,50 @@ Consolidated findings written to: deepfield/wip/run-N/findings.md
 
 After consolidation, parallel mode rejoins the sequential workflow at **Step 5: Synthesize Knowledge**. The synthesizer reads the consolidated `findings.md` exactly as in sequential mode — no changes needed downstream.
 
-## Step 5: Synthesize Knowledge
+## Step 5: Generate Documentation
 
-### Invoke Knowledge Synthesizer Agent
+**NOTE**: All parallel domain-learner agents from Step 4 MUST be complete before this step executes. Verify all batch completions and the consolidation step (4f) are finished before launching the document generator.
+
+### Resolve Staging Feedback Path
+
+Before launching, check whether the staging feedback file for the current run exists:
+
+```javascript
+const stagingFeedbackPath = `deepfield/source/run-${nextRun}-staging/feedback.md`;
+const stagingFeedback = fileExists(stagingFeedbackPath) ? stagingFeedbackPath : null;
+```
+
+Pass the resolved path (or null) as `staging_feedback` in the agent input.
+
+### Invoke Document Generator Agent
 
 ```
-Launch: deepfield-knowledge-synth
+Launch: deepfield-document-generator
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/*.md",
+  "domain_findings_dir": "deepfield/wip/run-${nextRun}/domains/",
+  "existing_drafts_dir": "deepfield/drafts/domains/",
+  "staging_feedback": <stagingFeedback>,
+  "config": deepfieldConfig,
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
-  "output_language": deepfieldConfig.language
+  "run_number": ${nextRun}
 }
 ```
 
-### Process Synthesis Output
+The `deepfieldConfig` object is the same object parsed in Pre-Run Step 0. No additional invocation of `parse-deepfield-config.js` is required here.
 
-Synthesizer updates:
-- `deepfield/drafts/domains/<topic>.md` - Updated with new knowledge
-- `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
-- `deepfield/drafts/_changelog.md` - Append run summary
+### Process Documentation Output
 
-### Document Length Rule for Synthesizer Agent
+The document generator writes or updates:
+- `deepfield/drafts/domains/<domain>/behavior-spec.md` — behavior specification per domain with findings this run (User Stories, Scenarios, Business Rules)
+- `deepfield/drafts/domains/<domain>/tech-spec.md` — technical specification per domain with findings this run (Architecture, Key Components, Data Flow, Integration Points)
+- `deepfield/drafts/cross-cutting/unknowns.md` — updated with new unknowns added and resolved unknowns removed
+- `deepfield/drafts/_changelog.md` — new run summary entry appended
+
+Only domains that have a findings file in `deepfield/wip/run-${nextRun}/domains/` are documented this run.
+
+### Document Length Rule for Document Generator Agent
 
 > Follow the [Document Length Rule](#document-length-rule) defined above.
 

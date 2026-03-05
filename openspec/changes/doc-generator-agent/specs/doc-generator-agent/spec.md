@@ -107,3 +107,9 @@ The agent MUST follow the document length rule (approximately 350 prose lines pe
 #### Scenario: Low-confidence sections are marked
 - **WHEN** domain findings carry low evidence strength for a claim
 - **THEN** the corresponding section in the generated doc is marked with a low-confidence indicator
+
+#### Scenario: Agent waits for all parallel domain-learner agents before generating docs
+- **WHEN** multiple domain-learner agents run in parallel during Step 4
+- **THEN** the iterate skill waits for all of them to complete before launching deepfield-document-generator
+- **THEN** the document-generator reads findings from all completed domains via domain_findings_dir
+- **THEN** no domain's documentation is generated before all parallel agents have written their findings

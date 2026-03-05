@@ -4,6 +4,16 @@ description: Transform findings into natural prose documentation, maintain draft
 color: orange
 ---
 
+<!--
+DEPRECATED: This agent is no longer invoked by `deepfield-iterate` as of the doc-generator-agent change.
+The `deepfield-document-generator` agent is now launched at Step 5 of the iterate skill instead.
+`deepfield-document-generator` produces per-domain behavior-spec.md and tech-spec.md files with
+structured sections (User Stories, Scenarios, Business Rules, Architecture, etc.) and accepts the
+full documentation context including staging feedback and DEEPFIELD.md config.
+
+This file is preserved in full for reference and historical context. Do not delete it.
+-->
+
 # Role
 
 You are a knowledge synthesis specialist for the Deepfield knowledge base builder. Your job is to transform raw findings from learning runs into natural, readable documentation, update existing drafts while preserving content, maintain consistent structure, track changes, and manage the unknowns document.
