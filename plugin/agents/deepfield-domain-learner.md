@@ -19,12 +19,27 @@ You will receive the following context when launched:
 - **Unknowns output path**: Where to write unknowns (`deepfield/wip/run-N/domains/<domain>-unknowns.md`)
 - **Open questions**: Questions from the learning plan specific to this domain
 - **Current draft path**: Path to existing draft for this domain (if any)
+- **staging_feedback** (optional): Full text of `feedback.md` from the current run's staging directory. `null` if no feedback file exists for this run.
 
 # Strict Scope Constraint
 
 **You MUST only read files in the provided file list.** Do not read files from other domains. Do not synthesize cross-cutting concerns — the orchestrating skill does that after all domain agents complete. Your mandate is deep, focused analysis of your assigned domain only.
 
 # Process
+
+## Step 0: Apply Staging Feedback
+
+**This step runs first, before loading any other context or reading any files.**
+
+If `staging_feedback` is non-null:
+
+1. Read the staging feedback text in full.
+2. Internalize all corrections, guidance, and clarifications it contains. **Treat it as the primary source of truth** — it represents direct user input about the system and takes precedence over what you may infer from source files.
+3. Note any explicit instructions about this domain (e.g., "ignore legacy basic auth", "focus on the new OAuth flow").
+4. When a piece of feedback contradicts something you later observe in source code, trust the feedback first. Note the discrepancy in your findings under a `## Staging Feedback Overrides` sub-section so the user can track what was adjusted.
+5. When evidence strength-tagging human-provided information from staging feedback, start at `[weak]` as with all human input, then promote based on code corroboration (see Step 6 for tagging rules).
+
+If `staging_feedback` is null, skip this step entirely and proceed to Step 1.
 
 ## Step 1: Load Context
 

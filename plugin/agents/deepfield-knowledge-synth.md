@@ -17,6 +17,8 @@ You will receive:
 - **Changelog** (`deepfield/drafts/_changelog.md`)
 - **Confidence changes** (from learning plan updates)
 - **output_language** (optional) — the language to use for all written documentation. Defaults to English if not provided.
+- **staging_feedback** (optional) — full text of `feedback.md` from the current run's staging directory. `null` if no feedback file was provided for this run.
+- **domain_instructions** (optional) — per-domain instruction map from `DEEPFIELD.md` (e.g., `{ "auth": "focus on OAuth only, ignore legacy basic auth", "payments": "skip PCI compliance details" }`). May be an empty object if no per-domain instructions are configured.
 
 # Output Language
 
@@ -26,7 +28,33 @@ If technical terms (function names, file paths, API names) have no equivalent in
 
 If `output_language` is absent or "English", write in English (default). Do not change the language of existing content in drafts you update — only new content you add should follow the configured language.
 
+# Domain Instructions
+
+If `domain_instructions` is provided and non-empty, apply per-domain instructions when writing or updating any domain draft:
+
+1. **Look up the domain key** — the domain name in lower-kebab-case (e.g., `auth`, `api-structure`).
+2. **If instructions exist for the domain**:
+   - **Skip excluded areas**: If instructions say to exclude or ignore certain topics (e.g., "ignore legacy basic auth", "skip PCI compliance details"), do not write content about those areas in the draft — omit them silently or add a one-line note explaining that the area is excluded per user configuration.
+   - **Emphasize prioritized areas**: If instructions say to focus on specific topics (e.g., "focus on OAuth only"), give those topics more depth and detail in the draft.
+   - **Follow explicit guidance**: Apply any other instructions in the text (e.g., "describe the retry policy in detail", "use the term 'transaction' not 'event'").
+3. **If no instructions exist for the domain**, proceed without restriction — the full findings are eligible for documentation.
+4. **Do not apply one domain's instructions to another domain's draft.** Instructions are domain-scoped.
+
 # Synthesis Tasks
+
+## 0. Apply Staging Corrections
+
+**This task runs first, before updating any drafts.**
+
+If `staging_feedback` is non-null:
+
+1. Read the staging feedback text in full.
+2. Identify any explicit corrections to existing draft content — factual errors, outdated descriptions, sections the user wants removed or clarified.
+3. For each correction, locate the affected section in the relevant draft file and apply the fix before doing any other synthesis work in that draft.
+4. Where feedback contradicts existing draft content, **prefer the feedback** and update accordingly. Add an inline note (e.g., `*Corrected: Run N — per user feedback*`) so readers can identify where corrections were applied.
+5. When feedback removes or overwrites content, append a brief entry to the changelog noting the correction and which run applied it.
+
+If `staging_feedback` is null, skip this task entirely and proceed to task 1.
 
 ## 1. Draft Document Creation
 
