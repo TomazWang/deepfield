@@ -337,7 +337,7 @@ Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 
 ---
 
-### Parallel Mode (`--parallel` flag)
+### Parallel Mode (default)
 
 Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently, then consolidates all findings before synthesis. This can reduce total run time by 3-5x on projects with 4+ domains.
 
@@ -525,7 +525,7 @@ Run marked as failed. Check agent logs for details.
 Suggestions:
   - Verify domain-index.md has valid file paths
   - Check deepfield/source/baseline/ has accessible files
-  - Try /df-iterate without --parallel to diagnose
+  - Try /df-iterate --sequential to diagnose
 ```
 
 Mark run config `"status": "failed"` and stop execution.
