@@ -566,10 +566,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-run-review-guide.js" \
 
 If any of the three generation scripts exit with a non-zero status:
 - Log a warning: `Warning: Readability document generation failed: <script> — <error>`
-- Continue with Step 5.5 (terminology extraction) — do NOT abort the run
+- Continue with Step 5.6 (terminology extraction) — do NOT abort the run
 - These documents are supplementary; their absence does not affect core learning output
 
-## Step 5.5: Extract Terminology
+## Step 5.6: Extract Terminology
 
 After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
 

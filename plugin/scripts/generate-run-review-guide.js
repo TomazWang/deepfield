@@ -268,6 +268,7 @@ function main() {
   const unknownsQ       = loadUnknowns(config.unknowns);
   const planQ           = extractOpenQuestionsFromPlan(config.learningPlan);
 
+  // runConfig.runNumber takes precedence over --run; --run is a fallback if the field is absent
   const runNumber   = runConfig.runNumber !== undefined ? runConfig.runNumber : config.run;
   const focusTopics = runConfig.focusTopics || [];
   const filesScanned = Object.keys(runConfig.fileHashes || {}).length;
