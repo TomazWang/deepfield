@@ -272,11 +272,18 @@ const domainInstructions = deepfieldConfig.domainInstructions[domainKey] || null
 
 If instructions exist, they will be passed to the agent as additional context. If no instructions exist for a domain, omit the section from the agent prompt.
 
-Choose between **Parallel Mode** (when `--parallel` flag was passed) and **Sequential Mode** (default).
+**Mode Selection** — determine which mode to use:
+
+1. If `--sequential` flag was passed → use **Sequential Mode**
+2. Else if `deepfield/wip/domain-index.md` exists → use **Parallel Mode** (default)
+3. Else → use **Sequential Mode** with warning:
+   ```
+   Warning: domain-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
+   ```
 
 ---
 
-### Sequential Mode (default)
+### Sequential Mode
 
 #### Invoke Learner Agent
 
@@ -330,7 +337,7 @@ Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 
 ---
 
-### Parallel Mode (`--parallel` flag)
+### Parallel Mode (default)
 
 Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently, then consolidates all findings before synthesis. This can reduce total run time by 3-5x on projects with 4+ domains.
 
@@ -397,28 +404,51 @@ Split domains into batches of `maxAgents`. For each batch:
    Batch 1/2: launching agents for [auth, api, database, ui, cache]
    ```
 
-2. **Launch all agents in the batch as parallel background Tasks:**
+2. **Launch all agents for this batch in a single message** (one tool call block with multiple Agent invocations) with `run_in_background: true`. This ensures true parallelism — all agents in the batch are submitted concurrently in one round-trip.
+
+   For each domain in the batch, invoke the **Agent tool** with `run_in_background: true` and the following inline prompt (fill in all placeholders from the `agentTasks` prepared in step 4b):
 
    ```
-   Launch (background): deepfield-domain-learner
-   Input: {
-     "domain_name": "auth",
-     "file_list": ["src/auth/login.ts", ...],
-     "previous_findings_path": "deepfield/wip/run-N-1/domains/auth-findings.md",
-     "findings_output_path": "deepfield/wip/run-N/domains/auth-findings.md",
-     "unknowns_output_path": "deepfield/wip/run-N/domains/auth-unknowns.md",
-     "open_questions": [...],
-     "current_draft_path": "deepfield/drafts/domains/auth.md"
-   }
+   You are a domain learning agent for the Deepfield knowledge base system.
 
-   Launch (background): deepfield-domain-learner
-   Input: { "domain_name": "api", ... }
+   Your job: deeply analyze the source files for the **${domain.name}** domain and write structured findings.
 
-   Launch (background): deepfield-domain-learner
-   Input: { "domain_name": "database", ... }
+   ## Domain
+   Name: ${domain.name}
+
+   ## Files to analyze
+   ${domain.files.map(f => `- ${f}`).join('\n')}
+
+   ## Context files (read if they exist)
+   - Previous findings: ${domain.previousFindingsPath}
+   - Current draft: ${domain.currentDraftPath}
+
+   ## Open questions for this domain
+   ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
+
+   ## Output (write these files)
+   - Findings: ${domain.findingsOutputPath}
+   - Unknowns: ${domain.unknownsOutputPath}
+
+   ## Findings file format
+   Write ${domain.findingsOutputPath} with the following sections:
+   - **Discoveries**: new facts learned about this domain
+   - **Cross-references**: relationships to other domains
+   - **Patterns**: recurring patterns or conventions observed
+   - **Contradictions**: inconsistencies found
+   - **Questions answered**: open questions that are now resolved
+   - **New questions**: questions raised by the analysis
+   - **Confidence Inputs** (JSON block): { "domain": "${domain.name}", "answeredQuestions": N, "unansweredQuestions": N, "unknowns": N, "evidenceByStrength": { "strong": N, "medium": N, "weak": N }, "analyzedSourceTypes": N, "requiredSourceTypes": N, "unresolvedContradictions": N, "totalContradictions": N }
+
+   ## Unknowns file format
+   Write ${domain.unknownsOutputPath} with a list of unresolved questions and missing information for this domain.
+
+   Read all files you can access from the file list above. Write findings to the output paths. Do not skip any files in the list.
    ```
 
-3. **Wait for all agents in this batch to complete** before starting the next batch.
+   Launch ALL agents for this batch in a single message block. Do not launch agents one at a time.
+
+3. **Wait for all agents in this batch to complete** before launching the next batch or proceeding.
 
 4. **Report batch completion:**
    ```
@@ -429,7 +459,21 @@ Split domains into batches of `maxAgents`. For each batch:
 
 #### 4e. Verify Agent Outputs (Failure Handling)
 
-After all batches complete, check which domain findings files were actually written:
+After all batches complete, collect the agent IDs returned by the Agent tool calls. Record them in the run config under `agentIds`:
+
+```javascript
+// Collect agent IDs returned by Agent tool calls across all batches
+// agentIds maps domain name → agent ID string returned by the Agent tool
+// Record agent IDs even for domains that failed to produce a findings file.
+// Only omit a domain from agentIds if the Agent tool returned no ID for that domain.
+const agentIds = {
+  "auth": "agent-abc123",
+  "api":  "agent-def456",
+  // etc.
+}
+```
+
+Then check which domain findings files were actually written:
 
 ```javascript
 const successDomains = []
@@ -462,7 +506,14 @@ Update the run config to record partial results:
   "parallelMode": true,
   "domainsAnalyzed": ["api", "database", "ui"],
   "domainsFailed": ["auth", "payments"],
-  "partialResults": true
+  "partialResults": true,
+  "agentIds": {
+    "api": "agent-def456",
+    "database": "agent-ghi789",
+    "ui": "agent-jkl012",
+    "auth": "agent-abc123",
+    "payments": "agent-mno345"
+  }
 }
 ```
 
@@ -474,7 +525,7 @@ Run marked as failed. Check agent logs for details.
 Suggestions:
   - Verify domain-index.md has valid file paths
   - Check deepfield/source/baseline/ has accessible files
-  - Try /df-iterate without --parallel to diagnose
+  - Try /df-iterate --sequential to diagnose
 ```
 
 Mark run config `"status": "failed"` and stop execution.

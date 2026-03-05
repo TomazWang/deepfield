@@ -16,8 +16,8 @@ arguments:
   - name: --focus
     description: Focus on a specific domain (e.g. --focus=authentication)
     required: false
-  - name: --parallel
-    description: Run domain-learning agents concurrently (one agent per domain, in parallel)
+  - name: --sequential
+    description: Run in sequential mode instead of the parallel default (one domain at a time)
     required: false
   - name: --max-agents
     description: Maximum number of domain agents to run concurrently in parallel mode (default 5)
@@ -72,7 +72,8 @@ After validation passes, invoke the **deepfield-iterate** skill with the followi
 
 - **Mode**: autonomous (default) or single (`--once`)
 - **Focus domain**: value of `--focus` if provided, otherwise let skill select from learning plan
-- **Parallel mode**: `true` if `--parallel` flag is present, otherwise `false`
+- **Parallel mode**: `true` by default (unless `--sequential` flag is passed)
+- **Sequential mode**: `true` if `--sequential` flag is present, otherwise `false`
 - **Max agents**: value of `--max-agents` if provided (default: 5), only relevant in parallel mode
 - **Working directory**: current directory (where `deepfield/` lives)
 
@@ -108,23 +109,24 @@ When `--focus=domain` is passed:
 - The skill should select topics related to that domain
 - Other topics may still be included if closely related
 
-### --parallel
+### --sequential
 
-When `--parallel` is passed:
-- Tell the skill to use parallel domain-learning mode
-- The skill will spawn one `deepfield-domain-learner` agent per domain, running concurrently
-- All agents run in background Tasks simultaneously (up to `--max-agents` limit)
-- Findings are consolidated from all domain agents before synthesis
-- Display parallel mode status: "Parallel mode: X domains, max Y concurrent agents"
-- Cannot be combined with `--focus` (parallel mode learns all domains; use `--focus` for sequential targeted learning)
+When `--sequential` is passed:
+- Tell the skill to use sequential domain-learning mode (one domain at a time)
+- Overrides the default parallel mode
+- Useful for debugging, tracing agent output, or low-resource environments
+- Can be combined with `--focus` for targeted sequential learning of a single domain
+
+> Note: `--parallel` is no longer a valid flag. Parallel mode is the default when `domain-index.md` exists. Use `--sequential` to opt out.
 
 ### --max-agents=N
 
-When `--max-agents=N` is passed alongside `--parallel`:
+When `--max-agents=N` is passed:
 - Set the maximum number of domain agents running concurrently to N
 - If domain count exceeds N, agents are batched: each batch of N runs in parallel, batches run sequentially
-- Default is 5 if `--parallel` is used without `--max-agents`
+- Default is 5
 - Minimum value: 1 (effectively sequential, but using the parallel code path)
+- Only relevant when running in parallel mode (i.e., `--sequential` was NOT passed)
 
 ## Output
 
@@ -134,7 +136,7 @@ The command itself produces minimal output — just validation messages and then
 
 ```
 Invoking autonomous learning...
-[Parallel mode: X domains, max Y agents concurrent]   ← only shown when --parallel
+[Parallel mode: X domains, max Y agents concurrent]
 
 [Skill takes over and produces detailed output]
 ```
@@ -157,5 +159,5 @@ Cannot run iterations: [specific reason]
 - If the user seems confused about workflow order, suggest `/df-continue` instead
 - After completion, suggest reviewing `deepfield/drafts/` for updated documentation
 - If stopped due to BLOCKED, highlight which sources are needed
-- If user passes both `--parallel` and `--focus`, explain they are mutually exclusive and ask which behavior they prefer
-- Recommend `--parallel` for projects with 4+ domains; mention the typical speedup (3-5x)
+- If user passes `--parallel`, inform them it is no longer a valid flag — parallel is now the default, and they can use `--sequential` to opt out
+- Recommend `--sequential` when debugging agent output or tracing specific domain learning; parallel is the default for speed
