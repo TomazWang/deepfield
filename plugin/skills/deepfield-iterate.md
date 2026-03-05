@@ -39,6 +39,20 @@ While should_continue:
        Report and exit
 ```
 
+# Document Length Rule
+
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
+
+1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+3. Add a **"See also"** section in the primary file linking to any sub-files:
+   ```
+   ## See also
+   - [Authentication Flows](flows.md)
+   ```
+
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+
 # Single Run Workflow (Run N)
 
 ## Pre-Run Setup
@@ -84,7 +98,8 @@ Create `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json`:
   "status": "in-progress",
   "focusTopics": [],
   "fileHashes": {},
-  "confidenceChanges": {}
+  "confidenceChanges": {},
+  "confidenceScores": {}
 }
 ```
 
@@ -299,6 +314,10 @@ Write all documentation in <deepfieldConfig.language>.
 If technical terms have no <language> equivalent, keep the English term with a <language> explanation in parentheses.
 ```
 
+#### Document Length Rule for Learner Agent
+
+> Follow the [Document Length Rule](#document-length-rule) defined above.
+
 #### Process Learner Output
 
 Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
@@ -500,7 +519,58 @@ Synthesizer updates:
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
-## Step 5.5: Extract Terminology
+### Document Length Rule for Synthesizer Agent
+
+> Follow the [Document Length Rule](#document-length-rule) defined above.
+
+## Step 5.5: Generate Readability Documents
+
+After the synthesizer has written domain drafts and updated the changelog, generate the three readability documents. These are supplementary — failures must NOT abort the run.
+
+### 5.5.1 Generate Drafts Index
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/README.md \
+  --unknowns   deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.2 Generate Domain Companion READMEs
+
+For every domain file that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+
+```bash
+# For each domain file: deepfield/drafts/domains/<domain>.md
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
+  --domain     <domain> \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/domains/<domain>/README.md
+```
+
+Enumerate domain files by listing all `*.md` files in `deepfield/drafts/domains/` and deriving the domain name by stripping the `.md` extension.
+
+### 5.5.3 Generate Run Review Guide
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-run-review-guide.js" \
+  --run           ${nextRun} \
+  --run-config    deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output        deepfield/wip/run-${nextRun}/review-guide.md \
+  --learning-plan deepfield/wip/learning-plan.md \
+  --unknowns      deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.4 Error Handling
+
+If any of the three generation scripts exit with a non-zero status:
+- Log a warning: `Warning: Readability document generation failed: <script> — <error>`
+- Continue with Step 5.6 (terminology extraction) — do NOT abort the run
+- These documents are supplementary; their absence does not affect core learning output
+
+## Step 5.6: Extract Terminology
 
 After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
 
@@ -563,20 +633,91 @@ If extraction or merge fails:
 - Log a warning: `Warning: Terminology extraction failed for Run ${nextRun}: <error>`
 - Continue to Step 6 — terminology extraction is non-blocking
 
+## Step 5.7: Calculate Evidence-Based Confidence Scores
+
+After synthesis and terminology extraction complete, run the confidence scoring script.
+
+### Collect Domain Inputs
+
+Parse the domain findings files produced this run to extract each domain's Confidence Inputs JSON block. Write the collected inputs to a single JSON array file:
+
+```bash
+# deepfield/wip/run-${nextRun}/confidence-inputs.json
+# Array of domain input objects from the ## Confidence Inputs sections
+# in each deepfield/wip/run-${nextRun}/domains/<domain>-findings.md
+```
+
+Each element must match the schema:
+```json
+{
+  "domain": "<domain-name>",
+  "answeredQuestions": <integer>,
+  "unansweredQuestions": <integer>,
+  "unknowns": <integer>,
+  "evidenceByStrength": { "strong": <int>, "medium": <int>, "weak": <int> },
+  "analyzedSourceTypes": <integer>,
+  "requiredSourceTypes": <integer>,
+  "unresolvedContradictions": <integer>,
+  "totalContradictions": <integer>
+}
+```
+
+For sequential mode (single learner agent), extract the `## Confidence Inputs` JSON block from `deepfield/wip/run-${nextRun}/findings.md` (the learner writes one block per domain).
+
+For parallel mode, read each `deepfield/wip/run-${nextRun}/domains/<domain>-findings.md` file and extract its `## Confidence Inputs` block. Skip domains that failed (no findings file).
+
+If no confidence inputs can be extracted (e.g., agent did not emit the block), log a warning and skip confidence scoring for that domain.
+
+### Run calculate-confidence.js
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/calculate-confidence.js" \
+  deepfield/wip/run-${nextRun}/confidence-inputs.json \
+  --wip-dir deepfield/wip \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --prev-run-config deepfield/wip/run-${nextRun - 1}/run-${nextRun - 1}.config.json
+```
+
+This script:
+1. Reads `confidence-inputs.json`
+2. Looks up each domain's previous aggregate from `run-${nextRun-1}.config.json` (null on first run)
+3. Computes the four-component formula for each domain
+4. Overwrites `deepfield/wip/confidence-scores.md` with the per-domain breakdown
+5. Updates `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json` `confidenceScores` field
+
+If calculate-confidence.js fails:
+- Log a warning: `Warning: Confidence scoring failed for Run ${nextRun}: <error>`
+- Continue to Step 6 — confidence scoring is non-blocking
+
+### Generate Run Review Guide
+
+After calculate-confidence.js succeeds (or is skipped due to failure), generate the run review guide `deepfield/wip/run-${nextRun}/run-review-guide.md` with a **Confidence Summary** section.
+
+Read `deepfield/wip/confidence-scores.md` and include:
+
+```markdown
+## Confidence Summary
+
+| Domain | Score | Percentage | Delta |
+|--------|-------|-----------|-------|
+| auth   | 0.734 | 73.4%     | +0.05 |
+| api    | 0.610 | 61.0%     | -0.11 |
+```
+
+- Show delta with sign (e.g., `+0.05` or `-0.11` or `0.00`)
+- Show negative deltas as-is — they indicate a run discovered new unknowns or contradictions, which is valuable information
+- If confidence-scores.md does not exist (scoring was skipped), omit the section with a note: `Confidence scoring not available for this run.`
+
 ## Step 6: Update Learning Plan
 
-### Calculate Confidence Changes
+### Read Confidence Scores
 
-Based on findings and synthesis:
-- Significant progress: +20-40%
-- Moderate progress: +10-20%
-- Light progress: +5-10%
-- Contradiction found: -10 to -20%
+Before updating the learning plan, read `deepfield/wip/confidence-scores.md` to get the current aggregate score for each domain. Use these values (converted to percentages) to update the confidence tracking table in `learning-plan.md`. Do NOT estimate confidence subjectively.
 
 ### Update Plan
 
 For each focus topic:
-1. Update confidence level
+1. Update confidence level — use the aggregate from `wip/confidence-scores.md` (do NOT estimate subjectively)
 2. Mark answered questions
 3. Add newly raised questions
 4. Update needed sources
@@ -609,6 +750,14 @@ Overwrite `deepfield/wip/learning-plan.md` with updated plan.
   "confidenceChanges": {
     "API Structure": { "before": 50, "after": 70 },
     "Data Flow": { "before": 30, "after": 50 }
+  },
+  "confidenceScores": {
+    "api-structure": {
+      "aggregate": 0.70,
+      "previousAggregate": 0.50,
+      "components": { "questionsAnswered": 0.8, "evidenceStrength": 0.65, "sourceCoverage": 0.75, "contradictionResolution": 1.0 },
+      "inputs": { "answeredQuestions": 8, "unansweredQuestions": 2, "unknowns": 0, "evidenceByStrength": { "strong": 3, "medium": 2, "weak": 1 }, "analyzedSourceTypes": 3, "requiredSourceTypes": 4, "unresolvedContradictions": 0, "totalContradictions": 0 }
+    }
   }
 }
 ```
