@@ -404,9 +404,13 @@ Split domains into batches of `maxAgents`. For each batch:
    Batch 1/2: launching agents for [auth, api, database, ui, cache]
    ```
 
-2. **Launch all agents for this batch in a single message** (one tool call block with multiple Agent invocations) with `run_in_background: true`. This ensures true parallelism — all agents in the batch are submitted concurrently in one round-trip.
+2. **Launch all agents for this batch in a single message** (one tool call block with multiple Task invocations) with `run_in_background: true`. This ensures true parallelism — all agents in the batch are submitted concurrently in one round-trip.
 
-   For each domain in the batch, invoke the **Agent tool** with `run_in_background: true` and the following inline prompt (fill in all placeholders from the `agentTasks` prepared in step 4b):
+   For each domain in the batch, invoke the **Task tool** with the following parameters:
+   - **subagent_type**: `"deepfield:Deepfield Domain Learner"`
+   - **description**: `"Learn ${domain.name} domain (Run ${runNumber})"`
+   - **run_in_background**: `true`
+   - **prompt**: the inline prompt below (fill in all placeholders from the `agentTasks` prepared in step 4b)
 
    ```
    You are a domain learning agent for the Deepfield knowledge base system.
@@ -450,7 +454,14 @@ Split domains into batches of `maxAgents`. For each batch:
    Read all files you can access from the file list above. Write findings to the output paths. Do not skip any files in the list.
    ```
 
-   Launch ALL agents for this batch in a single message block. Do not launch agents one at a time.
+   **You MUST make all Task tool calls for this batch in a SINGLE message** (one `<function_calls>` block with one Task call per domain). Do NOT launch agents one at a time in separate messages — that is sequential, not parallel.
+
+   Example for a batch with 3 domains (auth, api, database):
+   - First Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn auth domain (Run N)"`, `run_in_background=true`, prompt filled with auth context
+   - Second Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn api domain (Run N)"`, `run_in_background=true`, prompt filled with api context
+   - Third Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn database domain (Run N)"`, `run_in_background=true`, prompt filled with database context
+
+   All three calls in the same message. Wait for all to complete before proceeding.
 
 3. **Wait for all agents in this batch to complete** before launching the next batch or proceeding.
 
@@ -463,13 +474,13 @@ Split domains into batches of `maxAgents`. For each batch:
 
 #### 4e. Verify Agent Outputs (Failure Handling)
 
-After all batches complete, collect the agent IDs returned by the Agent tool calls. Record them in the run config under `agentIds`:
+After all batches complete, collect the agent IDs returned by the Task tool calls. Record them in the run config under `agentIds`:
 
 ```javascript
-// Collect agent IDs returned by Agent tool calls across all batches
-// agentIds maps domain name → agent ID string returned by the Agent tool
+// Collect agent IDs returned by Task tool calls across all batches
+// agentIds maps domain name → agent ID string returned by the Task tool
 // Record agent IDs even for domains that failed to produce a findings file.
-// Only omit a domain from agentIds if the Agent tool returned no ID for that domain.
+// Only omit a domain from agentIds if the Task tool returned no ID for that domain.
 const agentIds = {
   "auth": "agent-abc123",
   "api":  "agent-def456",
