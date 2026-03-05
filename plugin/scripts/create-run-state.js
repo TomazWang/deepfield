@@ -111,6 +111,7 @@ function createRunState(options) {
     fileHashes,
     focusTopics: [],
     confidenceChanges: {},
+    confidenceScores: {},
     changesDetected: false,
     learningGenerated: true,
   };

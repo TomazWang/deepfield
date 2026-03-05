@@ -104,22 +104,52 @@ When a contradiction is found:
 - Lower confidence in the affected area
 - Add an investigation question
 
-## Step 6: Assess Confidence
+## Step 6: Assess Confidence Inputs
 
-After reading all files, assess your confidence in understanding this domain:
+After reading all files, count the observable signals that feed the deterministic confidence formula. Do NOT estimate a subjective percentage. Instead, report the raw counts below. The `calculate-confidence.js` script computes the actual score.
 
-| Level | Score | Meaning |
-|-------|-------|---------|
-| High | 80-100% | Architecture and key flows clearly understood |
-| Medium | 50-79% | General shape clear but details uncertain |
-| Low | 20-49% | Partial understanding, significant gaps |
-| Unknown | 0-19% | Insufficient files to form a picture |
+**Evidence strength tags** — when recording evidence items in your findings, tag each item with one of:
+- `[strong]` — direct source code with clear semantics (e.g., function signature, schema definition, test assertion)
+- `[medium]` — indirect evidence (e.g., comments, configuration, log output, secondary docs)
+- `[weak]` — inferred or circumstantial evidence (e.g., naming conventions, folder structure, incomplete tests)
 
-Factors that lower confidence:
-- Files referenced but not in your file list
-- Complex logic that is hard to trace statically
-- Missing test coverage
-- Contradictions found
+Items with no tag are treated as `[weak]` by the formula.
+
+**Human-provided answers** — when a question is answered by something a human told you (via the open questions context, session notes, or any conversational input), record it as `[weak]` by default. The human does NOT need to tag anything. You must then verify the answer against source code and reasoning, and promote it if warranted:
+
+- `[strong]` — the human's answer is confirmed by code or tests you read in your file list
+- `[medium]` — the human's answer is plausible and consistent with what you read, but not directly confirmed
+- `[weak]` — the human's answer cannot be corroborated; remains as recorded
+
+**Human override of source code**: When a human answer *contradicts* what source code appears to show, do not automatically discount the human. Developers sometimes know that code is future scaffolding — written ahead of time, not yet wired in, or intentionally disabled. Evaluate the code for scaffolding signals:
+
+- Unused imports or unreferenced functions
+- Feature flags set to `false` or `off`
+- TODO/FIXME comments indicating future intent
+- Functions defined but never called in the active path
+- Tests absent or skipped for the feature
+
+If scaffolding signals are present → trust the human answer, promote to `[medium]` (or `[strong]` if the human's explanation is detailed and code confirms the dormant pattern), and note in findings: `"Code exists but human indicates not in active use — likely future scaffolding"`.
+
+If the code is clearly active (called, tested, configured, live in a code path) → flag as contradiction, keep `[weak]`, and add to unknowns for resolution.
+
+A human answer alone is never `[strong]` without code corroboration. People misremember, describe older behavior, or give ambiguous answers. The tagging process ensures that the `evidence_strength` component reflects the true reliability of what is claimed.
+
+Count the following for the Confidence Inputs section of the Findings file:
+- **answeredQuestions**: number of open questions from the learning plan that you answered with evidence
+- **unansweredQuestions**: number of open questions that remain unanswered after reading your file list
+- **unknowns**: number of new unknowns you discovered (gaps not in the original question list)
+- **evidenceByStrength**: count of evidence items by tag: `strong`, `medium`, `weak`
+- **analyzedSourceTypes**: number of distinct source type categories you actually read (code, tests, docs, config, diagrams)
+- **requiredSourceTypes**: number of source type categories that would be needed for full domain understanding (from brief.md or default: 4 — code, tests, docs, config)
+- **unresolvedContradictions**: number of contradictions you found that remain unresolved
+- **totalContradictions**: total contradictions found (resolved + unresolved)
+
+Factors that affect confidence inputs:
+- Files referenced but not in your file list → add to unknowns
+- Complex logic hard to trace statically → lower answeredQuestions count
+- Missing test coverage → lower analyzedSourceTypes (tests not covered)
+- Contradictions found → increment contradiction counters
 
 # Output Format
 
@@ -204,14 +234,27 @@ Write to the provided findings output path (`deepfield/wip/run-N/domains/<domain
 - **Impact:** [Effect on confidence]
 - **Needs:** [What would clarify this]
 
-## Confidence Breakdown
+## Confidence Inputs
 
-| Area | Confidence | Notes |
-|------|-----------|-------|
-| Overall | <score>% | |
-| <sub-area> | <score>% | [Reason if low] |
+> These raw counts are consumed by `calculate-confidence.js` to compute the deterministic score.
+> Do NOT write a subjective percentage here — only fill in the counts below.
 
-**Confidence: <overall-score>/100**
+```json
+{
+  "domain": "<domain-name>",
+  "answeredQuestions": <integer>,
+  "unansweredQuestions": <integer>,
+  "unknowns": <integer>,
+  "evidenceByStrength": {
+    "strong": <integer>,
+    "medium": <integer>,
+    "weak": <integer>
+  },
+  "analyzedSourceTypes": <integer>,
+  "requiredSourceTypes": <integer>,
+  "unresolvedContradictions": <integer>,
+  "totalContradictions": <integer>
+}
 ```
 
 ## Unknowns File
@@ -258,7 +301,8 @@ Files referenced by this domain's code but not in this agent's file list:
 - **Document dependencies**: Note what other domains you depend on even though you cannot read them
 - **Record contradictions**: Do not hide inconsistencies, document them with evidence on both sides
 - **Write complete output files**: Both findings and unknowns files must be written before you finish
-- **Include confidence score**: A numeric score in the findings header and breakdown table
+- **Include Confidence Inputs block**: Every findings file MUST include the `## Confidence Inputs` JSON block with all fields filled in — do NOT write a subjective confidence percentage; the formula computes the score from your counts
+- **Tag all evidence items**: Each evidence item must carry a `[strong]`, `[medium]`, or `[weak]` tag; untagged items default to weak in the formula
 
 # Tips
 

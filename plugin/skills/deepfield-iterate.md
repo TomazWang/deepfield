@@ -84,7 +84,8 @@ Create `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json`:
   "status": "in-progress",
   "focusTopics": [],
   "fileHashes": {},
-  "confidenceChanges": {}
+  "confidenceChanges": {},
+  "confidenceScores": {}
 }
 ```
 
@@ -563,20 +564,91 @@ If extraction or merge fails:
 - Log a warning: `Warning: Terminology extraction failed for Run ${nextRun}: <error>`
 - Continue to Step 6 — terminology extraction is non-blocking
 
+## Step 5.7: Calculate Evidence-Based Confidence Scores
+
+After synthesis and terminology extraction complete, run the confidence scoring script.
+
+### Collect Domain Inputs
+
+Parse the domain findings files produced this run to extract each domain's Confidence Inputs JSON block. Write the collected inputs to a single JSON array file:
+
+```bash
+# deepfield/wip/run-${nextRun}/confidence-inputs.json
+# Array of domain input objects from the ## Confidence Inputs sections
+# in each deepfield/wip/run-${nextRun}/domains/<domain>-findings.md
+```
+
+Each element must match the schema:
+```json
+{
+  "domain": "<domain-name>",
+  "answeredQuestions": <integer>,
+  "unansweredQuestions": <integer>,
+  "unknowns": <integer>,
+  "evidenceByStrength": { "strong": <int>, "medium": <int>, "weak": <int> },
+  "analyzedSourceTypes": <integer>,
+  "requiredSourceTypes": <integer>,
+  "unresolvedContradictions": <integer>,
+  "totalContradictions": <integer>
+}
+```
+
+For sequential mode (single learner agent), extract the `## Confidence Inputs` JSON block from `deepfield/wip/run-${nextRun}/findings.md` (the learner writes one block per domain).
+
+For parallel mode, read each `deepfield/wip/run-${nextRun}/domains/<domain>-findings.md` file and extract its `## Confidence Inputs` block. Skip domains that failed (no findings file).
+
+If no confidence inputs can be extracted (e.g., agent did not emit the block), log a warning and skip confidence scoring for that domain.
+
+### Run calculate-confidence.js
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/calculate-confidence.js" \
+  deepfield/wip/run-${nextRun}/confidence-inputs.json \
+  --wip-dir deepfield/wip \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --prev-run-config deepfield/wip/run-${nextRun - 1}/run-${nextRun - 1}.config.json
+```
+
+This script:
+1. Reads `confidence-inputs.json`
+2. Looks up each domain's previous aggregate from `run-${nextRun-1}.config.json` (null on first run)
+3. Computes the four-component formula for each domain
+4. Overwrites `deepfield/wip/confidence-scores.md` with the per-domain breakdown
+5. Updates `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json` `confidenceScores` field
+
+If calculate-confidence.js fails:
+- Log a warning: `Warning: Confidence scoring failed for Run ${nextRun}: <error>`
+- Continue to Step 6 — confidence scoring is non-blocking
+
+### Generate Run Review Guide
+
+After calculate-confidence.js succeeds (or is skipped due to failure), generate the run review guide `deepfield/wip/run-${nextRun}/run-review-guide.md` with a **Confidence Summary** section.
+
+Read `deepfield/wip/confidence-scores.md` and include:
+
+```markdown
+## Confidence Summary
+
+| Domain | Score | Percentage | Delta |
+|--------|-------|-----------|-------|
+| auth   | 0.734 | 73.4%     | +0.05 |
+| api    | 0.610 | 61.0%     | -0.11 |
+```
+
+- Show delta with sign (e.g., `+0.05` or `-0.11` or `0.00`)
+- Show negative deltas as-is — they indicate a run discovered new unknowns or contradictions, which is valuable information
+- If confidence-scores.md does not exist (scoring was skipped), omit the section with a note: `Confidence scoring not available for this run.`
+
 ## Step 6: Update Learning Plan
 
-### Calculate Confidence Changes
+### Read Confidence Scores
 
-Based on findings and synthesis:
-- Significant progress: +20-40%
-- Moderate progress: +10-20%
-- Light progress: +5-10%
-- Contradiction found: -10 to -20%
+Before updating the learning plan, read `deepfield/wip/confidence-scores.md` to get the current aggregate score for each domain. Use these values (converted to percentages) to update the confidence tracking table in `learning-plan.md`. Do NOT estimate confidence subjectively.
 
 ### Update Plan
 
 For each focus topic:
-1. Update confidence level
+1. Update confidence level — use the aggregate from `wip/confidence-scores.md` (do NOT estimate subjectively)
 2. Mark answered questions
 3. Add newly raised questions
 4. Update needed sources
@@ -609,6 +681,14 @@ Overwrite `deepfield/wip/learning-plan.md` with updated plan.
   "confidenceChanges": {
     "API Structure": { "before": 50, "after": 70 },
     "Data Flow": { "before": 30, "after": 50 }
+  },
+  "confidenceScores": {
+    "api-structure": {
+      "aggregate": 0.70,
+      "previousAggregate": 0.50,
+      "components": { "questionsAnswered": 0.8, "evidenceStrength": 0.65, "sourceCoverage": 0.75, "contradictionResolution": 1.0 },
+      "inputs": { "answeredQuestions": 8, "unansweredQuestions": 2, "unknowns": 0, "evidenceByStrength": { "strong": 3, "medium": 2, "weak": 1 }, "analyzedSourceTypes": 3, "requiredSourceTypes": 4, "unresolvedContradictions": 0, "totalContradictions": 0 }
+    }
   }
 }
 ```
