@@ -53,6 +53,7 @@ import {
   createApplyOpCommand,
   createValidateCommand,
   createSetVersionCommand,
+  createScaffoldCrossCuttingCommand,
 } from './commands/upgrade-helpers.js';
 
 // Register commands
@@ -70,6 +71,7 @@ program.addCommand(createBackupCommand());
 program.addCommand(createApplyOpCommand());
 program.addCommand(createValidateCommand());
 program.addCommand(createSetVersionCommand());
+program.addCommand(createScaffoldCrossCuttingCommand());
 
 // Global error handler
 process.on('uncaughtException', (error: Error) => {
