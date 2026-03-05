@@ -11,9 +11,9 @@ import { createBackup } from '../utils/backup.js';
 function getCliVersion(): string {
   try {
     const pkgPath = join(dirname(dirname(__filename)), 'package.json');
-    return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '1.0.0';
+    return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '0.0.0';
   } catch {
-    return '1.0.0';
+    return '0.0.0';
   }
 }
 
