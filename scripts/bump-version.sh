@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# bump-version.sh — Atomically update the version in all three Deepfield
+# bump-version.sh — Atomically update the version in all four Deepfield
 # package files and rebuild the CLI.
 #
 # Files updated:
+#   package.json                  → .version  (monorepo root)
 #   cli/package.json              → .version
 #   plugin/package.json           → .version AND .peerDependencies.deepfield
 #   plugin/.claude-plugin/plugin.json → .version
@@ -15,6 +16,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+ROOT_PKG="$REPO_ROOT/package.json"
 CLI_PKG="$REPO_ROOT/cli/package.json"
 PLUGIN_PKG="$REPO_ROOT/plugin/package.json"
 PLUGIN_JSON="$REPO_ROOT/plugin/.claude-plugin/plugin.json"
@@ -138,6 +140,9 @@ atomic_json_update() {
 # ---------------------------------------------------------------------------
 # Update files
 # ---------------------------------------------------------------------------
+echo "Updating package.json (root) ..."
+atomic_json_update "$ROOT_PKG" ".version = \"$NEW_VERSION\""
+
 echo "Updating cli/package.json ..."
 atomic_json_update "$CLI_PKG" ".version = \"$NEW_VERSION\""
 
