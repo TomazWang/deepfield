@@ -27,6 +27,11 @@ The `deepfield clone-repos` command MUST read `deepfield/source/baseline/repos.c
 - **THEN** user is advised to run `deepfield clone-repos --detect` to generate it
 - **THEN** exit code is non-zero
 
+#### Scenario: Config file exists but has zero entries
+- **WHEN** `repos.config.json` exists and contains an empty array (`[]`)
+- **THEN** the command prints "No repos configured." to stdout
+- **THEN** exit code is 0
+
 ### Requirement: clone-repos SHALL support shallow clones via depth config
 
 When a repo entry has a non-zero `depth` field, the clone MUST use `--depth <n>`.

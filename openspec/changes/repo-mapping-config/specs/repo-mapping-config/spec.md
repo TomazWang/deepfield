@@ -7,7 +7,7 @@ The system MUST maintain `deepfield/source/baseline/repos.config.json` with the 
 - `url` (string, required): git remote URL
 - `branch` (string, required): branch to clone
 - `commit` (string, optional): last known HEAD commit SHA
-- `path` (string, required): path relative to `deepfield/source/baseline/repos/`
+- `path` (string, required): path relative to the workspace root (not relative to `repos/`). Example: `"deepfield/source/baseline/repos/target-codebase"`
 - `cloneMethod` (enum: `"https"` | `"ssh"`, required): protocol used
 - `depth` (number, optional): shallow clone depth; 0 or omitted means full clone
 

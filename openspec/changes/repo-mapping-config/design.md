@@ -65,9 +65,10 @@ Alternative: copy everything then delete the repos dir in the backup. Rejected b
 ## Migration Plan
 
 1. Deploy updated backup.ts — existing backups are unaffected; new backups simply exclude repo contents.
-2. Update `.gitignore` template in `cli/src/templates/` — applied on `deepfield init`.
-3. Existing workspaces: user runs `deepfield clone-repos --detect` once to generate `repos.config.json` from their existing repos directory.
-4. No rollback needed — backup exclusion is additive, config file is optional.
+2. Update `.gitignore` template in `cli/templates/` — applied on `deepfield init`.
+3. Existing workspaces that already have `source/baseline/repos/` tracked by git must run `git rm -r --cached deepfield/source/baseline/repos/` to untrack the repos without deleting local files.
+4. Existing workspaces: user runs `deepfield clone-repos --detect` once to generate `repos.config.json` from their existing repos directory.
+5. No rollback needed — backup exclusion is additive, config file is optional.
 
 ## Open Questions
 

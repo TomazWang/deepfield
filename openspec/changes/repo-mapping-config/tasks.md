@@ -1,7 +1,8 @@
 ## 1. Git Ignore and Templates
 
-- [ ] 1.1 Add `deepfield/source/baseline/repos/` to the `.gitignore` template used by `deepfield init` (`cli/src/templates/` or equivalent)
-- [ ] 1.2 Verify that any existing `.gitignore` in the project root does NOT need updating (repos/ is inside deepfield/, covered by template)
+- [ ] 1.1a Create `cli/templates/.gitignore` template file with `deepfield/source/baseline/repos/` as an entry
+- [ ] 1.1b Wire the `.gitignore` template into `scaffold.ts` template mappings so `deepfield init` copies it to the workspace root on initialization
+- [ ] 1.2 Confirm `deepfield/source/baseline/repos/` is not tracked by the project's own git after running `deepfield init` (acceptance: `git status` in a freshly-initialized workspace shows no files under that path)
 
 ## 2. repos.config.json Schema and Helpers
 
