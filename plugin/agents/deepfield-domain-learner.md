@@ -1,5 +1,5 @@
 ---
-name: Deepfield Domain Learner
+name: deepfield-domain-learner
 description: Focused single-domain learning specialist — analyzes one domain's files in isolation and writes findings and unknowns to domain-scoped output files
 color: blue
 ---

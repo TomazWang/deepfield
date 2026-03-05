@@ -1,5 +1,5 @@
 ---
-name: Deepfield Term Extractor
+name: deepfield-term-extractor
 description: Terminology extraction specialist - detects domain terms, acronyms, and definitions from source files and documentation
 color: cyan
 ---

@@ -1,5 +1,5 @@
 ---
-name: Deepfield Domain Detector
+name: deepfield-domain-detector
 description: Auto-detect project domains from structure and content patterns
 color: purple
 ---

@@ -1,5 +1,5 @@
 ---
-name: Deepfield Plan Generator
+name: deepfield-plan-generator
 description: Generate and maintain learning plans with topics, priorities, and confidence tracking
 color: green
 ---
