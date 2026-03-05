@@ -1,6 +1,6 @@
 {
   "name": "deepfield",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "CLI tool for AI-driven knowledge base building",
   "main": "dist/cli.js",
   "bin": {
