@@ -371,7 +371,8 @@ const agentTasks = allDomains.map(domain => ({
   findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
   unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
   openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-  currentDraftPath: `deepfield/drafts/domains/${domain.name}.md`,
+  behaviorSpecPath: `deepfield/drafts/domains/${domain.name}/behavior-spec.md`,
+  techSpecPath: `deepfield/drafts/domains/${domain.name}/tech-spec.md`,
 }))
 ```
 
@@ -425,7 +426,8 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Context files (read if they exist)
    - Previous findings: ${domain.previousFindingsPath}
-   - Current draft: ${domain.currentDraftPath}
+   - Behavior spec: ${domain.behaviorSpecPath}
+   - Tech spec: ${domain.techSpecPath}
 
    ## Open questions for this domain
    ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
@@ -572,7 +574,7 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/*.md",
+  "existing_drafts": "deepfield/drafts/domains/**/*.md",
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language
@@ -582,7 +584,8 @@ Input: {
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `deepfield/drafts/domains/<topic>.md` - Updated with new knowledge
+- `deepfield/drafts/domains/<topic>/behavior-spec.md` - Updated stakeholder specification
+- `deepfield/drafts/domains/<topic>/tech-spec.md` - Updated technical specification
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
@@ -606,18 +609,23 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain file that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+For every domain subdirectory that exists in `deepfield/drafts/domains/` (not just domains updated this run):
 
 ```bash
-# For each domain file: deepfield/drafts/domains/<domain>.md
+# Enumerate domain subdirectories
+ls -d deepfield/drafts/domains/*/
+
+# For each domain subdirectory: deepfield/drafts/domains/<domain>/
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
-  --domain     <domain> \
-  --drafts-dir deepfield/drafts \
-  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --output     deepfield/drafts/domains/<domain>/README.md
+  --domain          <domain> \
+  --drafts-dir      deepfield/drafts \
+  --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --behavior-spec   deepfield/drafts/domains/<domain>/behavior-spec.md \
+  --tech-spec       deepfield/drafts/domains/<domain>/tech-spec.md \
+  --output          deepfield/drafts/domains/<domain>/README.md
 ```
 
-Enumerate domain files by listing all `*.md` files in `deepfield/drafts/domains/` and deriving the domain name by stripping the `.md` extension.
+Enumerate domain names by listing subdirectories under `deepfield/drafts/domains/` and using the directory name as the domain name (exclude non-domain directories such as `cross-cutting`).
 
 ### 5.5.3 Generate Run Review Guide
 
@@ -982,9 +990,12 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 🔗 Contradictions Found: [N]
 
 📁 Documentation Updated:
-  - deepfield/drafts/domains/authentication.md
-  - deepfield/drafts/domains/api-structure.md
-  - deepfield/drafts/domains/data-flow.md
+  - deepfield/drafts/domains/authentication/behavior-spec.md
+  - deepfield/drafts/domains/authentication/tech-spec.md
+  - deepfield/drafts/domains/api-structure/behavior-spec.md
+  - deepfield/drafts/domains/api-structure/tech-spec.md
+  - deepfield/drafts/domains/data-flow/behavior-spec.md
+  - deepfield/drafts/domains/data-flow/tech-spec.md
 
 🔍 Next Steps:
 
