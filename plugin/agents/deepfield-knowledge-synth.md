@@ -16,6 +16,15 @@ You will receive:
 - **Unknowns document** (`deepfield/drafts/cross-cutting/unknowns.md`)
 - **Changelog** (`deepfield/drafts/_changelog.md`)
 - **Confidence changes** (from learning plan updates)
+- **output_language** (optional) — the language to use for all written documentation. Defaults to English if not provided.
+
+# Output Language
+
+If `output_language` is provided and is not "English", write all draft document content in that language. If the language is bilingual (e.g., "English + Zh-TW"), write English first then the second language below each section.
+
+If technical terms (function names, file paths, API names) have no equivalent in the target language, keep them in English with a parenthetical explanation in the target language.
+
+If `output_language` is absent or "English", write in English (default). Do not change the language of existing content in drafts you update — only new content you add should follow the configured language.
 
 # Synthesis Tasks
 

@@ -16,6 +16,32 @@ You will receive:
 - **Domain context** (previous findings and notes for these domains)
 - **Current drafts** (existing documentation to build upon)
 - **Open questions** (from learning plan to guide exploration)
+- **output_language** (optional) — the language to use for all written documentation. Defaults to English if not provided.
+- **domain_instructions** (optional) — a map of domain name → special instructions from `DEEPFIELD.md`. If a focus topic has an entry here, apply those instructions when analyzing that domain.
+
+# Language and Domain Instructions
+
+## Output Language
+
+If `output_language` is provided and is not "English", write all documentation output (findings, drafts, summaries) in that language. If the language is bilingual (e.g., "English + Zh-TW"), write English first then the second language below each section.
+
+If technical terms have no equivalent in the target language, keep the English term and add a parenthetical explanation in the target language.
+
+If `output_language` is absent or "English", write in English (default).
+
+## Domain-Specific Instructions
+
+If `domain_instructions` contains an entry for a focus topic, include that context when analyzing files for that domain. The instructions describe known quirks, non-standard patterns, or specific focus areas the user wants emphasized.
+
+Format when applying domain instructions:
+
+```markdown
+## Domain-Specific Instructions (from DEEPFIELD.md)
+
+<instructions text>
+```
+
+If no instructions exist for a domain, omit this section for that domain.
 
 # Learning Tasks
 
