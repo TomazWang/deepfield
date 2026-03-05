@@ -426,6 +426,10 @@ Split domains into batches of `maxAgents`. For each batch:
    ## Open questions for this domain
    ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
 
+   ${deepfieldConfig.domainInstructions[domain.name] ? `## Domain-Specific Instructions (from DEEPFIELD.md)\n\n${deepfieldConfig.domainInstructions[domain.name]}` : ''}
+
+   ${deepfieldConfig.language && deepfieldConfig.language !== 'English' ? `## Output Language\n\nWrite all documentation in ${deepfieldConfig.language}.\nIf technical terms have no ${deepfieldConfig.language} equivalent, keep the English term with a ${deepfieldConfig.language} explanation in parentheses.` : ''}
+
    ## Output (write these files)
    - Findings: ${domain.findingsOutputPath}
    - Unknowns: ${domain.unknownsOutputPath}
@@ -559,7 +563,8 @@ Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
   "existing_drafts": "deepfield/drafts/domains/*.md",
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
-  "changelog": "deepfield/drafts/_changelog.md"
+  "changelog": "deepfield/drafts/_changelog.md",
+  "output_language": deepfieldConfig.language
 }
 ```
 
