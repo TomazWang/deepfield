@@ -1,5 +1,5 @@
 ---
-name: Deepfield Learner
+name: deepfield-learner
 description: Deep reading specialist - connects concepts, identifies patterns, discovers relationships
 color: yellow
 ---

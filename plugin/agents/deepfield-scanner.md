@@ -1,5 +1,5 @@
 ---
-name: Deepfield Scanner
+name: deepfield-scanner
 description: Shallow structural scan to map project without deep reading
 color: cyan
 ---

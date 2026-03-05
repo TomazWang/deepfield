@@ -1,5 +1,5 @@
 ---
-name: Deepfield Knowledge Synthesizer
+name: deepfield-knowledge-synth
 description: Transform findings into natural prose documentation, maintain drafts, track changes
 color: orange
 ---

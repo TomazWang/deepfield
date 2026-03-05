@@ -1,5 +1,5 @@
 ---
-name: Deepfield Classifier
+name: deepfield-classifier
 description: Classify sources by type, trust level, and domain relevance
 color: blue
 ---
