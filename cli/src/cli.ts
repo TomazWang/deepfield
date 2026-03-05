@@ -46,6 +46,7 @@ import { createStatusCommand } from './commands/status.js';
 import { createBootstrapCommand } from './commands/bootstrap.js';
 import { createUpgradeCommand } from './commands/upgrade.js';
 import { createRollbackCommand } from './commands/rollback.js';
+import { createVersionCommand } from './commands/version.js';
 import {
   createDetectVersionCommand,
   createBackupCommand,
@@ -61,6 +62,7 @@ program.addCommand(createStatusCommand());
 program.addCommand(createBootstrapCommand());
 program.addCommand(createUpgradeCommand());
 program.addCommand(createRollbackCommand());
+program.addCommand(createVersionCommand());
 
 // Register upgrade helper sub-commands (used by the /df-upgrade plugin skill)
 program.addCommand(createDetectVersionCommand());
