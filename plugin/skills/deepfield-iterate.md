@@ -39,6 +39,20 @@ While should_continue:
        Report and exit
 ```
 
+# Document Length Rule
+
+**IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
+
+1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+3. Add a **"See also"** section in the primary file linking to any sub-files:
+   ```
+   ## See also
+   - [Authentication Flows](flows.md)
+   ```
+
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+
 # Single Run Workflow (Run N)
 
 ## Pre-Run Setup
@@ -300,6 +314,10 @@ Write all documentation in <deepfieldConfig.language>.
 If technical terms have no <language> equivalent, keep the English term with a <language> explanation in parentheses.
 ```
 
+#### Document Length Rule for Learner Agent
+
+> Follow the [Document Length Rule](#document-length-rule) defined above.
+
 #### Process Learner Output
 
 Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
@@ -501,7 +519,58 @@ Synthesizer updates:
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
-## Step 5.5: Extract Terminology
+### Document Length Rule for Synthesizer Agent
+
+> Follow the [Document Length Rule](#document-length-rule) defined above.
+
+## Step 5.5: Generate Readability Documents
+
+After the synthesizer has written domain drafts and updated the changelog, generate the three readability documents. These are supplementary — failures must NOT abort the run.
+
+### 5.5.1 Generate Drafts Index
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/README.md \
+  --unknowns   deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.2 Generate Domain Companion READMEs
+
+For every domain file that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+
+```bash
+# For each domain file: deepfield/drafts/domains/<domain>.md
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
+  --domain     <domain> \
+  --drafts-dir deepfield/drafts \
+  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output     deepfield/drafts/domains/<domain>/README.md
+```
+
+Enumerate domain files by listing all `*.md` files in `deepfield/drafts/domains/` and deriving the domain name by stripping the `.md` extension.
+
+### 5.5.3 Generate Run Review Guide
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-run-review-guide.js" \
+  --run           ${nextRun} \
+  --run-config    deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --output        deepfield/wip/run-${nextRun}/review-guide.md \
+  --learning-plan deepfield/wip/learning-plan.md \
+  --unknowns      deepfield/drafts/cross-cutting/unknowns.md
+```
+
+### 5.5.4 Error Handling
+
+If any of the three generation scripts exit with a non-zero status:
+- Log a warning: `Warning: Readability document generation failed: <script> — <error>`
+- Continue with Step 5.6 (terminology extraction) — do NOT abort the run
+- These documents are supplementary; their absence does not affect core learning output
+
+## Step 5.6: Extract Terminology
 
 After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
 
