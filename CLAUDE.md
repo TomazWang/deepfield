@@ -20,6 +20,148 @@ This repository contains:
 1. **Claude Code Plugin** (`./plugin/`) - Commands, skills, and agents for Claude Code
 2. **CLI Tool** (`./cli/`) - Standalone Node.js CLI for project initialization and configuration
 
+## Project Terminology
+
+**1. Deepfield (this project):**
+- This development repository
+- Path: `~/dev/workspace/mine/deepfield/`
+- Contains: `plugin/` (commands, skills, agents) + `cli/` (support tools)
+- **YOU ARE HERE** - developing the plugin
+
+**2. Target project:**
+- The codebase the user wants to learn about
+- Example: User's e-commerce app, legacy system, etc.
+- Deepfield analyzes this to build knowledge base
+
+**3. Workspace:**
+- The `deepfield/` directory created by `/df-init`
+- Contains all analysis, findings, drafts, AND the target project source code
+- Structure:
+  ```
+  working-directory/           ← Where user runs deepfield commands
+    ├── deepfield/             ← Workspace (created by /df-init)
+    │   ├── brief.md
+    │   ├── project.config.json
+    │   ├── DEEPFIELD.md       (optional config)
+    │   ├── source/
+    │   │   ├── baseline/
+    │   │   │   ├── my-app/    ← Target project cloned here
+    │   │   │   ├── docs/      ← Additional documentation
+    │   │   │   └── ...
+    │   │   └── run-N-staging/ ← Per-run source additions
+    │   ├── wip/               ← AI workspace
+    │   │   ├── domain-index.md
+    │   │   ├── learning-plan.md
+    │   │   ├── confidence-scores.md
+    │   │   └── run-N/         ← Per-run findings
+    │   ├── drafts/            ← Living documentation
+    │   │   ├── domains/       ← Per-domain docs
+    │   │   ├── cross-cutting/ ← Cross-cutting concerns
+    │   │   │   ├── terminology.md
+    │   │   │   └── unknowns.md
+    │   │   └── _changelog.md
+    │   └── output/            ← Versioned snapshots
+    └── ... (other user files, unrelated to deepfield)
+  ```
+
+**4. Plugin installation:**
+- Production: `~/.claude/plugins/deepfield/` (from marketplace or manual install)
+- The plugin code users run (NOT this development repo)
+
+## Development vs Production
+
+**When developing (YOU):**
+- Edit files in `./plugin/` and `./cli/`
+- DO NOT run `/df-*` commands in this deepfield repo
+- DO NOT symlink `~/.claude/plugins/deepfield` to this repo
+- Test by acting like production (see Testing section below)
+
+**When users use it (Production):**
+- Plugin installed at `~/.claude/plugins/deepfield/`
+- User navigates to their target project
+- Runs `deepfield init` to create workspace
+- Runs `/df-bootstrap`, `/df-iterate` to analyze their code
+- Runs `deepfield upgrade` when plugin updates
+
+## Testing Approach
+
+**Test like production, not with symlinks:**
+
+```bash
+# Option 1: Install plugin to test location
+cp -r plugin/ ~/test-deepfield-plugin/
+claude --plugin-dir ~/test-deepfield-plugin
+
+# Option 2: Use separate Claude profile
+# Install plugin properly, test in real target project
+
+# Navigate to a test target project
+cd ~/test-projects/sample-ecommerce
+
+# Run deepfield commands
+deepfield init
+/df-bootstrap
+/df-iterate
+```
+
+**DO NOT:**
+- Symlink `~/.claude/plugins/deepfield` to this repo
+- Run `/df-*` commands inside this deepfield development repo
+- Mix development and testing environments
+
+## Upgrade System Architecture
+
+**Approach: AI-based upgrades, not hard-coded migrations**
+
+### When Plugin Updates
+
+1. User updates plugin (marketplace or manual)
+2. New commands/skills/agents available at `~/.claude/plugins/deepfield/`
+3. User's existing workspace has old structure
+4. User runs `deepfield upgrade`
+
+### Upgrade Flow
+
+**CLI role (non-AI):**
+- Detect version mismatch
+- Create backup
+- Call AI skill with context (old vs new structure)
+- Provide helper functions to AI
+- Validate result
+- Update version
+
+**AI skill role (intelligence):**
+- Analyze workspace differences
+- Determine what needs to change
+- Use CLI helpers for operations
+- Adapt to variations in structure
+
+**Example:**
+```bash
+deepfield upgrade
+
+# CLI does:
+1. Detect versions (workspace v1.0 vs plugin v2.5)
+2. Create backup
+3. Call skill: deepfield:upgrade-workspace
+4. Provide helpers (create-from-template, move-file, etc.)
+5. Validate upgraded workspace
+6. Update workspace version
+
+# AI skill does:
+1. Read current workspace structure
+2. Compare with target version structure
+3. Determine missing files/directories
+4. Use CLI helpers to apply changes
+5. Report what was done
+```
+
+**Key principles:**
+- ❌ NO hard-coded migration scripts
+- ✅ AI analyzes and adapts
+- ✅ CLI provides robust helpers
+- ✅ Just document structure changes as versions evolve
+
 ## Core Concept
 
 User provides sources (code, docs, wikis, etc.) → AI reads, learns, connects dots, identifies gaps → User provides more sources or feedback → Repeat until knowledge is sufficient → Output structured documentation.
@@ -134,6 +276,102 @@ Before implementing, use `/opsx:explore` to:
    - Knowledge synthesizer skill
 
 ## Development Guidelines
+
+### Plugin vs CLI Architecture Decision
+
+**CRITICAL: When adding new features, decide where they belong.**
+
+#### Plugin (AI-Driven) - `./plugin/`
+
+**Use plugin for:**
+- Commands requiring AI reasoning (`/df-iterate`, `/df-bootstrap`)
+- Skills orchestrating AI workflows
+- Agents for deep analysis, learning, synthesis
+- Operations needing context understanding
+- Decisions requiring judgment
+
+**Examples:**
+- `/df-iterate` - AI learns and analyzes codebase
+- `/df-bootstrap` - AI classifies sources
+- `deepfield-learner` agent - Deep analysis
+- `deepfield-term-extractor` - Extract terminology (requires understanding)
+
+**Location:** `plugin/commands/`, `plugin/skills/`, `plugin/agents/`
+
+#### CLI (Non-AI, Robust) - `./cli/`
+
+**Use CLI for:**
+- Deterministic file operations
+- Project scaffolding/initialization
+- Configuration management
+- State validation
+- Atomic file operations (create, move, rename)
+- Template application
+- Helper scripts for plugin to use
+
+**Examples:**
+- `deepfield init` - Create workspace structure
+- `deepfield upgrade` - Orchestrate workspace migration (calls AI skill)
+- `deepfield status` - Display state
+- Backup/restore utilities
+- File operation helpers
+
+**Location:** `cli/src/commands/`, `cli/src/utils/`
+
+**IMPORTANT:** CLI should NEVER invoke AI directly. It can call plugin skills which use AI.
+
+#### Hybrid Pattern (Both)
+
+**Use both when:**
+- Need robust scaffolding + AI analysis
+- Want separation: orchestration (CLI) vs intelligence (AI)
+
+**Pattern:**
+```
+1. Plugin command (orchestration)
+2. Plugin skill (workflow)
+3. CLI scripts (file ops) + AI agents (intelligence)
+4. Results combined
+```
+
+**Example - `/df-bootstrap`:**
+- Plugin: Orchestration, AI classification
+- CLI: Create directories, apply templates
+- AI agents: Analyze and organize
+
+#### Decision Tree
+
+```
+Is operation deterministic (same input → same output)?
+├─ Yes → CLI
+│   └─ Examples: create dirs, copy templates, validate JSON
+│
+└─ No → Plugin
+    ├─ Requires AI reasoning?
+    │   └─ Yes → Plugin (skill/agent)
+    │
+    └─ Requires context understanding?
+        └─ Yes → Plugin (skill/agent)
+
+Needs both?
+└─ Plugin orchestrates, CLI executes
+```
+
+#### Workspace Upgrade Example
+
+**Correct approach (AI-based):**
+```
+deepfield upgrade
+
+1. CLI: Detect versions, create backup
+2. CLI: Call plugin skill with context
+3. Plugin skill (AI): Analyze diff, determine changes
+4. Plugin skill (AI): Use CLI helpers for operations
+5. CLI: Validate result, update version
+```
+
+**CLI provides:** Orchestration, helpers, validation
+**AI provides:** Intelligence, adaptation, decision-making
 
 ### Temporary Working Files
 
