@@ -32,6 +32,8 @@ The skill accepts a JSON payload with the following shape:
 
 Parse the JSON payload from the invocation arguments into `{ from, to, workspaceSummary }`.
 
+**Note on version 1.0.0**: The CLI automatically maps legacy version 1.0.0 to 0.1.0 (a version numbering change occurred during development). If you receive `from: "0.1.0"`, the actual workspace will have `deepfieldVersion: "1.0.0"` in its config, but it should be treated as a pre-0.2.0 workspace that needs upgrading.
+
 If `from === to`:
 - Output: "Workspace is already at v{to}. No operations needed."
 - Exit without applying any operations.

@@ -11,21 +11,32 @@ import { createBackup } from '../utils/backup.js';
 function getCliVersion(): string {
   try {
     const pkgPath = join(dirname(dirname(__filename)), 'package.json');
-    return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '1.0.0';
+    return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '0.0.0';
   } catch {
-    return '1.0.0';
+    return '0.0.0';
   }
 }
 
 /**
  * Read deepfieldVersion from project.config.json (defaults to '0.0.0')
+ *
+ * Special handling: Treats 1.0.0 as a legacy pre-0.2.0 version (0.1.0)
+ * because the version numbering scheme changed during development.
  */
 async function getProjectVersion(projectPath: string): Promise<string> {
   const configPath = join(projectPath, 'deepfield', 'project.config.json');
   if (!(await pathExists(configPath))) return '0.0.0';
   try {
     const config = await readJson(configPath);
-    return config.deepfieldVersion ?? config.version ?? '0.0.0';
+    const rawVersion = config.deepfieldVersion ?? config.version ?? '0.0.0';
+
+    // Legacy version mapping: 1.0.0 was used before version numbering change
+    // Treat it as 0.1.0 (older than current 0.2.0) to trigger upgrades
+    if (rawVersion === '1.0.0') {
+      return '0.1.0';
+    }
+
+    return rawVersion;
   } catch {
     return '0.0.0';
   }
