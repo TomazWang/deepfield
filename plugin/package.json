@@ -4,7 +4,7 @@
   "description": "Claude Code plugin for Deepfield knowledge base builder",
   "private": true,
   "peerDependencies": {
-    "deepfield": "^1.0.0"
+    "deepfield": "^0.2.0"
   },
   "dependencies": {
     "mammoth": "^1.8.0",
