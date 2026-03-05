@@ -7,6 +7,16 @@ import { WorkflowState } from '../core/schemas.js';
 import { enforceVersionCompatibility } from '../utils/version-guard.js';
 
 /**
+ * CLI Classification (see CLAUDE.md § "Plugin vs CLI Guidelines")
+ * This command belongs in the CLI layer, not the Plugin, because:
+ * - It reads filesystem state deterministically (JSON config, directory listing).
+ * - It must work headlessly (CI, terminal) without Claude Code running.
+ * - No AI reasoning is required; all output is derived from on-disk state.
+ * The Plugin has a separate /df-status command that adds AI-driven commentary.
+ * Call direction for any future hybrid status feature: Plugin → CLI. Never CLI → Plugin.
+ */
+
+/**
  * Create the status command
  */
 export function createStatusCommand(): Command {

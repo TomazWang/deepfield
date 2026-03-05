@@ -26,6 +26,15 @@ arguments:
 
 # /df-input - Add and Classify Sources
 
+<!-- Plugin Classification (see CLAUDE.md § "Plugin vs CLI Guidelines")
+  This command belongs in the Plugin layer, not the CLI, because:
+  - Source classification (type + trust level) requires AI reasoning over file content.
+  - The session is interactive and context-rich; user intent shapes classification.
+  The deterministic sub-steps (cloning repos, writing the sources.json manifest) are
+  delegated to CLI scripts (clone-repos.sh, update-json.js). The Plugin orchestrates;
+  the CLI executes mechanical work. Call direction: Plugin → CLI. Never CLI → Plugin.
+-->
+
 Add new source materials (files, directories, git repositories, or inline text) to the knowledge base. Sources are classified by type and trust level, then filed into the appropriate location based on classification.
 
 ## Prerequisites
