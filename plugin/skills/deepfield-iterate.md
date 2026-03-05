@@ -407,7 +407,7 @@ Split domains into batches of `maxAgents`. For each batch:
 2. **Launch all agents for this batch in a single message** (one tool call block with multiple Task invocations) with `run_in_background: true`. This ensures true parallelism — all agents in the batch are submitted concurrently in one round-trip.
 
    For each domain in the batch, invoke the **Task tool** with the following parameters:
-   - **subagent_type**: `"deepfield:Deepfield Domain Learner"`
+   - **subagent_type**: `"general-purpose"`
    - **description**: `"Learn ${domain.name} domain (Run ${runNumber})"`
    - **run_in_background**: `true`
    - **prompt**: the inline prompt below (fill in all placeholders from the `agentTasks` prepared in step 4b)
@@ -457,9 +457,9 @@ Split domains into batches of `maxAgents`. For each batch:
    **You MUST make all Task tool calls for this batch in a SINGLE message** (one `<function_calls>` block with one Task call per domain). Do NOT launch agents one at a time in separate messages — that is sequential, not parallel.
 
    Example for a batch with 3 domains (auth, api, database):
-   - First Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn auth domain (Run N)"`, `run_in_background=true`, prompt filled with auth context
-   - Second Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn api domain (Run N)"`, `run_in_background=true`, prompt filled with api context
-   - Third Task call: `subagent_type="deepfield:Deepfield Domain Learner"`, `description="Learn database domain (Run N)"`, `run_in_background=true`, prompt filled with database context
+   - First Task call: `subagent_type="general-purpose"`, `description="Learn auth domain (Run N)"`, `run_in_background=true`, prompt filled with auth context
+   - Second Task call: `subagent_type="general-purpose"`, `description="Learn api domain (Run N)"`, `run_in_background=true`, prompt filled with api context
+   - Third Task call: `subagent_type="general-purpose"`, `description="Learn database domain (Run N)"`, `run_in_background=true`, prompt filled with database context
 
    All three calls in the same message. Wait for all to complete before proceeding.
 
