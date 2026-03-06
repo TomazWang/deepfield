@@ -9,12 +9,7 @@
   "plugins": [
     {
       "name": "deepfield",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/TomazWang/deepfield.git",
-        "path": "plugin",
-        "ref": "latest"
-      },
+      "source": "./plugin",
       "description": "Iteratively learns your codebase and distills institutional knowledge",
       "author": {
         "name": "TomazWang"
