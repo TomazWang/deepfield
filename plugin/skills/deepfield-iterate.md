@@ -844,7 +844,7 @@ Input: {
 
 The agent:
 1. Reads `terminology.md` to extract canonical terms and their synonyms
-2. Scans all `deepfield/drafts/domains/*.md` files for synonym usage
+2. Scans all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories, excluding `README.md`) for synonym usage
 3. Replaces synonyms with canonical terms via `upgrade:apply-op --type update` (word-boundary-aware, no plural replacement)
 4. Writes `deepfield/wip/run-${nextRun}/alignment-log.md` with a full substitution report
 

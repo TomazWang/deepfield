@@ -42,7 +42,7 @@ Build a map: `{ canonicalTerm: string, synonyms: string[] }[]`
 
 # Step 2: Scan Domain Drafts
 
-List all `*.md` files in `deepfield/drafts/domains/`. For each draft file:
+List all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories). Exclude `README.md` files. For each draft file:
 
 1. Read the file content
 2. For each canonical term with synonyms, search for synonym occurrences using **word-boundary-aware matching** (case-insensitive):
