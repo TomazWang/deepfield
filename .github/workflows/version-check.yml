@@ -1,13 +1,15 @@
-name: Version Sync Check
+name: Version Check
 
 on:
   push:
-    branches: ["**"]
+    branches-ignore:
+      - main
+      - "release/**"
   pull_request:
     branches: [main]
 
 jobs:
-  version-check:
+  check-versions:
     name: Verify version files are in sync
     runs-on: ubuntu-latest
 

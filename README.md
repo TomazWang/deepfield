@@ -754,4 +754,4 @@ MIT
 
 ## Contributing
 
-This project is currently in design phase. Implementation will follow the OpenSpec workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, branching conventions, and how to cut a release.
