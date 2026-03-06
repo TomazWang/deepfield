@@ -178,7 +178,7 @@ function buildNextSteps(runConfig) {
     steps.push('Review HIGH priority items — contradictions need resolution before continuing');
   }
 
-  steps.push(`Review updated drafts in \`deepfield/drafts/domains/\``);
+  steps.push(`Review updated drafts in \`deepfield/drafts/behavior/\` and \`deepfield/drafts/tech/\``);
 
   if (allTopics.length > 0) {
     steps.push(`Check the companion READMEs for: ${allTopics.join(', ')}`);

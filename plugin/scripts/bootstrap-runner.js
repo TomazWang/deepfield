@@ -9,7 +9,7 @@
  *   2. Clone repositories
  *   3. Scan repository structure
  *   4. Generate project-map.md
- *   5. Generate domain-index.md
+ *   5. Generate tech-index.md and detect behavior domain candidates
  *   6. Generate learning-plan.md
  *   7. Create run-0.config.json with file hashes
  *   8. Create run-1 staging area
@@ -29,6 +29,7 @@ const { scanAllRepos } = require('./scan-structure.js');
 const { generateProjectMap } = require('./generate-project-map.js');
 const { generateLearningPlan } = require('./generate-learning-plan.js');
 const { createRunState } = require('./create-run-state.js');
+const { detectBehaviorDomains } = require('./detect-behavior-domains.js');
 
 // generate-domain-index.js is CLI-only (merged from main via PR #23)
 // It is invoked via execSync rather than require().
@@ -212,8 +213,12 @@ ${feedbackQuestions}
 
 /**
  * Update project.config.json after successful bootstrap.
+ *
+ * @param {object} brief
+ * @param {Array}  techDomains              Tech domain entries from generate-domain-index.js output.
+ * @param {Array}  behaviorDomainCandidates Candidate behavior domains (pending user Q&A in skill).
  */
-function updateProjectConfig(brief) {
+function updateProjectConfig(brief, techDomains, behaviorDomainCandidates) {
   const configPath = './deepfield/project.config.json';
 
   const updates = {
@@ -222,6 +227,10 @@ function updateProjectConfig(brief) {
     totalRuns: 1,
     projectName: brief.projectName,
     lastModified: new Date().toISOString(),
+    techDomains: techDomains || [],
+    behaviorDomains: [],
+    domainLinks: [],
+    _behaviorDomainCandidates: behaviorDomainCandidates || [],
   };
 
   try {
@@ -249,7 +258,7 @@ function printSummary(brief, repos, domains, cloneStats, artifacts) {
   console.log(`      Cloned: ${cloneStats.cloned}`);
   if (cloneStats.skipped > 0) console.log(`      Skipped (existing): ${cloneStats.skipped}`);
   if (cloneStats.failed > 0) console.log(`      Failed: ${cloneStats.failed}`);
-  console.log(`  - Domains detected: ${domains.length}`);
+  console.log(`  - Tech domains detected: ${domains.length}`);
   console.log(`  - Focus areas: ${brief.focusAreas.length}`);
 
   console.log(`\nArtifacts Created:`);
@@ -306,10 +315,11 @@ async function runBootstrap() {
   const projectMapPath = generateProjectMap(brief, repos);
   console.log(`  Written: ${projectMapPath}`);
 
-  // Step 5: Generate domain-index.md (via CLI — generate-domain-index.js has no module.exports)
-  console.log('\nStep 5/9: Generating domain-index.md...');
-  const domainIndexPath = path.resolve('./deepfield/wip/domain-index.md');
-  fs.mkdirSync(path.dirname(domainIndexPath), { recursive: true });
+  // Step 5: Generate tech-index.md (via CLI — generate-domain-index.js has no module.exports)
+  // Tech-index lists technical components/services detected from the repo structure.
+  console.log('\nStep 5/9: Generating tech-index.md...');
+  const techIndexPath = path.resolve('./deepfield/wip/tech-index.md');
+  fs.mkdirSync(path.dirname(techIndexPath), { recursive: true });
 
   // Write brief JSON for the CLI to consume
   const briefJsonPath = path.resolve('./deepfield/wip/run-0/.brief-tmp.json');
@@ -322,14 +332,31 @@ async function runBootstrap() {
 
   const generateDomainIndexScript = path.join(SCRIPT_DIR, 'generate-domain-index.js');
   execSync(
-    `node "${generateDomainIndexScript}" --repos '${JSON.stringify(reposArg)}' --brief "${briefJsonPath}" --output "${domainIndexPath}"`,
+    `node "${generateDomainIndexScript}" --repos '${JSON.stringify(reposArg)}' --brief "${briefJsonPath}" --output "${techIndexPath}"`,
     { stdio: 'inherit' }
   );
 
   // Clean up temp file
   try { fs.unlinkSync(briefJsonPath); } catch { /* ignore */ }
 
-  console.log(`  Written: ${domainIndexPath}`);
+  console.log(`  Written: ${techIndexPath}`);
+
+  // Step 5b: Detect behavior domain candidates from reference docs.
+  // Candidates are stored in run-0.config.json for the skill to use in Q&A.
+  // The skill writes behavior-index.md after user confirmation — NOT this script.
+  console.log('\nStep 5b/9: Detecting behavior domain candidates from reference docs...');
+  let behaviorDomainCandidates = [];
+  const refDocsDir = path.resolve('./deepfield/source/baseline');
+  if (fs.existsSync(refDocsDir)) {
+    try {
+      behaviorDomainCandidates = detectBehaviorDomains(refDocsDir);
+      console.log(`  Detected ${behaviorDomainCandidates.length} behavior domain candidate(s)`);
+    } catch (err) {
+      console.error(`  Warning: behavior domain detection failed: ${err.message}`);
+    }
+  } else {
+    console.log('  No reference docs dir found — skipping behavior detection');
+  }
 
   // Step 6: Generate learning-plan.md
   console.log('\nStep 6/9: Generating learning-plan.md...');
@@ -355,14 +382,24 @@ async function runBootstrap() {
 
   // Step 9: Update project config
   console.log('\nStep 9/9: Updating project configuration...');
-  updateProjectConfig(brief);
+  // Tech domains are the focus areas + repo-derived modules (rough count).
+  // The actual structured tech domain list is written by the plugin skill that
+  // interprets generate-domain-index.js output.
+  const techDomainsForConfig = brief.focusAreas.map(area => ({
+    key: area.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    displayName: area,
+    sourcePath: '',
+    type: 'module',
+    description: '',
+  }));
+  updateProjectConfig(brief, techDomainsForConfig, behaviorDomainCandidates);
   console.log('  Updated: deepfield/project.config.json');
 
-  // Summary — count domains detected (repos + brief focus areas as rough estimate)
-  const detectedDomainCount = brief.focusAreas.length + repos.reduce((acc, r) => acc + (r.modules ? r.modules.length : 0), 0);
+  // Summary — count tech domains detected
+  const detectedTechDomainCount = brief.focusAreas.length + repos.reduce((acc, r) => acc + (r.modules ? r.modules.length : 0), 0);
   const artifacts = [
     projectMapPath,
-    domainIndexPath,
+    techIndexPath,
     learningPlanPath,
     runStateResult.configPath,
     runStateResult.findingsPath,
@@ -370,7 +407,7 @@ async function runBootstrap() {
     path.join(stagingDir, 'feedback.md'),
   ];
 
-  printSummary(brief, repos, { length: detectedDomainCount }, cloneStats, artifacts);
+  printSummary(brief, repos, { length: detectedTechDomainCount }, cloneStats, artifacts);
 }
 
 // Run

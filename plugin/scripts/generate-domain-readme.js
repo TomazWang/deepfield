@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * generate-domain-readme.js — Generate deepfield/drafts/domains/{domain}/README.md
+ * generate-domain-readme.js — Generate README.md for a behavior or tech domain.
  *
  * Usage:
  *   node generate-domain-readme.js --domain <name> --drafts-dir <path> --run-config <path> \
@@ -15,8 +15,8 @@
  *   --output <path>           Path to write README.md (required)
  *
  * Domain files are expected at:
- *   <drafts-dir>/domains/<domain>/behavior-spec.md
- *   <drafts-dir>/domains/<domain>/tech-spec.md
+ *   <drafts-dir>/behavior/<domain>/behavior-spec.md
+ *   <drafts-dir>/tech/<domain>/tech-spec.md
  * Output is written atomically.
  */
 
@@ -89,10 +89,10 @@ function validate(config) {
 
   // Derive spec paths if not explicitly provided
   if (!config.behaviorSpec) {
-    config.behaviorSpec = path.join(config.draftsDir, 'domains', config.domain, 'behavior-spec.md');
+    config.behaviorSpec = path.join(config.draftsDir, 'behavior', config.domain, 'behavior-spec.md');
   }
   if (!config.techSpec) {
-    config.techSpec = path.join(config.draftsDir, 'domains', config.domain, 'tech-spec.md');
+    config.techSpec = path.join(config.draftsDir, 'tech', config.domain, 'tech-spec.md');
   }
 }
 
