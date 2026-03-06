@@ -57,7 +57,26 @@ Sub-files follow the same 350-line prose guideline and may be split further usin
 
 ## Pre-Run Setup
 
-### 0. Load DEEPFIELD.md Configuration
+### 0. Parse --track Flag
+
+Parse the `--track` argument passed to this skill invocation:
+
+```javascript
+const trackArg = args['--track'] || 'both'  // default: both
+
+if (!['behavior', 'tech', 'both'].includes(trackArg)) {
+  throw new Error(`Invalid --track value "${trackArg}". Must be one of: behavior, tech, both`)
+}
+
+const activeTrack = trackArg  // 'behavior' | 'tech' | 'both'
+```
+
+The `activeTrack` variable is used throughout the run to:
+- Scope which domain index is loaded (Step 2 / Step 4a)
+- Route agent output to the correct drafts subdirectory (Step 4b)
+- Label each domain with its track affiliation
+
+### 0.1 Load DEEPFIELD.md Configuration
 
 Before anything else, load project-specific learning configuration:
 
@@ -353,37 +372,73 @@ Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently,
 
 #### 4a. Read Domain Index
 
-Load `deepfield/wip/domain-index.md` to get the list of all known domains and their associated file lists.
+Load the domain index file(s) based on `activeTrack`:
 
 ```javascript
-// Parse domain-index.md to extract:
-// [{ name: "auth", files: ["src/auth/...", ...] }, ...]
-const allDomains = parseDomainIndex("deepfield/wip/domain-index.md")
+// Track-aware domain index loading
+let allDomains = []
+
+if (activeTrack === 'behavior' || activeTrack === 'both') {
+  const behaviorDomains = parseDomainIndex("deepfield/wip/behavior-index.md")
+    .map(d => ({ ...d, track: 'behavior' }))
+  allDomains.push(...behaviorDomains)
+}
+
+if (activeTrack === 'tech' || activeTrack === 'both') {
+  const techDomains = parseDomainIndex("deepfield/wip/tech-index.md")
+    .map(d => ({ ...d, track: 'tech' }))
+  allDomains.push(...techDomains)
+}
 ```
 
-If `domain-index.md` does not exist, fall back to sequential mode and log a warning:
+**Fallback**: If neither index file exists, attempt to load the legacy `deepfield/wip/domain-index.md` and treat all domains as `track: 'tech'`:
+
+```javascript
+if (allDomains.length === 0) {
+  const legacyDomains = parseDomainIndex("deepfield/wip/domain-index.md")
+    .map(d => ({ ...d, track: 'tech' }))
+  if (legacyDomains.length > 0) {
+    allDomains = legacyDomains
+    console.warn("Warning: behavior-index.md / tech-index.md not found — using legacy domain-index.md with track=tech. Run /df-bootstrap to generate track-split indexes.")
+  }
+}
 ```
-Warning: domain-index.md not found — falling back to sequential learning.
+
+If no index file exists at all, fall back to sequential mode and log a warning:
+```
+Warning: No domain index found — falling back to sequential learning.
 Run /df-bootstrap first to generate the domain index.
 ```
 
 #### 4b. Prepare Agent Tasks
 
-For each domain, prepare the inputs for its `deepfield-domain-learner` agent:
+For each domain, prepare the inputs for its `deepfield-domain-learner` agent. Each domain carries its `track` field (`'behavior'` or `'tech'`) from the index load in step 4a. Use the track to route output paths:
 
 ```javascript
 const maxAgents = options.maxAgents || 5  // default: 5
 
-const agentTasks = allDomains.map(domain => ({
-  domainName: domain.name,
-  fileList: domain.files,
-  previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
-  findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
-  unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
-  openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-  behaviorSpecPath: `deepfield/drafts/domains/${domain.name}/behavior-spec.md`,
-  techSpecPath: `deepfield/drafts/domains/${domain.name}/tech-spec.md`,
-}))
+function getDraftBasePath(domainName, track) {
+  // Route output to the correct track subdirectory
+  if (track === 'behavior') return `deepfield/drafts/behavior/${domainName}`
+  if (track === 'tech')     return `deepfield/drafts/tech/${domainName}`
+  // Fallback: should not happen, but guard defensively
+  return `deepfield/drafts/tech/${domainName}`
+}
+
+const agentTasks = allDomains.map(domain => {
+  const draftBasePath = getDraftBasePath(domain.name, domain.track)
+  return {
+    domainName: domain.name,
+    track: domain.track,
+    fileList: domain.files,
+    previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
+    findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
+    unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
+    openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
+    draftSpecPath: `${draftBasePath}/spec.md`,
+    draftBasePath,
+  }
+})
 ```
 
 #### 4c. Progress Report — Before Launch
@@ -430,6 +485,7 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Domain
    Name: ${domain.name}
+   Track: ${domain.track}
 
    ${stagingFeedback ? `## Staging Feedback (User Corrections)\n\nThe user has provided corrections and guidance for this learning run. **Treat this feedback as the primary source of truth.** Apply all corrections and follow all guidance before proceeding with file analysis. If feedback contradicts what you observe in source code, trust the feedback first and note any discrepancy.\n\n${stagingFeedback}` : ''}
 
@@ -438,8 +494,7 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Context files (read if they exist)
    - Previous findings: ${domain.previousFindingsPath}
-   - Behavior spec: ${domain.behaviorSpecPath}
-   - Tech spec: ${domain.techSpecPath}
+   - Current draft spec: ${domain.draftSpecPath}
 
    ## Open questions for this domain
    ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
@@ -451,6 +506,7 @@ Split domains into batches of `maxAgents`. For each batch:
    ## Output (write these files)
    - Findings: ${domain.findingsOutputPath}
    - Unknowns: ${domain.unknownsOutputPath}
+   - Draft spec: ${domain.draftSpecPath}
 
    ## Findings file format
    Write ${domain.findingsOutputPath} with the following sections:
@@ -559,7 +615,31 @@ Suggestions:
 
 Mark run config `"status": "failed"` and stop execution.
 
-#### 4f. Consolidate Findings
+#### 4f. Invoke Domain Linker (If New Domains Discovered)
+
+After all agent batches complete and before consolidating findings, check whether any domain-learner agent reported discovering a new domain (a domain name not present in `domain-index.md` at the start of this run).
+
+If one or more new domains were discovered:
+
+```
+Launch: deepfield-domain-linker
+Input: {
+  "behavior_index_path": "deepfield/wip/behavior-index.md",
+  "tech_index_path": "deepfield/wip/tech-index.md",
+  "source_files": <filesToRead from Step 3>,
+  "existing_links_path": "deepfield/wip/domain-links.md"
+}
+```
+
+The linker reads both indexes (which must have been updated by the domain-discovery logic before this step), infers behavior↔tech mappings, and writes the updated `deepfield/wip/domain-links.md`.
+
+If no new domains were discovered this run, skip this step entirely.
+
+If the linker fails:
+- Log a warning: `Warning: Domain linker failed for Run ${nextRun}: <error>`
+- Continue to consolidation — the linker is non-blocking
+
+#### 4g. Consolidate Findings
 
 Run the `gather-domain-findings.js` script to merge per-domain findings into the canonical `findings.md`:
 
