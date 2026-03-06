@@ -256,6 +256,30 @@ If topics split or merge, update all cross-references.
 
 Maintain `deepfield/drafts/cross-cutting/unknowns.md`:
 
+### Pre-check: Ensure unknowns.md exists
+
+Before writing to `unknowns.md`, verify it exists:
+
+```bash
+# Check file existence
+test -f deepfield/drafts/cross-cutting/unknowns.md
+```
+
+If the file does **not** exist, create it from the plugin template via the CLI scaffold command:
+
+```bash
+deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
+```
+
+Log a warning:
+```
+Warning: unknowns.md was missing — created from template
+```
+
+Then proceed to write unknowns normally.
+
+
+
 ### Add New Unknowns
 
 When findings reveal gaps:

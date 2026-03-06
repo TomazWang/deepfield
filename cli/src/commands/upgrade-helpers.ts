@@ -227,6 +227,62 @@ export function createValidateCommand(): Command {
 }
 
 /**
+ * upgrade:scaffold-cross-cutting — checks and creates missing cross-cutting files from templates
+ */
+export function createScaffoldCrossCuttingCommand(): Command {
+  return new Command('upgrade:scaffold-cross-cutting')
+    .description('Check and create missing cross-cutting files (terminology.md, unknowns.md) from templates')
+    .option('--deepfield-dir <path>', 'Path to deepfield workspace directory', './deepfield')
+    .option('--templates-dir <path>', 'Path to plugin templates directory')
+    .action((options) => {
+      try {
+        const cwd = process.cwd();
+        const deepfieldDir = require('path').resolve(cwd, options.deepfieldDir);
+        const crossCuttingDir = join(deepfieldDir, 'drafts', 'cross-cutting');
+
+        // Determine templates directory
+        const templatesDir = options.templatesDir
+          ? require('path').resolve(cwd, options.templatesDir)
+          : join(dirname(dirname(__filename)), 'plugin', 'templates');
+
+        const filesToScaffold = ['terminology.md', 'unknowns.md'];
+
+        // Ensure cross-cutting directory exists
+        mkdirSync(crossCuttingDir, { recursive: true });
+
+        for (const filename of filesToScaffold) {
+          const targetPath = join(crossCuttingDir, filename);
+          const relativePath = `drafts/cross-cutting/${filename}`;
+
+          if (require('fs').existsSync(targetPath)) {
+            process.stdout.write(`Already exists: ${relativePath}\n`);
+          } else {
+            const templatePath = join(templatesDir, filename);
+            if (!require('fs').existsSync(templatePath)) {
+              process.stderr.write(chalk.red(`❌ Template not found: ${templatePath}\n`));
+              process.exit(1);
+            }
+            const content = readFileSync(templatePath, 'utf-8');
+            const tmpPath = targetPath + '.tmp';
+            writeFileSync(tmpPath, content, 'utf-8');
+            renameSync(tmpPath, targetPath);
+            process.stdout.write(`Created: ${relativePath}\n`);
+          }
+        }
+
+        process.exit(0);
+      } catch (error) {
+        process.stderr.write(
+          chalk.red('❌ scaffold-cross-cutting failed: ') +
+            (error instanceof Error ? error.message : String(error)) +
+            '\n'
+        );
+        process.exit(1);
+      }
+    });
+}
+
+/**
  * upgrade:set-version — atomically updates deepfieldVersion in project.config.json
  */
 export function createSetVersionCommand(): Command {

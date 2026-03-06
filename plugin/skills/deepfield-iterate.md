@@ -664,6 +664,34 @@ If any of the three generation scripts exit with a non-zero status:
 
 After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
 
+### Pre-check: Ensure terminology.md exists
+
+Before running the extraction script, check whether `deepfield/drafts/cross-cutting/terminology.md` exists:
+
+```javascript
+const terminologyPath = 'deepfield/drafts/cross-cutting/terminology.md';
+const terminologyExists = fs.existsSync(terminologyPath);
+```
+
+If the file does **not** exist:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/../../../node_modules/.bin/deepfield" upgrade:scaffold-cross-cutting \
+  --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
+```
+
+Or via the installed CLI:
+```bash
+deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
+```
+
+Log a warning:
+```
+Warning: terminology.md was missing — created from template before extraction
+```
+
+The run is NOT aborted. Proceed to extraction normally with the newly created file.
+
 ### Prepare File List
 
 Write the list of files analyzed this run to a temporary JSON file:
@@ -797,6 +825,38 @@ Read `deepfield/wip/confidence-scores.md` and include:
 - Show delta with sign (e.g., `+0.05` or `-0.11` or `0.00`)
 - Show negative deltas as-is — they indicate a run discovered new unknowns or contradictions, which is valuable information
 - If confidence-scores.md does not exist (scoring was skipped), omit the section with a note: `Confidence scoring not available for this run.`
+
+## Step 5.8: Glossary Alignment
+
+After confidence scoring (Step 5.7), run the glossary alignment step to enforce canonical terms across all domain drafts. This step is **non-blocking** — any failure logs a warning and continues to Step 6.
+
+### Invoke Glossary Aligner Agent
+
+```
+Launch: deepfield-glossary-aligner
+Input: {
+  "run_number": ${nextRun},
+  "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
+  "drafts_dir": "deepfield/drafts/domains",
+  "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
+}
+```
+
+The agent:
+1. Reads `terminology.md` to extract canonical terms and their synonyms
+2. Scans all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories, excluding `README.md`) for synonym usage
+3. Replaces synonyms with canonical terms via `upgrade:apply-op --type update` (word-boundary-aware, no plural replacement)
+4. Writes `deepfield/wip/run-${nextRun}/alignment-log.md` with a full substitution report
+
+### Handle Empty Glossary
+
+If `terminology.md` has no term entries (newly scaffolded), the aligner detects this and logs `Glossary is empty — skipping alignment` in the alignment log. No domain drafts are scanned. This is expected and correct — the alignment log is still written.
+
+### Error Handling
+
+If the glossary alignment agent fails or exits with an error:
+- Log: `Warning: Glossary alignment failed for Run ${nextRun}: <error>`
+- Continue to Step 6 — alignment failure does NOT abort the run
 
 ## Step 6: Update Learning Plan
 
