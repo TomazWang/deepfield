@@ -1,6 +1,6 @@
 {
   "name": "deepfield",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "AI-driven knowledge base builder for understanding brownfield projects. Provides commands for initializing and managing deepfield/ knowledge base structure.",
   "author": {
     "name": "Deepfield Contributors",
