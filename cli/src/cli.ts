@@ -46,12 +46,14 @@ import { createStatusCommand } from './commands/status.js';
 import { createBootstrapCommand } from './commands/bootstrap.js';
 import { createUpgradeCommand } from './commands/upgrade.js';
 import { createRollbackCommand } from './commands/rollback.js';
+import { createVersionCommand } from './commands/version.js';
 import {
   createDetectVersionCommand,
   createBackupCommand,
   createApplyOpCommand,
   createValidateCommand,
   createSetVersionCommand,
+  createScaffoldCrossCuttingCommand,
 } from './commands/upgrade-helpers.js';
 
 // Register commands
@@ -61,6 +63,7 @@ program.addCommand(createStatusCommand());
 program.addCommand(createBootstrapCommand());
 program.addCommand(createUpgradeCommand());
 program.addCommand(createRollbackCommand());
+program.addCommand(createVersionCommand());
 
 // Register upgrade helper sub-commands (used by the /df-upgrade plugin skill)
 program.addCommand(createDetectVersionCommand());
@@ -68,6 +71,7 @@ program.addCommand(createBackupCommand());
 program.addCommand(createApplyOpCommand());
 program.addCommand(createValidateCommand());
 program.addCommand(createSetVersionCommand());
+program.addCommand(createScaffoldCrossCuttingCommand());
 
 // Global error handler
 process.on('uncaughtException', (error: Error) => {

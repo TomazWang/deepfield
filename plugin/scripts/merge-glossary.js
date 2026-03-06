@@ -110,6 +110,8 @@ function parseNewTerms(content, runNumber) {
     };
 
     let inFiles = false;
+    let inDefinition = false;
+    const definitionLines = [];
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
@@ -117,6 +119,7 @@ function parseNewTerms(content, runNumber) {
       // Detect "- **Files:**" block
       if (/^\s*-\s*\*\*Files:\*\*/.test(line)) {
         inFiles = true;
+        inDefinition = false;
         continue;
       }
 
@@ -134,14 +137,40 @@ function parseNewTerms(content, runNumber) {
         }
       }
 
-      const expansionMatch = line.match(/^\s*-\s*\*\*Expansion:\*\*\s*(.+)/);
+      // Detect start of Definition field (may span multiple lines for bilingual entries)
       const definitionMatch = line.match(/^\s*-\s*\*\*Definition:\*\*\s*(.+)/);
+      if (definitionMatch) {
+        inDefinition = true;
+        definitionLines.length = 0;
+        definitionLines.push(definitionMatch[1]);
+        continue;
+      }
+
+      if (inDefinition) {
+        // Continuation lines of a bilingual definition (indented or wrapped with _(...) _)
+        if (/^\s*-\s*\*\*/.test(line)) {
+          // New field starts — finalize definition
+          term.definition = definitionLines.join('\n  ');
+          inDefinition = false;
+          // Fall through to process this line as a new field
+        } else if (line.trim() === '' && definitionLines.length > 0) {
+          // Blank line ends definition continuation
+          term.definition = definitionLines.join('\n  ');
+          inDefinition = false;
+          continue;
+        } else {
+          // Continuation of definition (e.g., second-language line)
+          definitionLines.push(line.trimEnd());
+          continue;
+        }
+      }
+
+      const expansionMatch = line.match(/^\s*-\s*\*\*Expansion:\*\*\s*(.+)/);
       const domainMatch = line.match(/^\s*-\s*\*\*Domain:\*\*\s*(.+)/);
       const relatedMatch = line.match(/^\s*-\s*\*\*Related:\*\*\s*(.+)/);
       const firstSeenMatch = line.match(/^\s*-\s*\*\*First seen:\*\*\s*(.+)/);
 
       if (expansionMatch) term.expansion = expansionMatch[1].trim();
-      if (definitionMatch) term.definition = definitionMatch[1].trim();
       if (domainMatch) term.domain = domainMatch[1].trim();
       if (relatedMatch) {
         term.related = relatedMatch[1]
@@ -150,6 +179,11 @@ function parseNewTerms(content, runNumber) {
           .filter(Boolean);
       }
       if (firstSeenMatch) term.firstSeen = firstSeenMatch[1].trim();
+    }
+
+    // Finalize definition if still in definition block at end of section
+    if (inDefinition && definitionLines.length > 0) {
+      term.definition = definitionLines.join('\n  ');
     }
 
     // Only include terms with a definition
@@ -220,6 +254,7 @@ function renderTermEntry(term) {
     : `### ${term.name}`;
 
   const lines = [header, ''];
+  // Preserve multi-line definitions (bilingual entries have continuation lines indented with "  ")
   lines.push(`**Definition:** ${term.definition}`);
   lines.push(`**Domain:** ${term.domain}`);
 

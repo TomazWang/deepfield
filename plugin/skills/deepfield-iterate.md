@@ -123,7 +123,15 @@ Load `deepfield/wip/run-${nextRun-1}/run-${nextRun-1}.config.json`:
 ### Check for New User Input
 
 Check if `deepfield/source/run-${nextRun}-staging/` exists with content:
-- Read `feedback.md` if present
+- Read `feedback.md` if present — capture the full text as a `stagingFeedback` string variable. If the file does not exist, set `stagingFeedback = null`.
+
+  ```javascript
+  const feedbackPath = `deepfield/source/run-${nextRun}-staging/feedback.md`
+  const stagingFeedback = fileExists(feedbackPath)
+    ? readFile(feedbackPath)   // full text as a string
+    : null
+  ```
+
 - List new sources in `sources/` directory
 - Classify new sources via classifier agent
 - File new sources appropriately
@@ -272,11 +280,18 @@ const domainInstructions = deepfieldConfig.domainInstructions[domainKey] || null
 
 If instructions exist, they will be passed to the agent as additional context. If no instructions exist for a domain, omit the section from the agent prompt.
 
-Choose between **Parallel Mode** (when `--parallel` flag was passed) and **Sequential Mode** (default).
+**Mode Selection** — determine which mode to use:
+
+1. If `--sequential` flag was passed → use **Sequential Mode**
+2. Else if `deepfield/wip/domain-index.md` exists → use **Parallel Mode** (default)
+3. Else → use **Sequential Mode** with warning:
+   ```
+   Warning: domain-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
+   ```
 
 ---
 
-### Sequential Mode (default)
+### Sequential Mode
 
 #### Invoke Learner Agent
 
@@ -293,7 +308,9 @@ Input: {
   "domain_instructions": {
     "api-structure": <deepfieldConfig.domainInstructions["api-structure"] or null>,
     "data-flow": <deepfieldConfig.domainInstructions["data-flow"] or null>
-  }
+  },
+  // Include only when stagingFeedback is non-null:
+  ...(stagingFeedback ? { "staging_feedback": stagingFeedback } : {})
 }
 ```
 
@@ -330,7 +347,7 @@ Learner writes findings to `deepfield/wip/run-${nextRun}/findings.md`:
 
 ---
 
-### Parallel Mode (`--parallel` flag)
+### Parallel Mode (default)
 
 Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently, then consolidates all findings before synthesis. This can reduce total run time by 3-5x on projects with 4+ domains.
 
@@ -364,7 +381,8 @@ const agentTasks = allDomains.map(domain => ({
   findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
   unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
   openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-  currentDraftPath: `deepfield/drafts/domains/${domain.name}.md`,
+  behaviorSpecPath: `deepfield/drafts/domains/${domain.name}/behavior-spec.md`,
+  techSpecPath: `deepfield/drafts/domains/${domain.name}/tech-spec.md`,
 }))
 ```
 
@@ -397,28 +415,69 @@ Split domains into batches of `maxAgents`. For each batch:
    Batch 1/2: launching agents for [auth, api, database, ui, cache]
    ```
 
-2. **Launch all agents in the batch as parallel background Tasks:**
+2. **Launch all agents for this batch in a single message** (one tool call block with multiple Task invocations) with `run_in_background: true`. This ensures true parallelism — all agents in the batch are submitted concurrently in one round-trip.
+
+   For each domain in the batch, invoke the **Task tool** with the following parameters:
+   - **subagent_type**: `"deepfield-domain-learner"`
+   - **description**: `"Learn ${domain.name} domain (Run ${runNumber})"`
+   - **run_in_background**: `true`
+   - **prompt**: the inline prompt below (fill in all placeholders from the `agentTasks` prepared in step 4b)
 
    ```
-   Launch (background): deepfield-domain-learner
-   Input: {
-     "domain_name": "auth",
-     "file_list": ["src/auth/login.ts", ...],
-     "previous_findings_path": "deepfield/wip/run-N-1/domains/auth-findings.md",
-     "findings_output_path": "deepfield/wip/run-N/domains/auth-findings.md",
-     "unknowns_output_path": "deepfield/wip/run-N/domains/auth-unknowns.md",
-     "open_questions": [...],
-     "current_draft_path": "deepfield/drafts/domains/auth.md"
-   }
+   You are a domain learning agent for the Deepfield knowledge base system.
 
-   Launch (background): deepfield-domain-learner
-   Input: { "domain_name": "api", ... }
+   Your job: deeply analyze the source files for the **${domain.name}** domain and write structured findings.
 
-   Launch (background): deepfield-domain-learner
-   Input: { "domain_name": "database", ... }
+   ## Domain
+   Name: ${domain.name}
+
+   ${stagingFeedback ? `## Staging Feedback (User Corrections)\n\nThe user has provided corrections and guidance for this learning run. **Treat this feedback as the primary source of truth.** Apply all corrections and follow all guidance before proceeding with file analysis. If feedback contradicts what you observe in source code, trust the feedback first and note any discrepancy.\n\n${stagingFeedback}` : ''}
+
+   ## Files to analyze
+   ${domain.files.map(f => `- ${f}`).join('\n')}
+
+   ## Context files (read if they exist)
+   - Previous findings: ${domain.previousFindingsPath}
+   - Behavior spec: ${domain.behaviorSpecPath}
+   - Tech spec: ${domain.techSpecPath}
+
+   ## Open questions for this domain
+   ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
+
+   ${deepfieldConfig.domainInstructions[domain.name] ? `## Domain-Specific Instructions (from DEEPFIELD.md)\n\n${deepfieldConfig.domainInstructions[domain.name]}` : ''}
+
+   ${deepfieldConfig.language && deepfieldConfig.language !== 'English' ? `## Output Language\n\nWrite all documentation in ${deepfieldConfig.language}.\nIf technical terms have no ${deepfieldConfig.language} equivalent, keep the English term with a ${deepfieldConfig.language} explanation in parentheses.` : ''}
+
+   ## Output (write these files)
+   - Findings: ${domain.findingsOutputPath}
+   - Unknowns: ${domain.unknownsOutputPath}
+
+   ## Findings file format
+   Write ${domain.findingsOutputPath} with the following sections:
+   - **Discoveries**: new facts learned about this domain
+   - **Cross-references**: relationships to other domains
+   - **Patterns**: recurring patterns or conventions observed
+   - **Contradictions**: inconsistencies found
+   - **Questions answered**: open questions that are now resolved
+   - **New questions**: questions raised by the analysis
+   - **Confidence Inputs** (JSON block): { "domain": "${domain.name}", "answeredQuestions": N, "unansweredQuestions": N, "unknowns": N, "evidenceByStrength": { "strong": N, "medium": N, "weak": N }, "analyzedSourceTypes": N, "requiredSourceTypes": N, "unresolvedContradictions": N, "totalContradictions": N }
+
+   ## Unknowns file format
+   Write ${domain.unknownsOutputPath} with a list of unresolved questions and missing information for this domain.
+
+   Read all files you can access from the file list above. Write findings to the output paths. Do not skip any files in the list.
    ```
 
-3. **Wait for all agents in this batch to complete** before starting the next batch.
+   **You MUST make all Task tool calls for this batch in a SINGLE message** (one `<function_calls>` block with one Task call per domain). Do NOT launch agents one at a time in separate messages — that is sequential, not parallel.
+
+   Example for a batch with 3 domains (auth, api, database):
+   - First Task call: `subagent_type="deepfield-domain-learner"`, `description="Learn auth domain (Run N)"`, `run_in_background=true`, prompt filled with auth context
+   - Second Task call: `subagent_type="deepfield-domain-learner"`, `description="Learn api domain (Run N)"`, `run_in_background=true`, prompt filled with api context
+   - Third Task call: `subagent_type="deepfield-domain-learner"`, `description="Learn database domain (Run N)"`, `run_in_background=true`, prompt filled with database context
+
+   All three calls in the same message. Wait for all to complete before proceeding.
+
+3. **Wait for all agents in this batch to complete** before launching the next batch or proceeding.
 
 4. **Report batch completion:**
    ```
@@ -429,7 +488,21 @@ Split domains into batches of `maxAgents`. For each batch:
 
 #### 4e. Verify Agent Outputs (Failure Handling)
 
-After all batches complete, check which domain findings files were actually written:
+After all batches complete, collect the agent IDs returned by the Task tool calls. Record them in the run config under `agentIds`:
+
+```javascript
+// Collect agent IDs returned by Task tool calls across all batches
+// agentIds maps domain name → agent ID string returned by the Task tool
+// Record agent IDs even for domains that failed to produce a findings file.
+// Only omit a domain from agentIds if the Task tool returned no ID for that domain.
+const agentIds = {
+  "auth": "agent-abc123",
+  "api":  "agent-def456",
+  // etc.
+}
+```
+
+Then check which domain findings files were actually written:
 
 ```javascript
 const successDomains = []
@@ -462,7 +535,14 @@ Update the run config to record partial results:
   "parallelMode": true,
   "domainsAnalyzed": ["api", "database", "ui"],
   "domainsFailed": ["auth", "payments"],
-  "partialResults": true
+  "partialResults": true,
+  "agentIds": {
+    "api": "agent-def456",
+    "database": "agent-ghi789",
+    "ui": "agent-jkl012",
+    "auth": "agent-abc123",
+    "payments": "agent-mno345"
+  }
 }
 ```
 
@@ -474,7 +554,7 @@ Run marked as failed. Check agent logs for details.
 Suggestions:
   - Verify domain-index.md has valid file paths
   - Check deepfield/source/baseline/ has accessible files
-  - Try /df-iterate without --parallel to diagnose
+  - Try /df-iterate --sequential to diagnose
 ```
 
 Mark run config `"status": "failed"` and stop execution.
@@ -506,16 +586,21 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/*.md",
+  "existing_drafts": "deepfield/drafts/domains/**/*.md",
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
-  "changelog": "deepfield/drafts/_changelog.md"
+  "changelog": "deepfield/drafts/_changelog.md",
+  "output_language": deepfieldConfig.language,
+  // Include only when stagingFeedback is non-null:
+  ...(stagingFeedback ? { "staging_feedback": stagingFeedback } : {}),
+  "domain_instructions": deepfieldConfig.domainInstructions
 }
 ```
 
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `deepfield/drafts/domains/<topic>.md` - Updated with new knowledge
+- `deepfield/drafts/domains/<topic>/behavior-spec.md` - Updated stakeholder specification
+- `deepfield/drafts/domains/<topic>/tech-spec.md` - Updated technical specification
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
@@ -539,18 +624,23 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain file that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+For every domain subdirectory that exists in `deepfield/drafts/domains/` (not just domains updated this run):
 
 ```bash
-# For each domain file: deepfield/drafts/domains/<domain>.md
+# Enumerate domain subdirectories
+ls -d deepfield/drafts/domains/*/
+
+# For each domain subdirectory: deepfield/drafts/domains/<domain>/
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
-  --domain     <domain> \
-  --drafts-dir deepfield/drafts \
-  --run-config deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --output     deepfield/drafts/domains/<domain>/README.md
+  --domain          <domain> \
+  --drafts-dir      deepfield/drafts \
+  --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --behavior-spec   deepfield/drafts/domains/<domain>/behavior-spec.md \
+  --tech-spec       deepfield/drafts/domains/<domain>/tech-spec.md \
+  --output          deepfield/drafts/domains/<domain>/README.md
 ```
 
-Enumerate domain files by listing all `*.md` files in `deepfield/drafts/domains/` and deriving the domain name by stripping the `.md` extension.
+Enumerate domain names by listing subdirectories under `deepfield/drafts/domains/` and using the directory name as the domain name (exclude non-domain directories such as `cross-cutting`).
 
 ### 5.5.3 Generate Run Review Guide
 
@@ -573,6 +663,34 @@ If any of the three generation scripts exit with a non-zero status:
 ## Step 5.6: Extract Terminology
 
 After synthesis, extract domain-specific terms from the files analyzed this run and merge them into the cumulative glossary.
+
+### Pre-check: Ensure terminology.md exists
+
+Before running the extraction script, check whether `deepfield/drafts/cross-cutting/terminology.md` exists:
+
+```javascript
+const terminologyPath = 'deepfield/drafts/cross-cutting/terminology.md';
+const terminologyExists = fs.existsSync(terminologyPath);
+```
+
+If the file does **not** exist:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/../../../node_modules/.bin/deepfield" upgrade:scaffold-cross-cutting \
+  --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
+```
+
+Or via the installed CLI:
+```bash
+deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
+```
+
+Log a warning:
+```
+Warning: terminology.md was missing — created from template before extraction
+```
+
+The run is NOT aborted. Proceed to extraction normally with the newly created file.
 
 ### Prepare File List
 
@@ -707,6 +825,38 @@ Read `deepfield/wip/confidence-scores.md` and include:
 - Show delta with sign (e.g., `+0.05` or `-0.11` or `0.00`)
 - Show negative deltas as-is — they indicate a run discovered new unknowns or contradictions, which is valuable information
 - If confidence-scores.md does not exist (scoring was skipped), omit the section with a note: `Confidence scoring not available for this run.`
+
+## Step 5.8: Glossary Alignment
+
+After confidence scoring (Step 5.7), run the glossary alignment step to enforce canonical terms across all domain drafts. This step is **non-blocking** — any failure logs a warning and continues to Step 6.
+
+### Invoke Glossary Aligner Agent
+
+```
+Launch: deepfield-glossary-aligner
+Input: {
+  "run_number": ${nextRun},
+  "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
+  "drafts_dir": "deepfield/drafts/domains",
+  "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
+}
+```
+
+The agent:
+1. Reads `terminology.md` to extract canonical terms and their synonyms
+2. Scans all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories, excluding `README.md`) for synonym usage
+3. Replaces synonyms with canonical terms via `upgrade:apply-op --type update` (word-boundary-aware, no plural replacement)
+4. Writes `deepfield/wip/run-${nextRun}/alignment-log.md` with a full substitution report
+
+### Handle Empty Glossary
+
+If `terminology.md` has no term entries (newly scaffolded), the aligner detects this and logs `Glossary is empty — skipping alignment` in the alignment log. No domain drafts are scanned. This is expected and correct — the alignment log is still written.
+
+### Error Handling
+
+If the glossary alignment agent fails or exits with an error:
+- Log: `Warning: Glossary alignment failed for Run ${nextRun}: <error>`
+- Continue to Step 6 — alignment failure does NOT abort the run
 
 ## Step 6: Update Learning Plan
 
@@ -915,9 +1065,12 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 🔗 Contradictions Found: [N]
 
 📁 Documentation Updated:
-  - deepfield/drafts/domains/authentication.md
-  - deepfield/drafts/domains/api-structure.md
-  - deepfield/drafts/domains/data-flow.md
+  - deepfield/drafts/domains/authentication/behavior-spec.md
+  - deepfield/drafts/domains/authentication/tech-spec.md
+  - deepfield/drafts/domains/api-structure/behavior-spec.md
+  - deepfield/drafts/domains/api-structure/tech-spec.md
+  - deepfield/drafts/domains/data-flow/behavior-spec.md
+  - deepfield/drafts/domains/data-flow/tech-spec.md
 
 🔍 Next Steps:
 

@@ -1,5 +1,5 @@
 ---
-name: Deepfield Term Extractor
+name: deepfield-term-extractor
 description: Terminology extraction specialist - detects domain terms, acronyms, and definitions from source files and documentation
 color: cyan
 ---
@@ -15,6 +15,7 @@ You will receive:
 - **Files to scan** — list of files analyzed this run (code, docs, READMEs)
 - **Previous glossary** — path to `drafts/cross-cutting/terminology.md` (may be empty or non-existent)
 - **Output path** — where to write `wip/run-N/new-terms.md`
+- **output_language** (optional) — the language setting from `DEEPFIELD.md` (e.g., "English", "English + Zh-TW", "Traditional Chinese")
 
 # What to Extract
 
@@ -93,6 +94,61 @@ For each extracted term, determine:
 - **Acronym**: All-caps or abbreviated form with an expansion (SKU, OMS, API in domain context)
 - **Business term**: Domain-specific business concept (Fulfillment, Cart Abandonment, Backorder)
 - **Technical term**: Project-specific technical concept distinct from general programming (e.g., custom design pattern names, proprietary system names)
+
+# Language Handling
+
+## Determining Output Language
+
+Use the `output_language` value from `DEEPFIELD.md` config (passed in input). If absent or "English", use English only (default — no change to existing behavior).
+
+## Bilingual Entries (e.g., "English + Zh-TW")
+
+When `output_language` is a bilingual pair (contains "+" and is not plain "English"):
+
+For each glossary entry, write the **Definition** and **Usage** fields with English first, then the second language immediately below within the same field:
+
+```markdown
+- **Definition:** The process of picking, packing, and shipping an order to a customer.
+  _（履行：揀貨、打包並將訂單發貨給客戶的流程。）_
+```
+
+- Write the English definition on the first line
+- Write the second-language translation indented below, wrapped in `_（...）_` or equivalent
+- The term heading (`## TERM_NAME`) always remains in English
+- `**Domain:**`, `**Files:**`, `**Related:**`, `**First seen:**` fields are always in English (metadata fields)
+
+## Monolingual Non-English Entries (e.g., "Traditional Chinese")
+
+When `output_language` is a single non-English language:
+
+- Write `**Definition:**` and `**Usage:**` in the configured language
+- Keep the term heading (`## TERM_NAME`) in English (technical accuracy)
+- Keep metadata fields (`**Domain:**`, `**Files:**`, `**Related:**`, `**First seen:**`) in English
+
+## Example: Bilingual Entry (English + Zh-TW)
+
+```markdown
+## Fulfillment
+
+- **Definition:** The process of picking, packing, and shipping an order to a customer.
+  _（履行：揀貨、打包並將訂單發貨給客戶的流程。）_
+- **Domain:** order-management
+- **Files:**
+  - `src/fulfillment/service.ts`
+- **First seen:** Run 3
+```
+
+## Example: Monolingual Entry (Traditional Chinese)
+
+```markdown
+## Fulfillment
+
+- **Definition:** 揀貨、打包並將訂單發貨給客戶的流程。
+- **Domain:** order-management
+- **Files:**
+  - `src/fulfillment/service.ts`
+- **First seen:** Run 3
+```
 
 # Output Format
 

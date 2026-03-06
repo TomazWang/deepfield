@@ -38,7 +38,22 @@ If `from === to`:
 - Output: "Workspace is already at v{to}. No operations needed."
 - Exit without applying any operations.
 
-## Step 2: Pre-apply validation
+## Step 2: Scaffold missing cross-cutting files
+
+Before making any other changes, ensure all required cross-cutting files exist by calling:
+
+```bash
+deepfield upgrade:scaffold-cross-cutting
+```
+
+Read the output line by line. For each `Created:` line, display the message to the user. After running, display:
+
+- If any files were created: "Scaffolded missing cross-cutting files"
+- If all files already existed: "Cross-cutting files already present"
+
+If this command fails (non-zero exit), report the error and abort.
+
+## Step 3: Pre-apply validation
 
 Before making any changes, validate the current workspace:
 
@@ -54,7 +69,7 @@ Parse the JSON output `{ valid, errors }`.
   - Output: "Pre-upgrade validation failed. Please fix the errors above before running /df-upgrade again."
   - Stop.
 
-## Step 3: Analyze structural diff and determine required operations
+## Step 4: Analyze structural diff and determine required operations
 
 Using your knowledge of Deepfield workspace structure conventions, reason about:
 
@@ -80,7 +95,7 @@ operations = [
 
 If the versions are consecutive and you cannot determine the exact structural diff, prefer conservative operations (add missing directories/files, do not delete unless certain).
 
-## Step 4: Apply operations
+## Step 5: Apply operations
 
 For each operation in the list, call the appropriate CLI helper:
 
@@ -102,7 +117,7 @@ deepfield upgrade:apply-op --type rename --path "<old-path>" --to "<new-path>"
 
 Report each operation result as it completes. If any operation fails (non-zero exit code), stop immediately and report the error. Do not continue applying remaining operations after a failure.
 
-## Step 5: Post-apply validation
+## Step 6: Post-apply validation
 
 After all operations are applied, validate the workspace again:
 
@@ -113,7 +128,7 @@ deepfield upgrade:validate
 Parse the JSON output `{ valid, errors }`.
 
 - If `valid === true`:
-  - Continue to Step 6.
+  - Continue to Step 7.
 - If `valid === false`:
   - Report the validation errors.
   - Instruct the user to rollback:
@@ -121,7 +136,7 @@ Parse the JSON output `{ valid, errors }`.
     > `deepfield rollback <backupPath>`"
   - Stop. Do NOT update the version.
 
-## Step 6: Update version
+## Step 7: Update version
 
 After successful post-apply validation, update the version:
 
@@ -131,7 +146,7 @@ deepfield upgrade:set-version --to-version "<to>"
 
 If this fails (non-zero exit code), report the error. The upgrade operations were applied successfully but the version field was not updated. Advise the user to run `deepfield upgrade:set-version --version <to>` manually.
 
-## Step 7: Report success
+## Step 8: Report success
 
 Output a summary:
 
