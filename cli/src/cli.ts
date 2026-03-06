@@ -55,6 +55,7 @@ import {
   createSetVersionCommand,
   createScaffoldCrossCuttingCommand,
 } from './commands/upgrade-helpers.js';
+import { createDetectBehaviorDomainsCommand } from './commands/bootstrap-helpers.js';
 
 // Register commands
 program.addCommand(createInitCommand());
@@ -64,6 +65,9 @@ program.addCommand(createBootstrapCommand());
 program.addCommand(createUpgradeCommand());
 program.addCommand(createRollbackCommand());
 program.addCommand(createVersionCommand());
+
+// Register bootstrap helper sub-commands
+program.addCommand(createDetectBehaviorDomainsCommand());
 
 // Register upgrade helper sub-commands (used by the /df-upgrade plugin skill)
 program.addCommand(createDetectVersionCommand());

@@ -130,15 +130,15 @@ function applyFeedbackToLearningPlan(feedback) {
 }
 
 /**
- * Placeholder: apply domain corrections from feedback to domain-index.md.
+ * Placeholder: apply domain corrections from feedback to tech-index.md / behavior-index.md.
  * Currently a no-op; future implementation will parse domain additions/removals/renames
- * and update deepfield/wip/domain-index.md accordingly.
+ * and update deepfield/wip/tech-index.md and deepfield/wip/behavior-index.md accordingly.
  *
  * @param {object|null} feedback  Parsed feedback object from readFeedback()
  */
 function applyFeedbackToDomains(feedback) {
   if (!feedback) return;
-  // TODO: parse feedback.corrections for domain changes and update domain-index.md
+  // TODO: parse feedback.corrections for domain changes and update tech-index.md / behavior-index.md
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
