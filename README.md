@@ -33,6 +33,7 @@ Together, they help you understand brownfield projects through structured explor
 ### Prerequisites
 
 - **Node.js 18+** and npm
+- **Claude Code 2.1.69+** (required for plugin installation via marketplace)
 - Git (optional, for git repository features)
 
 ### CLI Only (Universal Usage)
@@ -79,7 +80,9 @@ Now you can use `deepfield` or `df` commands anywhere.
 
 ### With Claude Code Plugin (via Marketplace)
 
-The easiest way to install the Claude Code plugin:
+> **Requires Claude Code 2.1.69+**. Update with `claude update` if needed.
+
+Add the marketplace and install the plugin:
 
 ```
 /plugin marketplace add TomazWang/deepfield
@@ -87,6 +90,12 @@ The easiest way to install the Claude Code plugin:
 ```
 
 That's it. The plugin is now available in Claude Code with all `df-*` commands.
+
+To get future updates:
+
+```
+/plugin marketplace update deepfield
+```
 
 ### With Claude Code Plugin (manual)
 
