@@ -281,6 +281,199 @@ Full report: deepfield/wip/migration-split-spec.md
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+### Step 8: Dual-Track Draft Migration (workspaces with version < 0.7.0)
+
+After the draft migration in Step 7 completes (or is skipped), check whether this workspace needs the dual-track structure migration.
+
+#### 8.1 Version Gate
+
+Only run this step when `projectVersion` (detected in Step 1) is less than `0.7.0` (semver comparison). If the workspace is already at 0.7.0 or higher, skip Steps 8.2–8.9 entirely:
+
+```
+Dual-track structure already present (workspace >= 0.7.0). Skipping Step 8.
+```
+
+#### 8.2 Detect Legacy Domain Folders
+
+Inspect `deepfield/drafts/domains/` for subdirectories that have not yet been migrated to the dual-track layout:
+
+```bash
+ls -d deepfield/drafts/domains/*/
+```
+
+For each `{domain}` subdirectory found:
+- **Already migrated (skip)**: Both `drafts/behavior/{domain}/spec.md` AND `drafts/tech/{domain}/spec.md` already exist
+- **Partially split (migrate)**: `{domain}/behavior-spec.md` exists OR `{domain}/tech-spec.md` exists but the new paths do not
+- **Flat spec only (AI split required)**: Only `{domain}/spec.md` exists (no behavior/tech split at all)
+- **Empty or unrecognised**: Skip with a warning
+
+List all detected legacy domains to the user before proceeding.
+
+#### 8.3 Confirmation Prompt
+
+Before starting, ask:
+
+```
+Found {N} domain folder(s) to migrate to the dual-track structure (behavior + tech).
+
+This migration will:
+  1. Create deepfield/drafts/behavior/ and deepfield/drafts/tech/ directories
+  2. For each domain:
+     a. If behavior-spec.md exists → move to drafts/behavior/{domain}/spec.md
+     b. If tech-spec.md exists → move to drafts/tech/{domain}/spec.md
+     c. If only a flat spec.md exists → AI splits it (behavior + tech content)
+        Original spec.md is preserved as spec.md.bak — NOT deleted
+  3. Update wip/ indexes:
+     a. Copy wip/domain-index.md → wip/tech-index.md (if tech-index.md doesn't exist)
+     b. Create wip/behavior-index.md from template (if it doesn't exist)
+     c. Create wip/domain-links.md from template (if it doesn't exist)
+  4. Update project.config.json schema (domains → techDomains, add behaviorDomains, domainLinks)
+
+A backup already exists at: {backupPath}
+
+Proceed with dual-track migration? (yes/no)
+```
+
+If the user says **no**, skip Steps 8.4–8.9:
+> "Dual-track migration skipped. Re-run `/df-upgrade` when ready."
+
+#### 8.4 Create Target Directories
+
+```bash
+mkdir -p deepfield/drafts/behavior
+mkdir -p deepfield/drafts/tech
+```
+
+#### 8.5 Migrate Domain Folders
+
+For each legacy domain, invoke the `Deepfield Upgrade` skill's flat-spec-split handler (Step 4 of that skill covers AI-based splitting). Specifically:
+
+**Case A — both `behavior-spec.md` and `tech-spec.md` exist in the old `domains/{domain}/` folder:**
+
+```bash
+deepfield upgrade:apply-op --type rename \
+  --path "drafts/domains/{domain}/behavior-spec.md" \
+  --to   "drafts/behavior/{domain}/spec.md"
+
+deepfield upgrade:apply-op --type rename \
+  --path "drafts/domains/{domain}/tech-spec.md" \
+  --to   "drafts/tech/{domain}/spec.md"
+```
+
+**Case B — only `tech-spec.md` exists:**
+
+```bash
+deepfield upgrade:apply-op --type rename \
+  --path "drafts/domains/{domain}/tech-spec.md" \
+  --to   "drafts/tech/{domain}/spec.md"
+```
+
+**Case C — only `behavior-spec.md` exists:**
+
+```bash
+deepfield upgrade:apply-op --type rename \
+  --path "drafts/domains/{domain}/behavior-spec.md" \
+  --to   "drafts/behavior/{domain}/spec.md"
+```
+
+**Case D — only flat `spec.md` exists (no behavior/tech split):**
+
+Invoke the `Deepfield Upgrade` skill passing the flat spec for AI splitting. The skill reads the flat `spec.md`, classifies each section as behavior or tech, and writes:
+- `drafts/behavior/{domain}/spec.md` — behavior content
+- `drafts/tech/{domain}/spec.md` — tech content
+- Renames original to `spec.md.bak` (see deepfield-upgrade.md Step 4.5 for details)
+
+After each domain succeeds, remove the now-empty `deepfield/drafts/domains/{domain}/` folder only if it is empty (ignore non-empty folders — they may contain additional sub-files).
+
+#### 8.6 Migrate wip/ Indexes
+
+After domain folders are migrated, update wip/:
+
+```bash
+# Step 8.6a: Copy legacy domain-index.md → tech-index.md (if tech-index.md doesn't already exist)
+if [ ! -f deepfield/wip/tech-index.md ] && [ -f deepfield/wip/domain-index.md ]; then
+  deepfield upgrade:apply-op --type rename \
+    --path "wip/domain-index.md" \
+    --to   "wip/tech-index.md"
+fi
+
+# Step 8.6b: Create behavior-index.md from template (if it doesn't exist)
+if [ ! -f deepfield/wip/behavior-index.md ]; then
+  deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates" \
+    --file behavior-index.md
+fi
+
+# Step 8.6c: Create domain-links.md from template (if it doesn't exist)
+if [ ! -f deepfield/wip/domain-links.md ]; then
+  deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates" \
+    --file domain-links.md
+fi
+```
+
+#### 8.7 Update project.config.json Schema
+
+Update `deepfield/project.config.json` to reflect the dual-track schema:
+
+```javascript
+// Read current config
+const config = JSON.parse(readFile('deepfield/project.config.json'))
+
+// Migrate domains → techDomains
+if (config.domains !== undefined) {
+  config.techDomains = config.domains
+  delete config.domains
+}
+
+// Add new fields (only if absent)
+if (config.behaviorDomains === undefined) config.behaviorDomains = []
+if (config.domainLinks === undefined)     config.domainLinks = []
+```
+
+Write the updated config via:
+
+```bash
+deepfield upgrade:apply-op --type update \
+  --path "project.config.json" \
+  --content "<updated JSON>"
+```
+
+**Important**: Do NOT set `workspaceVersion: "0.7.0"` here. The version bump is handled by `deepfield upgrade:set-version` in the Deepfield Upgrade skill's Step 7, after post-apply validation succeeds.
+
+#### 8.8 Display Migration Summary
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dual-Track Draft Migration Complete
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Domain              Status    behavior spec          tech spec
+──────────────────────────────────────────────────────────────
+authentication      ✓         drafts/behavior/...    drafts/tech/...
+api-structure       ✓         drafts/behavior/...    drafts/tech/...
+data-flow           ✓ split   drafts/behavior/...    drafts/tech/...
+
+Migrated {N} behavior spec(s), {M} tech spec(s).
+{F} domain(s) used legacy flat spec — AI split applied, originals preserved as spec.md.bak
+
+wip/ indexes:
+  ✓ wip/tech-index.md   (copied from domain-index.md)
+  ✓ wip/behavior-index.md   (created from template)
+  ✓ wip/domain-links.md     (created from template)
+
+project.config.json:
+  ✓ domains → techDomains
+  ✓ behaviorDomains: [] added
+  ✓ domainLinks: [] added
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+#### 8.9 Failure Handling
+
+- If any domain migration fails, preserve original files and log a warning. Continue with remaining domains — do NOT abort the entire migration.
+- If `project.config.json` update fails, warn the user but do not block the version bump.
+- If wip/ index creation fails, warn and continue.
+- On any failure, remind the user that a backup is available at `{backupPath}`.
+
 ## Error Handling
 
 - **CLI not found**: Suggest `npm install -g deepfield`

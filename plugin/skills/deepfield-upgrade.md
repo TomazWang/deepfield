@@ -69,6 +69,78 @@ Parse the JSON output `{ valid, errors }`.
   - Output: "Pre-upgrade validation failed. Please fix the errors above before running /df-upgrade again."
   - Stop.
 
+## Step 3.5: Handle Flat spec.md Splitting (pre-0.7.0 workspaces)
+
+This step runs only when the `df-upgrade` command delegates a flat-spec split for a specific domain. It is also invoked during Step 4 when a domain folder is found to have only a legacy `spec.md` with no behavior/tech split.
+
+### Detection
+
+A domain folder needs AI splitting when:
+- `drafts/domains/{domain}/spec.md` exists
+- Neither `drafts/behavior/{domain}/spec.md` nor `drafts/tech/{domain}/spec.md` exists
+- The file does not end in `.bak`
+
+### Split Process
+
+For each domain that needs splitting:
+
+1. **Read the flat spec:**
+   ```bash
+   # Read deepfield/drafts/domains/{domain}/spec.md
+   ```
+
+2. **Classify each section as behavior or tech:**
+   - Behavior content: user stories, product features, business rules, user flows, domain language, stakeholder-visible behavior
+   - Tech content: architecture, APIs, data models, implementation decisions, dependencies, technical constraints
+
+3. **Write behavior spec:**
+   ```bash
+   deepfield upgrade:apply-op --type create \
+     --path "drafts/behavior/{domain}/spec.md" \
+     --content "<behavior content>"
+   ```
+
+4. **Write tech spec:**
+   ```bash
+   deepfield upgrade:apply-op --type create \
+     --path "drafts/tech/{domain}/spec.md" \
+     --content "<tech content>"
+   ```
+
+5. **Preserve original as backup (NOT deleted):**
+   ```bash
+   deepfield upgrade:apply-op --type rename \
+     --path "drafts/domains/{domain}/spec.md" \
+     --to   "drafts/domains/{domain}/spec.md.bak"
+   ```
+
+6. **Log the split:**
+   ```
+   Split {domain}/spec.md into behavior and tech tracks
+   Original preserved as drafts/domains/{domain}/spec.md.bak
+   ```
+
+### Content guidelines per output file
+
+**`drafts/behavior/{domain}/spec.md`** — stakeholder-facing:
+- Start with a 1–2 sentence domain purpose from the user's perspective
+- Sections: User Stories, Business Rules, User Flows, Domain Concepts
+- Avoid implementation details, library names, and file paths
+- Use domain language, not code language
+
+**`drafts/tech/{domain}/spec.md`** — implementation-facing:
+- Start with a 1–2 sentence technical overview
+- Sections: Architecture, APIs, Data Models, Dependencies, Technical Decisions
+- Include file:line references where known
+- Avoid "As a user…" phrasing and business justifications disconnected from technical choices
+
+### Failure Handling
+
+If either output file cannot be written:
+- Leave the original `spec.md` in place (do NOT rename to `.bak`)
+- Log: `Warning: Flat spec split failed for domain "{domain}" — original preserved`
+- Continue with the next domain
+
 ## Step 4: Analyze structural diff and determine required operations
 
 Using your knowledge of Deepfield workspace structure conventions, reason about:
@@ -135,6 +207,61 @@ Parse the JSON output `{ valid, errors }`.
     > "Post-upgrade validation failed. To restore your workspace, run:
     > `deepfield rollback <backupPath>`"
   - Stop. Do NOT update the version.
+
+## Step 6.5: Migrate project.config.json to Dual-Track Schema (pre-0.7.0 only)
+
+Run this step only when the `from` version is less than `0.7.0`.
+
+### Schema changes
+
+| Old field | New field | Notes |
+|-----------|-----------|-------|
+| `domains` | `techDomains` | Renamed; same array of domain name strings |
+| _(absent)_ | `behaviorDomains` | New empty array; populated by future iterate runs |
+| _(absent)_ | `domainLinks` | New empty array; populated by domain-linker |
+
+### Migration logic
+
+```javascript
+const config = JSON.parse(readFile('deepfield/project.config.json'))
+
+// Rename domains → techDomains (if domains field still present)
+if (Object.prototype.hasOwnProperty.call(config, 'domains')) {
+  config.techDomains = config.domains
+  delete config.domains
+}
+
+// Add new fields only if absent (idempotent)
+if (!Object.prototype.hasOwnProperty.call(config, 'behaviorDomains')) {
+  config.behaviorDomains = []
+}
+if (!Object.prototype.hasOwnProperty.call(config, 'domainLinks')) {
+  config.domainLinks = []
+}
+
+// NOTE: Do NOT set workspaceVersion here.
+// workspaceVersion is updated by Step 7 (upgrade:set-version) ONLY after post-apply validation succeeds.
+// If migration fails partway through, the absence of workspaceVersion update protects the workspace.
+```
+
+Apply via:
+
+```bash
+deepfield upgrade:apply-op --type update \
+  --path "project.config.json" \
+  --content "<updated config JSON>"
+```
+
+### Failure handling
+
+If the config update fails:
+- Log: `Warning: project.config.json schema migration failed: <error>`
+- Do NOT abort — the workspace structure migration already applied. Report that the user should manually update `project.config.json` using the schema above.
+- Continue to Step 6 (post-apply validation).
+
+### Idempotency
+
+If `techDomains` already exists (a previous migration attempt partially completed), skip the rename step. Only add missing `behaviorDomains` and `domainLinks` fields.
 
 ## Step 7: Update version
 
