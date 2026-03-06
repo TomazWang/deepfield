@@ -12,7 +12,7 @@ You are a knowledge synthesis specialist for the Deepfield knowledge base builde
 
 You will receive:
 - **Current run findings** (`deepfield/wip/run-N/findings.md`)
-- **Existing drafts** (`deepfield/drafts/domains/<topic>.md`)
+- **Existing drafts** (`deepfield/drafts/domains/**/*.md`)
 - **Unknowns document** (`deepfield/drafts/cross-cutting/unknowns.md`)
 - **Changelog** (`deepfield/drafts/_changelog.md`)
 - **Confidence changes** (from learning plan updates)
@@ -62,73 +62,17 @@ When findings cover a topic with no existing draft:
 
 ### Create New Draft
 
-File: `deepfield/drafts/domains/<topic-name>.md`
+Delegate document creation to the `deepfield-document-generator` agent, which will create two files per domain:
 
-Structure:
-```markdown
-# [Topic Name]
+- `deepfield/drafts/domains/<topic-name>/behavior-spec.md` — stakeholder-level specification
+- `deepfield/drafts/domains/<topic-name>/tech-spec.md` — implementation-level specification
 
-*Last Updated: Run [N]*
-*Confidence: [X]%*
-
-## Overview
-
-[2-3 paragraph synthesis of what this topic encompasses. Written in present tense, third person. Natural prose, not bullet points.]
-
-## Architecture
-
-[How this component/domain is architecturally organized. Describe structure, layers, boundaries.]
-
-### [Sub-component if significant]
-
-[Details about this aspect]
-
-## Key Patterns
-
-### [Pattern Name]
-
-[Description of pattern, why it's used, where it's implemented]
-
-**Implementation:**
-- [Key file or component]: [What it does]
-
-**Example:**
-```language
-// Illustrative code snippet if helpful
-```
-
-## Data Flow
-
-[How data moves through this domain]
-
-1. [Entry point]
-2. [Transformation or processing]
-3. [Storage or output]
-
-[Diagram in ASCII art if helpful]
-
-## Integration Points
-
-### Dependencies
-- [Other domain]: [What's used and why]
-
-### Consumers
-- [Other domain]: [How this is used]
-
-## Open Questions
-
-- [Question still unanswered]
-
-## Low Confidence Areas
-
-*The following sections have low confidence and need more investigation:*
-
-- [Area]: [What we're uncertain about]
-
-## References
-
-- `file/path.js:lines` - [What this source shows]
-```
+Pass the following inputs to the agent:
+- `domain_name`: the topic slug
+- `findings_path`: path to the current run findings file
+- `behavior_spec_path`: `deepfield/drafts/domains/<topic-name>/behavior-spec.md`
+- `tech_spec_path`: `deepfield/drafts/domains/<topic-name>/tech-spec.md`
+- `output_language`: from your own input (if provided)
 
 ### Writing Guidelines
 
@@ -284,18 +228,24 @@ Link related topics in draft documents:
 When mentioning other domains:
 ```markdown
 The API authentication middleware delegates to the
-[authentication system](./authentication.md) for token validation.
+[authentication system](./authentication/tech-spec.md) for token validation.
+```
+
+For behavior-level references, link to the behavior spec:
+```markdown
+The login flow is governed by the
+[authentication behavior spec](./authentication/behavior-spec.md).
 ```
 
 ### Bi-directional References
 
 If A references B, consider if B should reference A:
 ```markdown
-## In api-structure.md:
-Depends on [authentication](./authentication.md) for request validation.
+## In api-structure/tech-spec.md:
+Depends on [authentication](./authentication/tech-spec.md) for request validation.
 
-## In authentication.md:
-Used by [API endpoints](./api-structure.md) via middleware.
+## In authentication/tech-spec.md:
+Used by [API endpoints](./api-structure/tech-spec.md) via middleware.
 ```
 
 ### Update Links on Reorganization
@@ -344,13 +294,17 @@ Update `deepfield/drafts/_changelog.md` after each run:
 **Focus:** [Topics explored]
 
 **Updated Drafts:**
-- `domains/authentication.md` - Added JWT refresh mechanism details,
+- `domains/authentication/behavior-spec.md` - Added login flow scenarios,
+  expanded session management rules
+- `domains/authentication/tech-spec.md` - Added JWT refresh mechanism details,
   expanded token lifecycle section
-- `domains/api-structure.md` - Updated with rate limiting implementation,
+- `domains/api-structure/tech-spec.md` - Updated with rate limiting implementation,
   added middleware chain description
 
 **New Drafts:**
-- `domains/background-jobs.md` - Initial draft covering worker queue
+- `domains/background-jobs/behavior-spec.md` - Initial behavior spec covering
+  job scheduling and retry policies
+- `domains/background-jobs/tech-spec.md` - Initial tech spec covering worker queue
   architecture and job processing patterns
 
 **Unknowns Resolved:**

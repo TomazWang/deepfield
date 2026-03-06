@@ -3,15 +3,20 @@
  * generate-domain-readme.js — Generate deepfield/drafts/domains/{domain}/README.md
  *
  * Usage:
- *   node generate-domain-readme.js --domain <name> --drafts-dir <path> --run-config <path> --output <path>
+ *   node generate-domain-readme.js --domain <name> --drafts-dir <path> --run-config <path> \
+ *     --behavior-spec <path> --tech-spec <path> --output <path>
  *
  * Arguments:
- *   --domain <name>       Domain name (e.g. "authentication") (required)
- *   --drafts-dir <path>   Path to deepfield/drafts/ directory (required)
- *   --run-config <path>   Path to run-N.config.json (required)
- *   --output <path>       Path to write README.md (required)
+ *   --domain <name>           Domain name (e.g. "authentication") (required)
+ *   --drafts-dir <path>       Path to deepfield/drafts/ directory (required)
+ *   --run-config <path>       Path to run-N.config.json (required)
+ *   --behavior-spec <path>    Path to behavior-spec.md (optional, derived if omitted)
+ *   --tech-spec <path>        Path to tech-spec.md (optional, derived if omitted)
+ *   --output <path>           Path to write README.md (required)
  *
- * The domain flat file is expected at: <drafts-dir>/domains/<domain>.md
+ * Domain files are expected at:
+ *   <drafts-dir>/domains/<domain>/behavior-spec.md
+ *   <drafts-dir>/domains/<domain>/tech-spec.md
  * Output is written atomically.
  */
 
@@ -32,7 +37,14 @@ function parseArgs() {
     process.exit(args.length === 0 ? 1 : 0);
   }
 
-  const config = { domain: null, draftsDir: null, runConfig: null, output: null };
+  const config = {
+    domain: null,
+    draftsDir: null,
+    runConfig: null,
+    behaviorSpec: null,
+    techSpec: null,
+    output: null,
+  };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--domain' && i + 1 < args.length) {
@@ -41,6 +53,10 @@ function parseArgs() {
       config.draftsDir = args[++i];
     } else if (args[i] === '--run-config' && i + 1 < args.length) {
       config.runConfig = args[++i];
+    } else if (args[i] === '--behavior-spec' && i + 1 < args.length) {
+      config.behaviorSpec = args[++i];
+    } else if (args[i] === '--tech-spec' && i + 1 < args.length) {
+      config.techSpec = args[++i];
     } else if (args[i] === '--output' && i + 1 < args.length) {
       config.output = args[++i];
     }
@@ -50,7 +66,10 @@ function parseArgs() {
 }
 
 function printUsage() {
-  console.error('Usage: generate-domain-readme.js --domain <name> --drafts-dir <path> --run-config <path> --output <path>');
+  console.error(
+    'Usage: generate-domain-readme.js --domain <name> --drafts-dir <path> ' +
+    '--run-config <path> [--behavior-spec <path>] [--tech-spec <path>] --output <path>'
+  );
 }
 
 function validate(config) {
@@ -67,6 +86,14 @@ function validate(config) {
     console.error(`Error: run config not found: ${config.runConfig}`);
     process.exit(1);
   }
+
+  // Derive spec paths if not explicitly provided
+  if (!config.behaviorSpec) {
+    config.behaviorSpec = path.join(config.draftsDir, 'domains', config.domain, 'behavior-spec.md');
+  }
+  if (!config.techSpec) {
+    config.techSpec = path.join(config.draftsDir, 'domains', config.domain, 'tech-spec.md');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -82,13 +109,10 @@ function loadRunConfig(runConfigPath) {
   }
 }
 
-function loadDomainFile(draftsDir, domainName) {
-  const domainPath = path.join(draftsDir, 'domains', `${domainName}.md`);
-  if (!fs.existsSync(domainPath)) {
-    return null;
-  }
+function loadSpecFile(specPath) {
+  if (!fs.existsSync(specPath)) return null;
   try {
-    return fs.readFileSync(domainPath, 'utf-8');
+    return fs.readFileSync(specPath, 'utf-8');
   } catch (_) {
     return null;
   }
@@ -136,6 +160,18 @@ function extractOpenQuestions(content) {
   return questions;
 }
 
+function extractConfidenceFromSpec(content) {
+  if (!content) return null;
+  const match = content.match(/\*Confidence:\s*(\d+)%\*/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function extractLastUpdatedFromSpec(content) {
+  if (!content) return null;
+  const match = content.match(/\*Last Updated:\s*([^*]+)\*/);
+  return match ? match[1].trim() : null;
+}
+
 function getConfidenceData(domainName, runConfig) {
   const changes = runConfig.confidenceChanges || {};
   for (const [k, v] of Object.entries(changes)) {
@@ -179,15 +215,35 @@ function renderOpenQuestions(questions) {
   return questions.slice(0, 5).map(q => `- ${q}`).join('\n');
 }
 
-function render({ domainName, domainFile, runNumber, generatedAt, overview, conf, recentChanges, openQuestions }) {
-  const confidenceStr = conf ? `${conf.after}%` : '—';
-  const delta = renderConfidenceDelta(conf);
+function render({
+  domainName,
+  runNumber,
+  generatedAt,
+  overview,
+  conf,
+  recentChanges,
+  openQuestions,
+  behaviorSpecExists,
+  techSpecExists,
+  behaviorConfidence,
+  techConfidence,
+  behaviorLastUpdated,
+  techLastUpdated,
+}) {
   const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1).replace(/-/g, ' ');
+  const delta = renderConfidenceDelta(conf);
+
+  const behaviorLine = behaviorSpecExists
+    ? `| [behavior-spec.md](./behavior-spec.md) | Stakeholder specification — user stories, scenarios, business rules | ${behaviorConfidence !== null ? behaviorConfidence + '%' : '—'} | ${behaviorLastUpdated || '—'} |`
+    : `| behavior-spec.md | _Not yet created_ | — | — |`;
+
+  const techLine = techSpecExists
+    ? `| [tech-spec.md](./tech-spec.md) | Technical specification — architecture, implementations, data models | ${techConfidence !== null ? techConfidence + '%' : '—'} | ${techLastUpdated || '—'} |`
+    : `| tech-spec.md | _Not yet created_ | — | — |`;
 
   return `# ${displayName}
 
-> Companion summary for [\`../${domainFile}\`](../${domainFile}).
-> Generated after Run ${runNumber} on ${generatedAt}.
+> Domain summary generated after Run ${runNumber} on ${generatedAt}.
 
 ## Overview
 
@@ -195,7 +251,14 @@ ${overview}
 
 ## Confidence
 
-**${confidenceStr}** ${delta}
+**${conf ? conf.after + '%' : '—'}** ${delta}
+
+## Specification Files
+
+| File | Description | Confidence | Last Updated |
+|------|-------------|-----------|--------------|
+${behaviorLine}
+${techLine}
 
 ## Recent Changes (Run ${runNumber})
 
@@ -204,10 +267,6 @@ ${recentChanges}
 ## Open Questions
 
 ${renderOpenQuestions(openQuestions)}
-
-## Full Documentation
-
-See [../${domainFile}](../${domainFile}) for the complete domain knowledge base.
 
 ---
 
@@ -239,24 +298,33 @@ function main() {
   const config = parseArgs();
   validate(config);
 
-  const runConfig   = loadRunConfig(config.runConfig);
-  const domainFile  = `${config.domain}.md`;
-  const content     = loadDomainFile(config.draftsDir, config.domain);
-  const overview    = extractOverview(content);
-  const questions   = extractOpenQuestions(content);
-  const conf        = getConfidenceData(config.domain, runConfig);
-  const recentChg   = renderRecentChanges(config.domain, runConfig);
-  const generatedAt = new Date().toISOString().slice(0, 10);
+  const runConfig        = loadRunConfig(config.runConfig);
+  const behaviorContent  = loadSpecFile(config.behaviorSpec);
+  const techContent      = loadSpecFile(config.techSpec);
+
+  // Use behavior-spec for overview and open questions (stakeholder-friendly)
+  // Fall back to tech-spec if behavior-spec not yet created
+  const primaryContent = behaviorContent || techContent;
+  const overview       = extractOverview(primaryContent);
+  const questions      = extractOpenQuestions(primaryContent);
+  const conf           = getConfidenceData(config.domain, runConfig);
+  const recentChg      = renderRecentChanges(config.domain, runConfig);
+  const generatedAt    = new Date().toISOString().slice(0, 10);
 
   const markdown = render({
-    domainName:    config.domain,
-    domainFile,
-    runNumber:     runConfig.runNumber || 0,
+    domainName:         config.domain,
+    runNumber:          runConfig.runNumber || 0,
     generatedAt,
     overview,
     conf,
-    recentChanges: recentChg,
-    openQuestions: questions,
+    recentChanges:      recentChg,
+    openQuestions:      questions,
+    behaviorSpecExists: behaviorContent !== null,
+    techSpecExists:     techContent !== null,
+    behaviorConfidence: extractConfidenceFromSpec(behaviorContent),
+    techConfidence:     extractConfidenceFromSpec(techContent),
+    behaviorLastUpdated: extractLastUpdatedFromSpec(behaviorContent),
+    techLastUpdated:    extractLastUpdatedFromSpec(techContent),
   });
 
   writeAtomic(config.output, markdown);
