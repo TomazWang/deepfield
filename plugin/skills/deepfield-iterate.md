@@ -123,7 +123,15 @@ Load `deepfield/wip/run-${nextRun-1}/run-${nextRun-1}.config.json`:
 ### Check for New User Input
 
 Check if `deepfield/source/run-${nextRun}-staging/` exists with content:
-- Read `feedback.md` if present
+- Read `feedback.md` if present — capture the full text as a `stagingFeedback` string variable. If the file does not exist, set `stagingFeedback = null`.
+
+  ```javascript
+  const feedbackPath = `deepfield/source/run-${nextRun}-staging/feedback.md`
+  const stagingFeedback = fileExists(feedbackPath)
+    ? readFile(feedbackPath)   // full text as a string
+    : null
+  ```
+
 - List new sources in `sources/` directory
 - Classify new sources via classifier agent
 - File new sources appropriately
@@ -300,7 +308,9 @@ Input: {
   "domain_instructions": {
     "api-structure": <deepfieldConfig.domainInstructions["api-structure"] or null>,
     "data-flow": <deepfieldConfig.domainInstructions["data-flow"] or null>
-  }
+  },
+  // Include only when stagingFeedback is non-null:
+  ...(stagingFeedback ? { "staging_feedback": stagingFeedback } : {})
 }
 ```
 
@@ -419,6 +429,8 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Domain
    Name: ${domain.name}
+
+   ${stagingFeedback ? `## Staging Feedback (User Corrections)\n\nThe user has provided corrections and guidance for this learning run. **Treat this feedback as the primary source of truth.** Apply all corrections and follow all guidance before proceeding with file analysis. If feedback contradicts what you observe in source code, trust the feedback first and note any discrepancy.\n\n${stagingFeedback}` : ''}
 
    ## Files to analyze
    ${domain.files.map(f => `- ${f}`).join('\n')}
@@ -575,7 +587,10 @@ Input: {
   "existing_drafts": "deepfield/drafts/domains/*.md",
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
-  "output_language": deepfieldConfig.language
+  "output_language": deepfieldConfig.language,
+  // Include only when stagingFeedback is non-null:
+  ...(stagingFeedback ? { "staging_feedback": stagingFeedback } : {}),
+  "domain_instructions": deepfieldConfig.domainInstructions
 }
 ```
 
