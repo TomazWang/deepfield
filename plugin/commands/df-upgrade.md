@@ -65,7 +65,7 @@ Build a JSON payload:
 
 ### Step 5: Invoke the deepfield-upgrade skill
 
-Invoke the `deepfield-upgrade` skill with the payload from Step 4.
+Invoke the `Deepfield Upgrade` skill with the payload from Step 4.
 
 Pass the payload as the skill argument. The skill will:
 - Validate the workspace pre-upgrade

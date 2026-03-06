@@ -43,7 +43,7 @@ If `from === to`:
 Before making any other changes, ensure all required cross-cutting files exist by calling:
 
 ```bash
-deepfield upgrade:scaffold-cross-cutting
+deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
 ```
 
 Read the output line by line. For each `Created:` line, display the message to the user. After running, display:
