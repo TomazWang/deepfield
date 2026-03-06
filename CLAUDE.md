@@ -504,6 +504,36 @@ Three layers prevent context overload:
 
 `drafts/cross-cutting/unknowns.md` explicitly states what the KB doesn't cover, contradictions, and what sources would help. This makes output trustworthy.
 
+## Release Workflow
+
+**Trunk-based, CI tag-triggered releases. Main is always `0.0.0-dev`.**
+
+- Version files on main are permanently `0.0.0-dev` — never bump them
+- Real semver only lives on `release/X.Y.Z` branches and git tags
+
+### Cutting a release
+
+```bash
+git checkout main && git pull
+git checkout -b release/0.6.0
+git push origin release/0.6.0
+# CI runs automatically:
+#   1. Sets all 4 version files to "0.6.0"
+#   2. Rebuilds CLI
+#   3. Commits + pushes release branch
+#   4. Tags v0.6.0 and moves latest tag
+```
+
+### How marketplace updates work
+
+- `marketplace.json` on main has `ref: "latest"` — never changes
+- `latest` tag moves on each release → users pick it up via `/plugin marketplace update`
+
+### CI files
+
+- `.github/workflows/release.yml` — triggered by `push to release/**`
+- `.github/workflows/version-check.yml` — excludes `main` and `release/**`; runs on feature branches + PRs to main
+
 ## Current Status
 
 **Version**: 2.0.0

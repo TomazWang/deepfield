@@ -1,6 +1,6 @@
 {
   "name": "deepfield",
-  "version": "1.0.0",
+  "version": "0.0.0-dev",
   "description": "AI-driven knowledge base builder for understanding brownfield projects",
   "private": true,
   "workspaces": [

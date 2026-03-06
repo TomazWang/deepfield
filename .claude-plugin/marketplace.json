@@ -9,8 +9,13 @@
   "plugins": [
     {
       "name": "deepfield",
-      "source": "./plugin",
-      "description": "Iteratively learns your codebase and distills institutional knowledge. Provides df-* commands for autonomous knowledge base building.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/TomazWang/deepfield.git",
+        "path": "plugin",
+        "ref": "latest"
+      },
+      "description": "Iteratively learns your codebase and distills institutional knowledge",
       "author": {
         "name": "TomazWang"
       },
