@@ -131,9 +131,7 @@ The bootstrap runner script (Step 3) already writes `deepfield/wip/tech-index.md
 Detect behavior domain candidates from reference documentation in the baseline source directory:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap-runner.js" \
-  detect-behavior-domains \
-  --source-dir deepfield/source/baseline/
+deepfield bootstrap:detect-behavior-domains --source-dir deepfield/source/baseline/
 ```
 
 Parse the JSON array of domain candidates returned by the script. Each candidate has:
