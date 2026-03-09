@@ -136,8 +136,10 @@ deepfield bootstrap:detect-behavior-domains --source-dir deepfield/source/baseli
 
 Parse the JSON array of domain candidates returned by the script. Each candidate has:
 - `name` — domain name
-- `description` — short description inferred from docs
-- `confidence` — `high` | `medium` | `low`
+- `sourceFile` — path of the file from which this domain was inferred
+- `confidence` — numeric value between 0.0 and 1.0
+
+Convert numeric confidence to a label for display: `>= 0.7` → `high`, `>= 0.4` → `medium`, else `low`.
 
 ### Step C: Interactive Q&A (unless `--skip-behavior-qa`)
 
@@ -148,7 +150,7 @@ If the `--skip-behavior-qa` flag was **not** passed:
 ```
 I detected the following product behavior domains from your documentation:
 
-<list each candidate as "- {name}: {description}">
+<list each candidate as "- {name} (from {sourceFile})">
 
 Do these capture the product features your stakeholders care about?
 Add or remove any domains before I write the behavior index.
@@ -205,10 +207,10 @@ Write atomically (temp file → rename) to `deepfield/wip/behavior-index.md`.
 
 ## Step 3c: Link Behavior and Tech Domains
 
-After both `wip/behavior-index.md` and `wip/tech-index.md` exist, invoke the `Deepfield Domain Linker` agent to analyze the relationships between behavior domains and tech domains:
+After both `wip/behavior-index.md` and `wip/tech-index.md` exist, invoke the `deepfield-domain-linker` agent to analyze the relationships between behavior domains and tech domains:
 
 ```
-Invoke: Deepfield Domain Linker
+Invoke: deepfield-domain-linker
 With context:
   - behavior-index path: deepfield/wip/behavior-index.md
   - tech-index path:     deepfield/wip/tech-index.md

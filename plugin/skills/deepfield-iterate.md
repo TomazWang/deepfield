@@ -617,7 +617,7 @@ Mark run config `"status": "failed"` and stop execution.
 
 #### 4f. Invoke Domain Linker (If New Domains Discovered)
 
-After all agent batches complete and before consolidating findings, check whether any domain-learner agent reported discovering a new domain (a domain name not present in `domain-index.md` at the start of this run).
+After all agent batches complete and before consolidating findings, check whether any domain-learner agent reported discovering a new domain. For behavior-track domains, check against `behavior-index.md`; for tech-track domains, check against `tech-index.md`. A domain is considered new if its name is not present in the relevant index at the start of this run.
 
 If one or more new domains were discovered:
 
