@@ -87,16 +87,33 @@ function loadRunConfig(runConfigPath) {
 }
 
 function findDomainFiles(draftsDir) {
-  const domainsDir = path.join(draftsDir, 'domains');
-  if (!fs.existsSync(domainsDir)) return [];
+  const results = [];
 
-  return fs.readdirSync(domainsDir)
-    .filter(f => f.endsWith('.md'))
-    .map(f => ({
-      name: f.replace(/\.md$/, ''),
-      file: f,
-      fullPath: path.join(domainsDir, f),
-    }));
+  // New dual-track structure: drafts/behavior/{domain}/ and drafts/tech/{domain}/
+  for (const track of ['behavior', 'tech']) {
+    const trackDir = path.join(draftsDir, track);
+    if (!fs.existsSync(trackDir)) continue;
+    for (const entry of fs.readdirSync(trackDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      results.push({
+        name: entry.name,
+        track,
+        fullPath: path.join(trackDir, entry.name),
+      });
+    }
+  }
+
+  // Legacy fallback: drafts/domains/{domain}.md (pre-0.6.0 flat structure)
+  if (results.length === 0) {
+    const domainsDir = path.join(draftsDir, 'domains');
+    if (fs.existsSync(domainsDir)) {
+      for (const f of fs.readdirSync(domainsDir).filter(f => f.endsWith('.md'))) {
+        results.push({ name: f.replace(/\.md$/, ''), track: 'domains', fullPath: path.join(domainsDir, f) });
+      }
+    }
+  }
+
+  return results;
 }
 
 function countUnknowns(unknownsPath) {
@@ -152,8 +169,11 @@ function buildDomainRows(domains, runConfig) {
     const conf = getConfidenceForDomain(d.name, runConfig);
     const confStr = conf ? `${conf.after}%` : '—';
     const lastUpdated = conf ? `Run ${runConfig.runNumber}` : '—';
-    const link = `[${d.name}](domains/${d.file})`;
-    return `| ${link} | ${confStr} | ${lastUpdated} | [README](domains/${d.name}/README.md) |`;
+    const specFile = d.track === 'domains' ? `${d.name}.md` : `${d.track}/${d.name}/spec.md`;
+    const readmePath = d.track === 'domains' ? `domains/${d.name}/README.md` : `${d.track}/${d.name}/README.md`;
+    const displayName = d.track !== 'domains' ? `${d.name} (${d.track})` : d.name;
+    const link = `[${displayName}](${specFile})`;
+    return `| ${link} | ${confStr} | ${lastUpdated} | [README](${readmePath}) |`;
   }).join('\n');
 }
 
