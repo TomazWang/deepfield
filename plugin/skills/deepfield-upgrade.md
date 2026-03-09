@@ -312,8 +312,8 @@ If the user says **no**, report "Draft migration skipped. Re-run `/df-upgrade` l
 For each legacy domain:
 
 1. Invoke `deepfield-document-generator` twice in migration mode:
-   - First: `track: "behavior"`, `output_path: "deepfield/drafts/behavior/{domain}/spec.md"`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
-   - Then: `track: "tech"`, `output_path: "deepfield/drafts/tech/{domain}/spec.md"`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+   - First: `domain_name: "{domain}"`, `track: "behavior"`, `findings_path: null`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+   - Then: `domain_name: "{domain}"`, `track: "tech"`, `findings_path: null`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
 
 2. If both output files exist: archive the original via `deepfield upgrade:apply-op --type rename --path "drafts/domains/{domain}.md" --to "drafts/domains/{domain}/_legacy.md"`
 
