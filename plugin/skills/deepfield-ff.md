@@ -76,10 +76,19 @@ Parse the JSON output to get the starting confidence baseline for the final repo
 
 ## Initialize Session Counters
 
-```
+```javascript
+// Count domains listed in an index file (lines starting with "- " under ## Domains)
+function countDomainsInIndex(path) {
+  if (!fs.existsSync(path)) return 0
+  const lines = fs.readFileSync(path, 'utf8').split('\n')
+  return lines.filter(l => l.match(/^-\s+\S/)).length
+}
+
 sessionRunCount = 0
 sessionStartRun = <current highest run number + 1>
-sessionStartDomainCount = <count of domains across behavior-index.md + tech-index.md (or domain-index.md if legacy)>
+sessionStartDomainCount =
+  countDomainsInIndex('./deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('./deepfield/wip/tech-index.md')
 previousRunConfidenceNet = null
 twoRunsLowProgress = false
 ```
