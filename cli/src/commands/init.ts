@@ -123,7 +123,9 @@ async function initCommand(options: { force?: boolean; yes?: boolean }): Promise
   console.log('  • project.config.json                  # Project configuration');
   console.log('  • brief.md                             # Project brief and context');
   console.log('  • project-map.md                       # Structural map');
-  console.log('  • domain-index.md                      # Domain organization');
+  console.log('  • behavior-index.md                    # Behavior domain index (product features)');
+  console.log('  • tech-index.md                        # Technical domain index (code components)');
+  console.log('  • domain-links.md                      # Behavior-to-tech domain mappings');
   console.log('  • drafts/cross-cutting/unknowns.md     # Questions and uncertainties');
   console.log('  • drafts/_changelog.md                 # Run history');
 

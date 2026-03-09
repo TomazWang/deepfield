@@ -62,7 +62,9 @@ function getTemplatesDir(): string {
  *   - project.config.json (template)
  *   - brief.md (template)
  *   - project-map.md (template)
- *   - domain-index.md (template)
+ *   - behavior-index.md (template)
+ *   - tech-index.md (template)
+ *   - domain-links.md (template)
  *   - unknowns.md (template)
  *   - _changelog.md (template)
  *
@@ -99,7 +101,8 @@ export async function scaffold(
     'deepfield/source/baseline/repos',
     'deepfield/wip',
     'deepfield/drafts',
-    'deepfield/drafts/domains',
+    'deepfield/drafts/behavior',
+    'deepfield/drafts/tech',
     'deepfield/drafts/cross-cutting',
     'deepfield/output',
   ];
@@ -128,7 +131,9 @@ export async function scaffold(
     { src: 'project.config.json', dest: 'project.config.json' },
     { src: 'brief.md', dest: 'brief.md' },
     { src: 'project-map.md', dest: 'project-map.md' },
-    { src: 'domain-index.md', dest: 'domain-index.md' },
+    { src: 'behavior-index.md', dest: 'behavior-index.md' },
+    { src: 'tech-index.md', dest: 'tech-index.md' },
+    { src: 'domain-links.md', dest: 'domain-links.md' },
     { src: 'unknowns.md', dest: 'drafts/cross-cutting/unknowns.md' },
     { src: '_changelog.md', dest: 'drafts/_changelog.md' },
   ];

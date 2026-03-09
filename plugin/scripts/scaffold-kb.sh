@@ -44,7 +44,8 @@ mkdir -p "$TARGET_DIR/source/run-0"
 mkdir -p "$TARGET_DIR/wip/run-0/domains"
 
 # drafts/ - Living documents
-mkdir -p "$TARGET_DIR/drafts/domains"
+mkdir -p "$TARGET_DIR/drafts/behavior"
+mkdir -p "$TARGET_DIR/drafts/tech"
 mkdir -p "$TARGET_DIR/drafts/cross-cutting"
 
 # output/ - Frozen snapshots
@@ -73,7 +74,9 @@ copy_if_not_exists "$TEMPLATES_DIR/project.config.json" "$TARGET_DIR/project.con
 
 # wip/ templates
 copy_if_not_exists "$TEMPLATES_DIR/project-map.md" "$TARGET_DIR/wip/project-map.md"
-copy_if_not_exists "$TEMPLATES_DIR/domain-index.md" "$TARGET_DIR/wip/domain-index.md"
+copy_if_not_exists "$TEMPLATES_DIR/behavior-index.md" "$TARGET_DIR/wip/behavior-index.md"
+copy_if_not_exists "$TEMPLATES_DIR/tech-index.md" "$TARGET_DIR/wip/tech-index.md"
+copy_if_not_exists "$TEMPLATES_DIR/domain-links.md" "$TARGET_DIR/wip/domain-links.md"
 copy_if_not_exists "$TEMPLATES_DIR/learning-plan.md" "$TARGET_DIR/wip/learning-plan.md"
 
 # drafts/ templates
