@@ -302,7 +302,7 @@ Input: {
   "files_to_read": filesToRead,
   "previous_findings": "deepfield/wip/run-${nextRun-1}/findings.md",
   "domain_notes": "deepfield/wip/domains/*.md",
-  "current_drafts": "deepfield/drafts/domains/*.md",
+  "current_drafts": "deepfield/drafts/{behavior,tech}/**/*.md",
   "open_questions": <from learning plan>,
   "output_language": deepfieldConfig.language,
   "domain_instructions": {
@@ -381,8 +381,8 @@ const agentTasks = allDomains.map(domain => ({
   findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
   unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
   openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-  behaviorSpecPath: `deepfield/drafts/domains/${domain.name}/behavior-spec.md`,
-  techSpecPath: `deepfield/drafts/domains/${domain.name}/tech-spec.md`,
+  behaviorSpecPath: `deepfield/drafts/behavior/${domain.name}/spec.md`,
+  techSpecPath: `deepfield/drafts/tech/${domain.name}/spec.md`,
 }))
 ```
 
@@ -586,7 +586,7 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/**/*.md",
+  "existing_drafts": "deepfield/drafts/{behavior,tech}/**/*.md",
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language,
@@ -599,8 +599,8 @@ Input: {
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `deepfield/drafts/domains/<topic>/behavior-spec.md` - Updated stakeholder specification
-- `deepfield/drafts/domains/<topic>/tech-spec.md` - Updated technical specification
+- `deepfield/drafts/behavior/<topic>/spec.md` - Updated stakeholder specification
+- `deepfield/drafts/tech/<topic>/spec.md` - Updated technical specification
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
@@ -624,23 +624,23 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain subdirectory that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+For every domain that exists (i.e., has entries under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/`), not just domains updated this run:
 
 ```bash
-# Enumerate domain subdirectories
-ls -d deepfield/drafts/domains/*/
+# Enumerate domain names from behavior subtree
+ls -d deepfield/drafts/behavior/*/
 
-# For each domain subdirectory: deepfield/drafts/domains/<domain>/
+# For each domain: <domain>
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --behavior-spec   deepfield/drafts/domains/<domain>/behavior-spec.md \
-  --tech-spec       deepfield/drafts/domains/<domain>/tech-spec.md \
-  --output          deepfield/drafts/domains/<domain>/README.md
+  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
+  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
+  --output          deepfield/drafts/behavior/<domain>/README.md
 ```
 
-Enumerate domain names by listing subdirectories under `deepfield/drafts/domains/` and using the directory name as the domain name (exclude non-domain directories such as `cross-cutting`).
+Enumerate domain names by listing subdirectories under `deepfield/drafts/behavior/` and using the directory name as the domain name.
 
 ### 5.5.3 Generate Run Review Guide
 
@@ -837,14 +837,14 @@ Launch: deepfield-glossary-aligner
 Input: {
   "run_number": ${nextRun},
   "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
-  "drafts_dir": "deepfield/drafts/domains",
+  "drafts_dir": "deepfield/drafts",
   "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
 }
 ```
 
 The agent:
 1. Reads `terminology.md` to extract canonical terms and their synonyms
-2. Scans all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories, excluding `README.md`) for synonym usage
+2. Scans all `*.md` files under `deepfield/drafts/` recursively (including `spec.md` files under `behavior/` and `tech/` subtrees, excluding `README.md`) for synonym usage
 3. Replaces synonyms with canonical terms via `upgrade:apply-op --type update` (word-boundary-aware, no plural replacement)
 4. Writes `deepfield/wip/run-${nextRun}/alignment-log.md` with a full substitution report
 
@@ -1065,12 +1065,12 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 🔗 Contradictions Found: [N]
 
 📁 Documentation Updated:
-  - deepfield/drafts/domains/authentication/behavior-spec.md
-  - deepfield/drafts/domains/authentication/tech-spec.md
-  - deepfield/drafts/domains/api-structure/behavior-spec.md
-  - deepfield/drafts/domains/api-structure/tech-spec.md
-  - deepfield/drafts/domains/data-flow/behavior-spec.md
-  - deepfield/drafts/domains/data-flow/tech-spec.md
+  - deepfield/drafts/behavior/authentication/spec.md
+  - deepfield/drafts/tech/authentication/spec.md
+  - deepfield/drafts/behavior/api-structure/spec.md
+  - deepfield/drafts/tech/api-structure/spec.md
+  - deepfield/drafts/behavior/data-flow/spec.md
+  - deepfield/drafts/tech/data-flow/spec.md
 
 🔍 Next Steps:
 
