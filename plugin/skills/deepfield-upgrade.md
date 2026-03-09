@@ -270,6 +270,69 @@ If the config update fails:
 
 If `techDomains` already exists (a previous migration attempt partially completed), skip the rename step. Only add missing `behaviorDomains` and `domainLinks` fields.
 
+## Step 6.7: Migrate Legacy Flat Domain Draft Files (if mode is "draft-migration")
+
+This step runs only when the skill is invoked with `"mode": "draft-migration"` from the command's Step 7. Skip this step for normal upgrade invocations.
+
+### Detection
+
+Scan `deepfield/drafts/domains/` for flat `{domain}.md` files (files directly in the `domains/` directory, not in subdirectories):
+
+```bash
+find deepfield/drafts/domains -maxdepth 1 -name "*.md" -not -name "README.md"
+```
+
+**Idempotency check:** For each detected `{domain}.md`, check whether both `deepfield/drafts/behavior/{domain}/spec.md` AND `deepfield/drafts/tech/{domain}/spec.md` already exist. If both exist, skip that domain (already migrated).
+
+If no domains remain after the idempotency check, report "No legacy domain files found. Draft migration not needed." and exit this step.
+
+### Confirmation Prompt
+
+Before starting, ask the user:
+
+```
+Found {N} legacy domain file(s) that need to be split into behavior and tech specs.
+
+This migration will:
+  1. Use AI to classify each domain file into behavior (stakeholder) and tech (implementation) sections
+  2. Write deepfield/drafts/behavior/{domain}/spec.md
+  3. Write deepfield/drafts/tech/{domain}/spec.md
+  4. Archive the original {domain}.md as {domain}/_legacy.md (preserved, not deleted)
+  5. Update cross-reference links across all draft files
+
+A backup is available at: {backupPath}
+
+Proceed with draft migration? (yes/no)
+```
+
+If the user says **no**, report "Draft migration skipped. Re-run `/df-upgrade` later to migrate legacy files." and exit.
+
+### Migrate Each Domain (in sequence)
+
+For each legacy domain:
+
+1. Invoke `deepfield-document-generator` twice in migration mode:
+   - First: `track: "behavior"`, `output_path: "deepfield/drafts/behavior/{domain}/spec.md"`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+   - Then: `track: "tech"`, `output_path: "deepfield/drafts/tech/{domain}/spec.md"`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+
+2. If both output files exist: archive the original via `deepfield upgrade:apply-op --type rename --path "drafts/domains/{domain}.md" --to "drafts/domains/{domain}/_legacy.md"`
+
+3. If either output file is missing: leave the original in place and log a warning. Continue with the next domain.
+
+### Update Cross-Reference Links
+
+For each successfully migrated domain, scan all `*.md` files under `deepfield/drafts/` and update links. Compute the relative path from each source file to the target individually based on directory depth below `deepfield/drafts/`:
+
+- Depth 0 (e.g. `drafts/_changelog.md`) → `tech/{domain}/spec.md`
+- Depth 1 (e.g. `drafts/cross-cutting/unknowns.md`) → `../tech/{domain}/spec.md`
+- Depth 2 (e.g. `drafts/tech/auth/spec.md`) → `../../tech/{domain}/spec.md`
+
+Replace patterns: `](./{domain}.md)` and `]({domain}.md)` with the computed relative path.
+
+### Report
+
+Write a migration summary to `deepfield/wip/migration-split-spec.md` and display a human-readable table to the user showing per-domain status and total links updated.
+
 ## Step 7: Update version
 
 After successful post-apply validation, update the version:
@@ -278,7 +341,7 @@ After successful post-apply validation, update the version:
 deepfield upgrade:set-version --to-version "<to>"
 ```
 
-If this fails (non-zero exit code), report the error. The upgrade operations were applied successfully but the version field was not updated. Advise the user to run `deepfield upgrade:set-version --version <to>` manually.
+If this fails (non-zero exit code), report the error. The upgrade operations were applied successfully but the version field was not updated. Advise the user to run `deepfield upgrade:set-version --to-version <to>` manually.
 
 ## Step 8: Report success
 

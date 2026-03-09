@@ -131,7 +131,7 @@ Create `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json`:
 {
   "runNumber": ${nextRun},
   "startedAt": "<ISO-timestamp>",
-  "status": "in-progress",
+  "status": "initialized",
   "focusTopics": [],
   "fileHashes": {},
   "confidenceChanges": {},
