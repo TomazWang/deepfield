@@ -362,7 +362,7 @@ async function runBootstrap() {
   const detectedDomainCount = brief.focusAreas.length + repos.reduce((acc, r) => acc + (r.modules ? r.modules.length : 0), 0);
   const artifacts = [
     projectMapPath,
-    domainIndexPath,
+    techIndexPath,
     learningPlanPath,
     runStateResult.configPath,
     runStateResult.findingsPath,
