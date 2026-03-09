@@ -136,7 +136,7 @@ Add cross-reference links when a feature is described in both tracks.
 
 ## New Domain (File Does Not Exist)
 
-1. Read `plugin/templates/behavior-index.md` (for behavior track) or `plugin/templates/tech-index.md` (for tech track) to get the template structure, then produce `spec.md` populated with findings classified for the appropriate audience.
+1. Read `plugin/templates/behavior-spec.md` (for behavior track) or `plugin/templates/tech-spec.md` (for tech track) to get the template structure.
 2. Create `deepfield/drafts/{track}/{domain}/` directory.
 3. Write `{spec_file}` (default: `spec.md`) from the template, populated with findings classified for the appropriate audience.
 
