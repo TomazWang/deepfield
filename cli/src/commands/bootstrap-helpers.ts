@@ -10,8 +10,8 @@ import chalk from 'chalk';
 
 interface DomainCandidate {
   name: string;
-  description: string;
-  confidence: 'high' | 'medium' | 'low';
+  sourceFile: string;
+  confidence: number;
 }
 
 /**
@@ -65,16 +65,16 @@ function detectDomainCandidates(sourceDir: string): DomainCandidate[] {
           if (!candidates.has(lower)) {
             candidates.set(lower, {
               name: title,
-              description: `Detected from ${dirent.name}`,
-              confidence: 'low',
+              sourceFile: fullPath,
+              confidence: 0.2,
             });
           }
         }
         // Files with many headings suggest a real domain catalog
         if (matchCount >= 3) {
           for (const [, cand] of candidates) {
-            if (cand.description.includes(dirent.name) && cand.confidence === 'low') {
-              cand.confidence = 'medium';
+            if (cand.sourceFile === fullPath && cand.confidence === 0.2) {
+              cand.confidence = 0.5;
             }
           }
         }
@@ -88,7 +88,7 @@ function detectDomainCandidates(sourceDir: string): DomainCandidate[] {
   let promoted = 0;
   for (const [, cand] of candidates) {
     if (promoted >= 3) break;
-    cand.confidence = 'high';
+    cand.confidence = 0.8;
     promoted++;
   }
 
