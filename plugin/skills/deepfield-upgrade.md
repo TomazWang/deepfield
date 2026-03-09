@@ -69,6 +69,10 @@ Parse the JSON output `{ valid, errors }`.
   - Output: "Pre-upgrade validation failed. Please fix the errors above before running /df-upgrade again."
   - Stop.
 
+After validation passes, determine the next step based on `from` version:
+- If `from` < `0.6.0` (i.e., `0.5.x` or earlier): **proceed to Step 3.5** to handle legacy flat spec files, then continue to Step 4.
+- Otherwise: **skip Step 3.5** and proceed directly to Step 4.
+
 ## Step 3.5: Handle Flat spec.md Splitting (pre-0.6.0 workspaces only)
 
 This step applies only to workspaces from version 0.5.x and earlier, which stored a single flat `spec.md` per domain before the behavior/tech split was introduced in 0.6.0. Workspaces from 0.6.x already have `behavior-spec.md` and `tech-spec.md` — those are handled by Step 4, not this step.

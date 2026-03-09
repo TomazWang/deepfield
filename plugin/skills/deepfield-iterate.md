@@ -101,6 +101,23 @@ const runNumbers = runs.map(r => parseInt(r.match(/run-(\d+)/)[1]))
 const nextRun = Math.max(...runNumbers) + 1
 ```
 
+### 1.5. Record Session Start Domain Count
+
+Before the learning loop begins, snapshot the current total domain count so Stop Condition 5 can detect significant restructuring:
+
+```javascript
+// Count domains listed in both index files (lines starting with "- " under ## Domains)
+function countDomainsInIndex(path) {
+  if (!fs.existsSync(path)) return 0
+  const lines = fs.readFileSync(path, 'utf8').split('\n')
+  return lines.filter(l => l.match(/^-\s+\S/)).length
+}
+
+const sessionStartDomainCount =
+  countDomainsInIndex('deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('deepfield/wip/tech-index.md')
+```
+
 ### 2. Create Run Directory
 
 ```bash
@@ -1075,11 +1092,11 @@ if (minimalProgress && recentRuns.length >= 2) {
 ### Stop Condition 5: Major Domain Restructure
 
 ```javascript
-const domainCountChanged = Math.abs(
-  currentDomainCount - previousDomainCount
-) > 3
+const currentDomainCount =
+  countDomainsInIndex('deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('deepfield/wip/tech-index.md')
 
-if (domainCountChanged) {
+if (Math.abs(currentDomainCount - sessionStartDomainCount) > 3) {
   stopReason = "DOMAIN_RESTRUCTURE"
   shouldContinue = false
 }
