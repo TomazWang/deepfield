@@ -66,7 +66,7 @@ program.addCommand(createUpgradeCommand());
 program.addCommand(createRollbackCommand());
 program.addCommand(createVersionCommand());
 
-// Register bootstrap helper sub-commands
+// Register bootstrap helper sub-commands (used by the deepfield-bootstrap plugin skill)
 program.addCommand(createDetectBehaviorDomainsCommand());
 
 // Register upgrade helper sub-commands (used by the /df-upgrade plugin skill)

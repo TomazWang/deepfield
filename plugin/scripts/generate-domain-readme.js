@@ -89,10 +89,10 @@ function validate(config) {
 
   // Derive spec paths if not explicitly provided
   if (!config.behaviorSpec) {
-    config.behaviorSpec = path.join(config.draftsDir, 'behavior', config.domain, 'behavior-spec.md');
+    config.behaviorSpec = path.join(config.draftsDir, 'behavior', config.domain, 'spec.md');
   }
   if (!config.techSpec) {
-    config.techSpec = path.join(config.draftsDir, 'tech', config.domain, 'tech-spec.md');
+    config.techSpec = path.join(config.draftsDir, 'tech', config.domain, 'spec.md');
   }
 }
 
