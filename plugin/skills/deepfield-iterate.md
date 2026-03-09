@@ -718,6 +718,7 @@ For each domain, invoke the script once per track it belongs to — a domain tha
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
+  --track           behavior \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
   --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
   --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
@@ -727,6 +728,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
+  --track           tech \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
   --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
   --tech-spec       deepfield/drafts/tech/<domain>/spec.md \

@@ -4,12 +4,13 @@
  *
  * Usage:
  *   node generate-domain-readme.js --domain <name> --drafts-dir <path> --run-config <path> \
- *     --behavior-spec <path> --tech-spec <path> --output <path>
+ *     --track <behavior|tech> [--behavior-spec <path>] [--tech-spec <path>] --output <path>
  *
  * Arguments:
  *   --domain <name>           Domain name (e.g. "authentication") (required)
  *   --drafts-dir <path>       Path to deepfield/drafts/ directory (required)
  *   --run-config <path>       Path to run-N.config.json (required)
+ *   --track <behavior|tech>   Which track this README is for (required)
  *   --behavior-spec <path>    Path to behavior spec.md (optional, derived if omitted)
  *   --tech-spec <path>        Path to tech spec.md (optional, derived if omitted)
  *   --output <path>           Path to write README.md (required)
@@ -41,6 +42,7 @@ function parseArgs() {
     domain: null,
     draftsDir: null,
     runConfig: null,
+    track: null,
     behaviorSpec: null,
     techSpec: null,
     output: null,
@@ -53,6 +55,8 @@ function parseArgs() {
       config.draftsDir = args[++i];
     } else if (args[i] === '--run-config' && i + 1 < args.length) {
       config.runConfig = args[++i];
+    } else if (args[i] === '--track' && i + 1 < args.length) {
+      config.track = args[++i];
     } else if (args[i] === '--behavior-spec' && i + 1 < args.length) {
       config.behaviorSpec = args[++i];
     } else if (args[i] === '--tech-spec' && i + 1 < args.length) {
@@ -68,7 +72,7 @@ function parseArgs() {
 function printUsage() {
   console.error(
     'Usage: generate-domain-readme.js --domain <name> --drafts-dir <path> ' +
-    '--run-config <path> [--behavior-spec <path>] [--tech-spec <path>] --output <path>'
+    '--run-config <path> --track <behavior|tech> [--behavior-spec <path>] [--tech-spec <path>] --output <path>'
   );
 }
 
@@ -77,6 +81,10 @@ function validate(config) {
   if (!config.draftsDir) { console.error('Error: --drafts-dir is required'); process.exit(1); }
   if (!config.runConfig) { console.error('Error: --run-config is required');  process.exit(1); }
   if (!config.output)    { console.error('Error: --output is required');      process.exit(1); }
+  if (!config.track || !['behavior', 'tech'].includes(config.track)) {
+    console.error('Error: --track must be "behavior" or "tech"');
+    process.exit(1);
+  }
 
   if (!fs.existsSync(config.draftsDir)) {
     console.error(`Error: drafts dir not found: ${config.draftsDir}`);
@@ -217,33 +225,32 @@ function renderOpenQuestions(questions) {
 
 function render({
   domainName,
+  track,
   runNumber,
   generatedAt,
   overview,
   conf,
   recentChanges,
   openQuestions,
-  behaviorSpecExists,
-  techSpecExists,
-  behaviorConfidence,
-  techConfidence,
-  behaviorLastUpdated,
-  techLastUpdated,
+  specExists,
+  specConfidence,
+  specLastUpdated,
 }) {
   const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1).replace(/-/g, ' ');
+  const trackLabel = track === 'behavior' ? 'Behavior' : 'Tech';
   const delta = renderConfidenceDelta(conf);
 
-  const behaviorLine = behaviorSpecExists
-    ? `| [spec.md](./spec.md) | Stakeholder specification — user stories, scenarios, business rules | ${behaviorConfidence !== null ? behaviorConfidence + '%' : '—'} | ${behaviorLastUpdated || '—'} |`
+  const specDescription = track === 'behavior'
+    ? 'Stakeholder specification — user stories, scenarios, business rules'
+    : 'Technical specification — architecture, implementations, data models';
+
+  const specLine = specExists
+    ? `| [spec.md](./spec.md) | ${specDescription} | ${specConfidence !== null ? specConfidence + '%' : '—'} | ${specLastUpdated || '—'} |`
     : `| spec.md | _Not yet created_ | — | — |`;
 
-  const techLine = techSpecExists
-    ? `| [spec.md](./spec.md) | Technical specification — architecture, implementations, data models | ${techConfidence !== null ? techConfidence + '%' : '—'} | ${techLastUpdated || '—'} |`
-    : `| spec.md | _Not yet created_ | — | — |`;
+  return `# ${displayName} (${trackLabel})
 
-  return `# ${displayName}
-
-> Domain summary generated after Run ${runNumber} on ${generatedAt}.
+> ${trackLabel} domain summary generated after Run ${runNumber} on ${generatedAt}.
 
 ## Overview
 
@@ -257,8 +264,7 @@ ${overview}
 
 | File | Description | Confidence | Last Updated |
 |------|-------------|-----------|--------------|
-${behaviorLine}
-${techLine}
+${specLine}
 
 ## Recent Changes (Run ${runNumber})
 
@@ -298,33 +304,34 @@ function main() {
   const config = parseArgs();
   validate(config);
 
-  const runConfig        = loadRunConfig(config.runConfig);
-  const behaviorContent  = loadSpecFile(config.behaviorSpec);
-  const techContent      = loadSpecFile(config.techSpec);
+  const runConfig = loadRunConfig(config.runConfig);
 
-  // Use behavior-spec for overview and open questions (stakeholder-friendly)
-  // Fall back to tech-spec if behavior-spec not yet created
-  const primaryContent = behaviorContent || techContent;
-  const overview       = extractOverview(primaryContent);
-  const questions      = extractOpenQuestions(primaryContent);
-  const conf           = getConfidenceData(config.domain, runConfig);
-  const recentChg      = renderRecentChanges(config.domain, runConfig);
-  const generatedAt    = new Date().toISOString().slice(0, 10);
+  // Load the spec for this track; use the other as fallback for overview only
+  const primarySpec  = config.track === 'behavior' ? config.behaviorSpec : config.techSpec;
+  const fallbackSpec = config.track === 'behavior' ? config.techSpec : config.behaviorSpec;
+  const primaryContent  = loadSpecFile(primarySpec);
+  const fallbackContent = loadSpecFile(fallbackSpec);
+
+  // Overview and questions come from the track-specific spec; fall back if not yet created
+  const contentForOverview = primaryContent || fallbackContent;
+  const overview    = extractOverview(contentForOverview);
+  const questions   = extractOpenQuestions(contentForOverview);
+  const conf        = getConfidenceData(config.domain, runConfig);
+  const recentChg   = renderRecentChanges(config.domain, runConfig);
+  const generatedAt = new Date().toISOString().slice(0, 10);
 
   const markdown = render({
-    domainName:         config.domain,
-    runNumber:          runConfig.runNumber || 0,
+    domainName:      config.domain,
+    track:           config.track,
+    runNumber:       runConfig.runNumber || 0,
     generatedAt,
     overview,
     conf,
-    recentChanges:      recentChg,
-    openQuestions:      questions,
-    behaviorSpecExists: behaviorContent !== null,
-    techSpecExists:     techContent !== null,
-    behaviorConfidence: extractConfidenceFromSpec(behaviorContent),
-    techConfidence:     extractConfidenceFromSpec(techContent),
-    behaviorLastUpdated: extractLastUpdatedFromSpec(behaviorContent),
-    techLastUpdated:    extractLastUpdatedFromSpec(techContent),
+    recentChanges:   recentChg,
+    openQuestions:   questions,
+    specExists:      primaryContent !== null,
+    specConfidence:  extractConfidenceFromSpec(primaryContent),
+    specLastUpdated: extractLastUpdatedFromSpec(primaryContent),
   });
 
   writeAtomic(config.output, markdown);
