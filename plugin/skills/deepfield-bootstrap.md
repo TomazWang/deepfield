@@ -207,10 +207,10 @@ Write atomically (temp file → rename) to `deepfield/wip/behavior-index.md`.
 
 ## Step 3c: Link Behavior and Tech Domains
 
-After both `wip/behavior-index.md` and `wip/tech-index.md` exist, invoke the `Deepfield Domain Linker` agent to analyze the relationships between behavior domains and tech domains:
+After both `wip/behavior-index.md` and `wip/tech-index.md` exist, invoke the `deepfield-domain-linker` agent to analyze the relationships between behavior domains and tech domains:
 
 ```
-Invoke: Deepfield Domain Linker
+Invoke: deepfield-domain-linker
 With context:
   - behavior-index path: deepfield/wip/behavior-index.md
   - tech-index path:     deepfield/wip/tech-index.md
@@ -323,7 +323,7 @@ After the script completes, verify these files exist:
 - `deepfield/wip/project-map.md` — Repository structure overview
 - `deepfield/wip/tech-index.md` — Tech domains detected from source code
 - `deepfield/wip/behavior-index.md` — Behavior domains confirmed via Q&A
-- `deepfield/wip/domain-links.md` — Many-to-many behavior↔tech domain links (written by `Deepfield Domain Linker`)
+- `deepfield/wip/domain-links.md` — Many-to-many behavior↔tech domain links (written by `deepfield-domain-linker`)
 - `deepfield/wip/learning-plan.md` — Topics and priorities for Run 1
 - `deepfield/wip/run-0/run-0.config.json` — Run state (status: "completed")
 - `deepfield/wip/run-0/findings.md` — Bootstrap findings summary
