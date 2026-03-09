@@ -18,7 +18,7 @@ user_invocable: false
    - [Authentication Flows](flows.md) — detailed flow diagrams
    ```
 
-Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/{track}/{domain}/{section}/{subsection}.md`.
 
 # Purpose
 

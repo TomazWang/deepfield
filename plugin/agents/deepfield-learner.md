@@ -62,7 +62,7 @@ If exist, read `deepfield/wip/domains/<domain>-notes.md`:
 - Unresolved questions
 
 ### Current Drafts
-Read `deepfield/drafts/domains/<topic>.md`:
+Read `deepfield/drafts/behavior/<topic>/spec.md` and `deepfield/drafts/tech/<topic>/spec.md` (whichever exist):
 - Current state of documentation
 - Sections that exist vs gaps
 - Confidence markers and unknowns

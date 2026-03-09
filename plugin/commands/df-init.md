@@ -17,7 +17,7 @@ This command wraps the `deepfield init` CLI tool to create the complete director
 - **deepfield/wip/**: Work in progress (active exploration runs)
 - **deepfield/drafts/**: Draft documents and notes
 - **deepfield/output/**: Final knowledge base artifacts
-- Template files: project.config.json, brief.md, project-map.md, domain-index.md, unknowns.md, _changelog.md
+- Template files: project.config.json, brief.md, project-map.md, unknowns.md, _changelog.md
 
 ## Implementation
 

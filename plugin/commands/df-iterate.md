@@ -117,7 +117,7 @@ When `--sequential` is passed:
 - Useful for debugging, tracing agent output, or low-resource environments
 - Can be combined with `--focus` for targeted sequential learning of a single domain
 
-> Note: `--parallel` is no longer a valid flag. Parallel mode is the default when `domain-index.md` exists. Use `--sequential` to opt out.
+> Note: `--parallel` is no longer a valid flag. Parallel mode is the default when `behavior-index.md` or `tech-index.md` exists. Use `--sequential` to opt out.
 
 ### --max-agents=N
 

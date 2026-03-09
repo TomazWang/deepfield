@@ -43,15 +43,15 @@ While should_continue:
 
 **IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
 
-1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
-2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+1. Move the largest section(s) to a sub-file under `drafts/{track}/{domain}/` named `{section}.md` (e.g., `drafts/tech/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/{track}/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
 3. Add a **"See also"** section in the primary file linking to any sub-files:
    ```
    ## See also
    - [Authentication Flows](flows.md)
    ```
 
-Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/{track}/{domain}/{section}/{subsection}.md`.
 
 # Single Run Workflow (Run N)
 
@@ -247,7 +247,7 @@ If no exclusion patterns are configured, skip this filter.
 
 Only include files relevant to focus topics from the non-excluded set:
 - Check file paths for focus-related keywords
-- Use domain mapping from domain-index.md
+- Use domain mapping from behavior-index.md and tech-index.md (or legacy domain-index.md)
 - Include cross-cutting files (shared, common, utils)
 
 ### Files to Read
@@ -608,7 +608,7 @@ Update the run config to record partial results:
 Error: All domain learning agents failed to produce findings.
 Run marked as failed. Check agent logs for details.
 Suggestions:
-  - Verify domain-index.md has valid file paths
+  - Verify behavior-index.md / tech-index.md have valid file paths
   - Check deepfield/source/baseline/ has accessible files
   - Try /df-iterate --sequential to diagnose
 ```
@@ -1204,7 +1204,8 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 
   Domain structure has changed significantly.
   Please review:
-    deepfield/wip/domain-index.md
+    deepfield/wip/behavior-index.md
+    deepfield/wip/tech-index.md
 
   Confirm new structure before continuing.
 
