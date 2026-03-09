@@ -82,7 +82,8 @@ Write the complete `domain-links.md` to `existing_links_path` (creating the file
 # Domain Links
 
 <!-- This file is maintained by the Deepfield Domain Linker agent.
-     Mark any entry with <!-- user-confirmed --> to lock it against automatic changes.
+     To lock an entry against automatic changes, append: user-confirmed
+     (as an HTML comment on the same line, e.g. "- auth: reason <!-- user-confirmed -->")
      Inferred entries without that marker may be updated or removed in future runs. -->
 
 ## Behavior: <name>

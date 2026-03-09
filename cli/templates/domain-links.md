@@ -1,7 +1,7 @@
 # Domain Links
 
 <!-- Maps behavior domains (product features) to tech domains (implementation) -->
-<!-- Mark entries with <!-- user-confirmed --> to prevent AI from overwriting -->
+<!-- To lock an entry, append a user-confirmed comment on the same line -->
 
 ## Unmapped Tech Domains
 

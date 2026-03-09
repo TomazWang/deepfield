@@ -89,7 +89,7 @@ deepfield/drafts/tech/authentication/
 
 # Content Split Enforcement
 
-## What Goes in `behavior-spec.md` (Stakeholder Audience)
+## What Goes in `spec.md` — Behavior Track (Stakeholder Audience)
 
 INCLUDE:
 - User stories ("As a [role], I want to...")
@@ -107,7 +107,7 @@ DO NOT INCLUDE:
 - Implementation details of any kind
 - Library names or version numbers
 
-## What Goes in `tech-spec.md` (Engineering Audience)
+## What Goes in `spec.md` — Tech Track (Engineering Audience)
 
 INCLUDE:
 - Architecture diagrams (ASCII art)
@@ -136,7 +136,7 @@ Add cross-reference links when a feature is described in both tracks.
 
 ## New Domain (File Does Not Exist)
 
-1. Read `plugin/templates/behavior-spec.md` or `plugin/templates/tech-spec.md` (matching the `track`) to get the template structure.
+1. Read `plugin/templates/behavior-index.md` (for behavior track) or `plugin/templates/tech-index.md` (for tech track) to get the template structure, then produce `spec.md` populated with findings classified for the appropriate audience.
 2. Create `deepfield/drafts/{track}/{domain}/` directory.
 3. Write `{spec_file}` (default: `spec.md`) from the template, populated with findings classified for the appropriate audience.
 

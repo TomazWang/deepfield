@@ -87,6 +87,7 @@ Optional flags:
 - `--brief-path <path>` — Override brief location (default: `./deepfield/source/baseline/brief.md`)
 - `--skip-clone` — Skip cloning repos (useful if repos already cloned)
 - `--skip-hashing` — Skip file hashing step (faster, but no incremental scanning in Run 1)
+- `--skip-behavior-qa` — Skip the interactive behavior domain Q&A (Step 3b Step C); use detected candidates as-is
 
 The script handles all bootstrap steps automatically:
 1. Parses `brief.md` (project name, repos, focus areas, topics)
