@@ -9,7 +9,7 @@
  *   2. Clone repositories
  *   3. Scan repository structure
  *   4. Generate project-map.md
- *   5. Generate tech-index.md and detect behavior domain candidates
+ *   5. Generate tech-index.md (behavior domain detection is done separately by the bootstrap skill)
  *   6. Generate learning-plan.md
  *   7. Create run-0.config.json with file hashes
  *   8. Create run-1 staging area
@@ -29,8 +29,6 @@ const { scanAllRepos } = require('./scan-structure.js');
 const { generateProjectMap } = require('./generate-project-map.js');
 const { generateLearningPlan } = require('./generate-learning-plan.js');
 const { createRunState } = require('./create-run-state.js');
-const { detectBehaviorDomains } = require('./detect-behavior-domains.js');
-
 // generate-domain-index.js is CLI-only (merged from main via PR #23)
 // It is invoked via execSync rather than require().
 
@@ -215,10 +213,9 @@ ${feedbackQuestions}
  * Update project.config.json after successful bootstrap.
  *
  * @param {object} brief
- * @param {Array}  techDomains              Tech domain entries from generate-domain-index.js output.
- * @param {Array}  behaviorDomainCandidates Candidate behavior domains (pending user Q&A in skill).
+ * @param {Array}  techDomains Tech domain entries from generate-domain-index.js output.
  */
-function updateProjectConfig(brief, techDomains, behaviorDomainCandidates) {
+function updateProjectConfig(brief, techDomains) {
   const configPath = './deepfield/project.config.json';
 
   const updates = {
@@ -230,7 +227,6 @@ function updateProjectConfig(brief, techDomains, behaviorDomainCandidates) {
     techDomains: techDomains || [],
     behaviorDomains: [],
     domainLinks: [],
-    _behaviorDomainCandidates: behaviorDomainCandidates || [],
   };
 
   try {
@@ -341,23 +337,6 @@ async function runBootstrap() {
 
   console.log(`  Written: ${techIndexPath}`);
 
-  // Step 5b: Detect behavior domain candidates from reference docs.
-  // Candidates are stored in run-0.config.json for the skill to use in Q&A.
-  // The skill writes behavior-index.md after user confirmation — NOT this script.
-  console.log('\nStep 5b/9: Detecting behavior domain candidates from reference docs...');
-  let behaviorDomainCandidates = [];
-  const refDocsDir = path.resolve('./deepfield/source/baseline');
-  if (fs.existsSync(refDocsDir)) {
-    try {
-      behaviorDomainCandidates = detectBehaviorDomains(refDocsDir);
-      console.log(`  Detected ${behaviorDomainCandidates.length} behavior domain candidate(s)`);
-    } catch (err) {
-      console.error(`  Warning: behavior domain detection failed: ${err.message}`);
-    }
-  } else {
-    console.log('  No reference docs dir found — skipping behavior detection');
-  }
-
   // Step 6: Generate learning-plan.md
   console.log('\nStep 6/9: Generating learning-plan.md...');
   const learningPlanPath = generateLearningPlan(brief, repos);
@@ -392,7 +371,7 @@ async function runBootstrap() {
     type: 'module',
     description: '',
   }));
-  updateProjectConfig(brief, techDomainsForConfig, behaviorDomainCandidates);
+  updateProjectConfig(brief, techDomainsForConfig);
   console.log('  Updated: deepfield/project.config.json');
 
   // Summary — count tech domains detected

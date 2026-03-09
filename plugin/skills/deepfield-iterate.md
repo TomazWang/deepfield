@@ -711,10 +711,10 @@ For every domain that exists under `deepfield/drafts/behavior/` or `deepfield/dr
 ls -d deepfield/drafts/behavior/*/ deepfield/drafts/tech/*/ 2>/dev/null
 ```
 
-Collect unique domain names from both subtrees, then for each domain:
+For each domain, invoke the script once per track it belongs to — a domain that appears in both subtrees gets two README invocations:
 
 ```bash
-# For each <domain> found in drafts/behavior/ or drafts/tech/:
+# For each <domain> found in drafts/behavior/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
@@ -722,9 +722,18 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
   --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
   --output          deepfield/drafts/behavior/<domain>/README.md
+
+# For each <domain> found in drafts/tech/:
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
+  --domain          <domain> \
+  --drafts-dir      deepfield/drafts \
+  --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
+  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
+  --output          deepfield/drafts/tech/<domain>/README.md
 ```
 
-Enumerate domain names by collecting unique directory names across `deepfield/drafts/behavior/` and `deepfield/drafts/tech/`.
+Enumerate behavior domains from `deepfield/drafts/behavior/` and tech domains from `deepfield/drafts/tech/` separately, writing each README into the correct subtree.
 
 ### 5.5.3 Generate Run Review Guide
 

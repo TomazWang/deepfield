@@ -10,13 +10,13 @@
  *   --domain <name>           Domain name (e.g. "authentication") (required)
  *   --drafts-dir <path>       Path to deepfield/drafts/ directory (required)
  *   --run-config <path>       Path to run-N.config.json (required)
- *   --behavior-spec <path>    Path to behavior-spec.md (optional, derived if omitted)
- *   --tech-spec <path>        Path to tech-spec.md (optional, derived if omitted)
+ *   --behavior-spec <path>    Path to behavior spec.md (optional, derived if omitted)
+ *   --tech-spec <path>        Path to tech spec.md (optional, derived if omitted)
  *   --output <path>           Path to write README.md (required)
  *
  * Domain files are expected at:
- *   <drafts-dir>/behavior/<domain>/behavior-spec.md
- *   <drafts-dir>/tech/<domain>/tech-spec.md
+ *   <drafts-dir>/behavior/<domain>/spec.md
+ *   <drafts-dir>/tech/<domain>/spec.md
  * Output is written atomically.
  */
 
