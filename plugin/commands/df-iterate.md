@@ -22,6 +22,9 @@ arguments:
   - name: --max-agents
     description: Maximum number of domain agents to run concurrently in parallel mode (default 5)
     required: false
+  - name: --track
+    description: Restrict iteration to a specific track — behavior, tech, or both (default both)
+    required: false
 ---
 
 # /df-iterate - Autonomous Learning Iterations
@@ -75,6 +78,7 @@ After validation passes, invoke the **deepfield-iterate** skill with the followi
 - **Parallel mode**: `true` by default (unless `--sequential` flag is passed)
 - **Sequential mode**: `true` if `--sequential` flag is present, otherwise `false`
 - **Max agents**: value of `--max-agents` if provided (default: 5), only relevant in parallel mode
+- **Track**: value of `--track` if provided (`behavior`, `tech`, or `both`); default `both`
 - **Working directory**: current directory (where `deepfield/` lives)
 
 ### Invoke Skill
@@ -117,7 +121,15 @@ When `--sequential` is passed:
 - Useful for debugging, tracing agent output, or low-resource environments
 - Can be combined with `--focus` for targeted sequential learning of a single domain
 
-> Note: `--parallel` is no longer a valid flag. Parallel mode is the default when `domain-index.md` exists. Use `--sequential` to opt out.
+> Note: `--parallel` is no longer a valid flag. Parallel mode is the default when `behavior-index.md` or `tech-index.md` exists. Use `--sequential` to opt out.
+
+### --track=TRACK
+
+When `--track=behavior`, `--track=tech`, or `--track=both` is passed:
+- Pass the value directly to the `deepfield-iterate` skill as the `track` parameter
+- `behavior`: skill reads only `behavior-index.md`; writes to `drafts/behavior/`
+- `tech`: skill reads only `tech-index.md`; writes to `drafts/tech/`
+- `both` (default): skill reads both indexes; writes to both output subtrees
 
 ### --max-agents=N
 

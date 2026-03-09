@@ -43,21 +43,40 @@ While should_continue:
 
 **IMPORTANT**: When writing or updating any draft document in `deepfield/drafts/`, aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If adding content would push a file significantly past ~350 prose lines, consider splitting it:
 
-1. Move the largest section(s) to a sub-file under `drafts/domains/{domain}/` named `{section}.md` (e.g., `drafts/domains/authentication/flows.md`)
-2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/domains/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+1. Move the largest section(s) to a sub-file under `drafts/{track}/{domain}/` named `{section}.md` (e.g., `drafts/tech/authentication/flows.md`)
+2. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/{track}/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
 3. Add a **"See also"** section in the primary file linking to any sub-files:
    ```
    ## See also
    - [Authentication Flows](flows.md)
    ```
 
-Sub-files follow the same 350-line prose guideline and may be split further using `drafts/domains/{domain}/{section}/{subsection}.md`.
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/{track}/{domain}/{section}/{subsection}.md`.
 
 # Single Run Workflow (Run N)
 
 ## Pre-Run Setup
 
-### 0. Load DEEPFIELD.md Configuration
+### 0. Parse --track Flag
+
+Parse the `--track` argument passed to this skill invocation:
+
+```javascript
+const trackArg = args['--track'] || 'both'  // default: both
+
+if (!['behavior', 'tech', 'both'].includes(trackArg)) {
+  throw new Error(`Invalid --track value "${trackArg}". Must be one of: behavior, tech, both`)
+}
+
+const activeTrack = trackArg  // 'behavior' | 'tech' | 'both'
+```
+
+The `activeTrack` variable is used throughout the run to:
+- Scope which domain index is loaded (Step 2 / Step 4a)
+- Route agent output to the correct drafts subdirectory (Step 4b)
+- Label each domain with its track affiliation
+
+### 0.1 Load DEEPFIELD.md Configuration
 
 Before anything else, load project-specific learning configuration:
 
@@ -82,6 +101,23 @@ const runNumbers = runs.map(r => parseInt(r.match(/run-(\d+)/)[1]))
 const nextRun = Math.max(...runNumbers) + 1
 ```
 
+### 1.5. Record Session Start Domain Count
+
+Before the learning loop begins, snapshot the current total domain count so Stop Condition 5 can detect significant restructuring:
+
+```javascript
+// Count domains listed in both index files (lines starting with "- " under ## Domains)
+function countDomainsInIndex(path) {
+  if (!fs.existsSync(path)) return 0
+  const lines = fs.readFileSync(path, 'utf8').split('\n')
+  return lines.filter(l => l.match(/^-\s+\S/)).length
+}
+
+const sessionStartDomainCount =
+  countDomainsInIndex('deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('deepfield/wip/tech-index.md')
+```
+
 ### 2. Create Run Directory
 
 ```bash
@@ -95,7 +131,7 @@ Create `deepfield/wip/run-${nextRun}/run-${nextRun}.config.json`:
 {
   "runNumber": ${nextRun},
   "startedAt": "<ISO-timestamp>",
-  "status": "in-progress",
+  "status": "initialized",
   "focusTopics": [],
   "fileHashes": {},
   "confidenceChanges": {},
@@ -228,7 +264,7 @@ If no exclusion patterns are configured, skip this filter.
 
 Only include files relevant to focus topics from the non-excluded set:
 - Check file paths for focus-related keywords
-- Use domain mapping from domain-index.md
+- Use domain mapping from behavior-index.md and tech-index.md (or legacy domain-index.md)
 - Include cross-cutting files (shared, common, utils)
 
 ### Files to Read
@@ -283,10 +319,10 @@ If instructions exist, they will be passed to the agent as additional context. I
 **Mode Selection** — determine which mode to use:
 
 1. If `--sequential` flag was passed → use **Sequential Mode**
-2. Else if `deepfield/wip/domain-index.md` exists → use **Parallel Mode** (default)
+2. Else if `deepfield/wip/behavior-index.md` exists OR `deepfield/wip/tech-index.md` exists → use **Parallel Mode** (default)
 3. Else → use **Sequential Mode** with warning:
    ```
-   Warning: domain-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
+   Warning: behavior-index.md and tech-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
    ```
 
 ---
@@ -302,7 +338,7 @@ Input: {
   "files_to_read": filesToRead,
   "previous_findings": "deepfield/wip/run-${nextRun-1}/findings.md",
   "domain_notes": "deepfield/wip/domains/*.md",
-  "current_drafts": "deepfield/drafts/domains/*.md",
+  "current_drafts": "deepfield/drafts/{behavior,tech}/**/*.md",
   "open_questions": <from learning plan>,
   "output_language": deepfieldConfig.language,
   "domain_instructions": {
@@ -353,37 +389,73 @@ Parallel mode runs one `deepfield-domain-learner` agent per domain concurrently,
 
 #### 4a. Read Domain Index
 
-Load `deepfield/wip/domain-index.md` to get the list of all known domains and their associated file lists.
+Load the domain index file(s) based on `activeTrack`:
 
 ```javascript
-// Parse domain-index.md to extract:
-// [{ name: "auth", files: ["src/auth/...", ...] }, ...]
-const allDomains = parseDomainIndex("deepfield/wip/domain-index.md")
+// Track-aware domain index loading
+let allDomains = []
+
+if (activeTrack === 'behavior' || activeTrack === 'both') {
+  const behaviorDomains = parseDomainIndex("deepfield/wip/behavior-index.md")
+    .map(d => ({ ...d, track: 'behavior' }))
+  allDomains.push(...behaviorDomains)
+}
+
+if (activeTrack === 'tech' || activeTrack === 'both') {
+  const techDomains = parseDomainIndex("deepfield/wip/tech-index.md")
+    .map(d => ({ ...d, track: 'tech' }))
+  allDomains.push(...techDomains)
+}
 ```
 
-If `domain-index.md` does not exist, fall back to sequential mode and log a warning:
+**Fallback**: If neither index file exists, attempt to load the legacy `deepfield/wip/domain-index.md` and treat all domains as `track: 'tech'`:
+
+```javascript
+if (allDomains.length === 0) {
+  const legacyDomains = parseDomainIndex("deepfield/wip/domain-index.md")
+    .map(d => ({ ...d, track: 'tech' }))
+  if (legacyDomains.length > 0) {
+    allDomains = legacyDomains
+    console.warn("Warning: behavior-index.md / tech-index.md not found — using legacy domain-index.md with track=tech. Run /df-bootstrap to generate track-split indexes.")
+  }
+}
 ```
-Warning: domain-index.md not found — falling back to sequential learning.
+
+If no index file exists at all, fall back to sequential mode and log a warning:
+```
+Warning: No domain index found — falling back to sequential learning.
 Run /df-bootstrap first to generate the domain index.
 ```
 
 #### 4b. Prepare Agent Tasks
 
-For each domain, prepare the inputs for its `deepfield-domain-learner` agent:
+For each domain, prepare the inputs for its `deepfield-domain-learner` agent. Each domain carries its `track` field (`'behavior'` or `'tech'`) from the index load in step 4a. Use the track to route output paths:
 
 ```javascript
 const maxAgents = options.maxAgents || 5  // default: 5
 
-const agentTasks = allDomains.map(domain => ({
-  domainName: domain.name,
-  fileList: domain.files,
-  previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
-  findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
-  unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
-  openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-  behaviorSpecPath: `deepfield/drafts/domains/${domain.name}/behavior-spec.md`,
-  techSpecPath: `deepfield/drafts/domains/${domain.name}/tech-spec.md`,
-}))
+function getDraftBasePath(domainName, track) {
+  // Route output to the correct track subdirectory
+  if (track === 'behavior') return `deepfield/drafts/behavior/${domainName}`
+  if (track === 'tech')     return `deepfield/drafts/tech/${domainName}`
+  // Fallback: should not happen, but guard defensively
+  return `deepfield/drafts/tech/${domainName}`
+}
+
+const agentTasks = allDomains.map(domain => {
+  const draftBasePath = getDraftBasePath(domain.name, domain.track)
+  return {
+    domainName: domain.name,
+    track: domain.track,
+    fileList: domain.files,
+    previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
+    findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
+    unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
+    openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
+    draftSpecPath: `${draftBasePath}/spec.md`,
+    draftBasePath,
+  }
+})
 ```
 
 #### 4c. Progress Report — Before Launch
@@ -430,6 +502,7 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Domain
    Name: ${domain.name}
+   Track: ${domain.track}
 
    ${stagingFeedback ? `## Staging Feedback (User Corrections)\n\nThe user has provided corrections and guidance for this learning run. **Treat this feedback as the primary source of truth.** Apply all corrections and follow all guidance before proceeding with file analysis. If feedback contradicts what you observe in source code, trust the feedback first and note any discrepancy.\n\n${stagingFeedback}` : ''}
 
@@ -438,8 +511,7 @@ Split domains into batches of `maxAgents`. For each batch:
 
    ## Context files (read if they exist)
    - Previous findings: ${domain.previousFindingsPath}
-   - Behavior spec: ${domain.behaviorSpecPath}
-   - Tech spec: ${domain.techSpecPath}
+   - Current draft spec: ${domain.draftSpecPath}
 
    ## Open questions for this domain
    ${domain.openQuestions.map(q => `- ${q}`).join('\n') || '(none)'}
@@ -451,6 +523,7 @@ Split domains into batches of `maxAgents`. For each batch:
    ## Output (write these files)
    - Findings: ${domain.findingsOutputPath}
    - Unknowns: ${domain.unknownsOutputPath}
+   - Draft spec: ${domain.draftSpecPath}
 
    ## Findings file format
    Write ${domain.findingsOutputPath} with the following sections:
@@ -552,14 +625,38 @@ Update the run config to record partial results:
 Error: All domain learning agents failed to produce findings.
 Run marked as failed. Check agent logs for details.
 Suggestions:
-  - Verify domain-index.md has valid file paths
+  - Verify behavior-index.md / tech-index.md have valid file paths
   - Check deepfield/source/baseline/ has accessible files
   - Try /df-iterate --sequential to diagnose
 ```
 
 Mark run config `"status": "failed"` and stop execution.
 
-#### 4f. Consolidate Findings
+#### 4f. Invoke Domain Linker (If New Domains Discovered)
+
+After all agent batches complete and before consolidating findings, check whether any domain-learner agent reported discovering a new domain. For behavior-track domains, check against `behavior-index.md`; for tech-track domains, check against `tech-index.md`. A domain is considered new if its name is not present in the relevant index at the start of this run.
+
+If one or more new domains were discovered:
+
+```
+Launch: deepfield-domain-linker
+Input: {
+  "behavior_index_path": "deepfield/wip/behavior-index.md",
+  "tech_index_path": "deepfield/wip/tech-index.md",
+  "source_files": <filesToRead from Step 3>,
+  "existing_links_path": "deepfield/wip/domain-links.md"
+}
+```
+
+The linker reads both indexes (which must have been updated by the domain-discovery logic before this step), infers behavior↔tech mappings, and writes the updated `deepfield/wip/domain-links.md`.
+
+If no new domains were discovered this run, skip this step entirely.
+
+If the linker fails:
+- Log a warning: `Warning: Domain linker failed for Run ${nextRun}: <error>`
+- Continue to consolidation — the linker is non-blocking
+
+#### 4g. Consolidate Findings
 
 Run the `gather-domain-findings.js` script to merge per-domain findings into the canonical `findings.md`:
 
@@ -586,7 +683,7 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/**/*.md",
+  "existing_drafts": ["deepfield/drafts/behavior/**/*.md", "deepfield/drafts/tech/**/*.md"],
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language,
@@ -599,8 +696,8 @@ Input: {
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `deepfield/drafts/domains/<topic>/behavior-spec.md` - Updated stakeholder specification
-- `deepfield/drafts/domains/<topic>/tech-spec.md` - Updated technical specification
+- `deepfield/drafts/behavior/<topic>/spec.md` - Updated stakeholder specification
+- `deepfield/drafts/tech/<topic>/spec.md` - Updated technical specification
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
@@ -624,23 +721,38 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain subdirectory that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+For every domain that exists under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/` (not just domains updated this run):
 
 ```bash
-# Enumerate domain subdirectories
-ls -d deepfield/drafts/domains/*/
+# Enumerate domain subdirectories from both subtrees
+ls -d deepfield/drafts/behavior/*/ deepfield/drafts/tech/*/ 2>/dev/null
+```
 
-# For each domain subdirectory: deepfield/drafts/domains/<domain>/
+For each domain, invoke the script once per track it belongs to — a domain that appears in both subtrees gets two README invocations:
+
+```bash
+# For each <domain> found in drafts/behavior/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
+  --track           behavior \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --behavior-spec   deepfield/drafts/domains/<domain>/behavior-spec.md \
-  --tech-spec       deepfield/drafts/domains/<domain>/tech-spec.md \
-  --output          deepfield/drafts/domains/<domain>/README.md
+  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
+  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
+  --output          deepfield/drafts/behavior/<domain>/README.md
+
+# For each <domain> found in drafts/tech/:
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
+  --domain          <domain> \
+  --drafts-dir      deepfield/drafts \
+  --track           tech \
+  --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
+  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
+  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
+  --output          deepfield/drafts/tech/<domain>/README.md
 ```
 
-Enumerate domain names by listing subdirectories under `deepfield/drafts/domains/` and using the directory name as the domain name (exclude non-domain directories such as `cross-cutting`).
+Enumerate behavior domains from `deepfield/drafts/behavior/` and tech domains from `deepfield/drafts/tech/` separately, writing each README into the correct subtree.
 
 ### 5.5.3 Generate Run Review Guide
 
@@ -837,14 +949,14 @@ Launch: deepfield-glossary-aligner
 Input: {
   "run_number": ${nextRun},
   "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
-  "drafts_dir": "deepfield/drafts/domains",
+  "drafts_dir": "deepfield/drafts",
   "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
 }
 ```
 
 The agent:
 1. Reads `terminology.md` to extract canonical terms and their synonyms
-2. Scans all `*.md` files under `deepfield/drafts/domains/` recursively (including `behavior-spec.md` and `tech-spec.md` inside domain subdirectories, excluding `README.md`) for synonym usage
+2. Scans all `*.md` files under `deepfield/drafts/` recursively (including `spec.md` files under `behavior/` and `tech/` subtrees, excluding `README.md`) for synonym usage
 3. Replaces synonyms with canonical terms via `upgrade:apply-op --type update` (word-boundary-aware, no plural replacement)
 4. Writes `deepfield/wip/run-${nextRun}/alignment-log.md` with a full substitution report
 
@@ -980,11 +1092,11 @@ if (minimalProgress && recentRuns.length >= 2) {
 ### Stop Condition 5: Major Domain Restructure
 
 ```javascript
-const domainCountChanged = Math.abs(
-  currentDomainCount - previousDomainCount
-) > 3
+const currentDomainCount =
+  countDomainsInIndex('deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('deepfield/wip/tech-index.md')
 
-if (domainCountChanged) {
+if (Math.abs(currentDomainCount - sessionStartDomainCount) > 3) {
   stopReason = "DOMAIN_RESTRUCTURE"
   shouldContinue = false
 }
@@ -1065,12 +1177,12 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 🔗 Contradictions Found: [N]
 
 📁 Documentation Updated:
-  - deepfield/drafts/domains/authentication/behavior-spec.md
-  - deepfield/drafts/domains/authentication/tech-spec.md
-  - deepfield/drafts/domains/api-structure/behavior-spec.md
-  - deepfield/drafts/domains/api-structure/tech-spec.md
-  - deepfield/drafts/domains/data-flow/behavior-spec.md
-  - deepfield/drafts/domains/data-flow/tech-spec.md
+  - deepfield/drafts/behavior/authentication/spec.md
+  - deepfield/drafts/tech/authentication/spec.md
+  - deepfield/drafts/behavior/api-structure/spec.md
+  - deepfield/drafts/tech/api-structure/spec.md
+  - deepfield/drafts/behavior/data-flow/spec.md
+  - deepfield/drafts/tech/data-flow/spec.md
 
 🔍 Next Steps:
 
@@ -1120,7 +1232,8 @@ HIGH Priority Complete: [X]/[Y] topics >80%
 
   Domain structure has changed significantly.
   Please review:
-    deepfield/wip/domain-index.md
+    deepfield/wip/behavior-index.md
+    deepfield/wip/tech-index.md
 
   Confirm new structure before continuing.
 

@@ -36,10 +36,15 @@ If `--domains` filter was provided, validate domain names against the domain ind
 ## Read Domain Index
 
 ```bash
-# Check domain index exists
+# Check domain indexes exist (dual-track: behavior-index and tech-index)
+if [ -f "./deepfield/wip/behavior-index.md" ]; then
+  grep -i "^##" ./deepfield/wip/behavior-index.md
+fi
+if [ -f "./deepfield/wip/tech-index.md" ]; then
+  grep -i "^##" ./deepfield/wip/tech-index.md
+fi
+# Legacy fallback: support old single-track domain-index.md
 if [ -f "./deepfield/wip/domain-index.md" ]; then
-  # Extract domain names from domain-index.md
-  # Domains are listed as headings: ## Domain: auth or ## auth
   grep -i "^##" ./deepfield/wip/domain-index.md
 fi
 ```
@@ -48,7 +53,7 @@ fi
 
 For each domain name in the filter:
 
-1. Check if it appears (case-insensitive substring match) in domain-index.md
+1. Check if it appears (case-insensitive substring match) in behavior-index.md or tech-index.md (or legacy domain-index.md)
 2. If no match found: print warning `"Domain 'xyz' not found in domain index. Known domains: <list>"`
 3. Remove unknown domains from filter, keep valid ones
 4. If ALL specified domains are unknown (no valid domains remain):
@@ -71,10 +76,19 @@ Parse the JSON output to get the starting confidence baseline for the final repo
 
 ## Initialize Session Counters
 
-```
+```javascript
+// Count domains listed in an index file (lines starting with "- " under ## Domains)
+function countDomainsInIndex(path) {
+  if (!fs.existsSync(path)) return 0
+  const lines = fs.readFileSync(path, 'utf8').split('\n')
+  return lines.filter(l => l.match(/^-\s+\S/)).length
+}
+
 sessionRunCount = 0
 sessionStartRun = <current highest run number + 1>
-sessionStartDomainCount = <count of domains in domain-index.md>
+sessionStartDomainCount =
+  countDomainsInIndex('./deepfield/wip/behavior-index.md') +
+  countDomainsInIndex('./deepfield/wip/tech-index.md')
 previousRunConfidenceNet = null
 twoRunsLowProgress = false
 ```
@@ -205,7 +219,9 @@ if (stopOnBlocked) {
 ### Stop Condition 5: DOMAIN_RESTRUCTURE
 
 ```javascript
-const currentDomainCount = countDomainsInIndex('./deepfield/wip/domain-index.md')
+const currentDomainCount = countDomainsInIndex('./deepfield/wip/behavior-index.md') + countDomainsInIndex('./deepfield/wip/tech-index.md')
+  // Legacy fallback: if neither dual-track index exists, count from domain-index.md
+  // const currentDomainCount = countDomainsInIndex('./deepfield/wip/domain-index.md')
 
 if (Math.abs(currentDomainCount - sessionStartDomainCount) > 3) {
   stopReason = "DOMAIN_RESTRUCTURE"
@@ -282,7 +298,8 @@ HIGH Priority Complete: [X]/[Y] topics >= [min-confidence]%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Documentation Updated:
-  deepfield/drafts/domains/<updated files>
+  deepfield/drafts/behavior/<updated files>
+  deepfield/drafts/tech/<updated files>
 
 Next Steps:
 [stop-reason-specific section — see below]
@@ -345,7 +362,8 @@ Major domain changes detected (domain count shifted by >3).
 
 Domain structure has changed significantly.
 Please review and confirm:
-  deepfield/wip/domain-index.md
+  deepfield/wip/behavior-index.md
+  deepfield/wip/tech-index.md
 
 Then run /df-continue to resume with updated structure.
 ```

@@ -43,7 +43,7 @@ If `from === to`:
 Before making any other changes, ensure all required cross-cutting files exist by calling:
 
 ```bash
-deepfield upgrade:scaffold-cross-cutting
+deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/templates"
 ```
 
 Read the output line by line. For each `Created:` line, display the message to the user. After running, display:
@@ -68,6 +68,84 @@ Parse the JSON output `{ valid, errors }`.
   - Abort: do not apply any operations
   - Output: "Pre-upgrade validation failed. Please fix the errors above before running /df-upgrade again."
   - Stop.
+
+After validation passes, determine the next step based on `from` version:
+- If `from` < `0.6.0` (i.e., `0.5.x` or earlier): **proceed to Step 3.5** to handle legacy flat spec files, then continue to Step 4.
+- Otherwise: **skip Step 3.5** and proceed directly to Step 4.
+
+## Step 3.5: Handle Flat spec.md Splitting (pre-0.6.0 workspaces only)
+
+This step applies only to workspaces from version 0.5.x and earlier, which stored a single flat `spec.md` per domain before the behavior/tech split was introduced in 0.6.0. Workspaces from 0.6.x already have `behavior-spec.md` and `tech-spec.md` — those are handled by Step 4, not this step.
+
+### Detection
+
+A domain folder needs AI splitting when:
+- `drafts/domains/{domain}/spec.md` exists (the pre-0.6.0 flat format)
+- Neither `drafts/domains/{domain}/behavior-spec.md` nor `drafts/domains/{domain}/tech-spec.md` exists
+- The file does not end in `.bak`
+
+If no domain folders match this condition (true for all 0.6.x workspaces), skip this step entirely.
+
+### Split Process
+
+For each domain that needs splitting:
+
+1. **Read the flat spec:**
+   ```bash
+   # Read deepfield/drafts/domains/{domain}/spec.md
+   ```
+
+2. **Classify each section as behavior or tech:**
+   - Behavior content: user stories, product features, business rules, user flows, domain language, stakeholder-visible behavior
+   - Tech content: architecture, APIs, data models, implementation decisions, dependencies, technical constraints
+
+3. **Write behavior spec:**
+   ```bash
+   deepfield upgrade:apply-op --type create \
+     --path "drafts/behavior/{domain}/spec.md" \
+     --content "<behavior content>"
+   ```
+
+4. **Write tech spec:**
+   ```bash
+   deepfield upgrade:apply-op --type create \
+     --path "drafts/tech/{domain}/spec.md" \
+     --content "<tech content>"
+   ```
+
+5. **Preserve original as backup (NOT deleted):**
+   ```bash
+   deepfield upgrade:apply-op --type rename \
+     --path "drafts/domains/{domain}/spec.md" \
+     --to   "drafts/domains/{domain}/spec.md.bak"
+   ```
+
+6. **Log the split:**
+   ```
+   Split {domain}/spec.md into behavior and tech tracks
+   Original preserved as drafts/domains/{domain}/spec.md.bak
+   ```
+
+### Content guidelines per output file
+
+**`drafts/behavior/{domain}/spec.md`** — stakeholder-facing:
+- Start with a 1–2 sentence domain purpose from the user's perspective
+- Sections: User Stories, Business Rules, User Flows, Domain Concepts
+- Avoid implementation details, library names, and file paths
+- Use domain language, not code language
+
+**`drafts/tech/{domain}/spec.md`** — implementation-facing:
+- Start with a 1–2 sentence technical overview
+- Sections: Architecture, APIs, Data Models, Dependencies, Technical Decisions
+- Include file:line references where known
+- Avoid "As a user…" phrasing and business justifications disconnected from technical choices
+
+### Failure Handling
+
+If either output file cannot be written:
+- Leave the original `spec.md` in place (do NOT rename to `.bak`)
+- Log: `Warning: Flat spec split failed for domain "{domain}" — original preserved`
+- Continue with the next domain
 
 ## Step 4: Analyze structural diff and determine required operations
 
@@ -128,13 +206,132 @@ deepfield upgrade:validate
 Parse the JSON output `{ valid, errors }`.
 
 - If `valid === true`:
-  - Continue to Step 7.
+  - If upgrading from a version less than `0.7.0`: Continue to Step 6.5, then Step 7.
+  - Otherwise: Continue to Step 7.
 - If `valid === false`:
   - Report the validation errors.
   - Instruct the user to rollback:
     > "Post-upgrade validation failed. To restore your workspace, run:
     > `deepfield rollback <backupPath>`"
   - Stop. Do NOT update the version.
+
+## Step 6.5: Migrate project.config.json to Dual-Track Schema (pre-0.7.0 only)
+
+Run this step only when the `from` version is less than `0.7.0`.
+
+### Schema changes
+
+| Old field | New field | Notes |
+|-----------|-----------|-------|
+| `domains` | `techDomains` | Renamed; same array of domain name strings |
+| _(absent)_ | `behaviorDomains` | New empty array; populated by future iterate runs |
+| _(absent)_ | `domainLinks` | New empty array; populated by domain-linker |
+
+### Migration logic
+
+```javascript
+const config = JSON.parse(readFile('deepfield/project.config.json'))
+
+// Rename domains → techDomains (if domains field still present)
+if (Object.prototype.hasOwnProperty.call(config, 'domains')) {
+  config.techDomains = config.domains
+  delete config.domains
+}
+
+// Add new fields only if absent (idempotent)
+if (!Object.prototype.hasOwnProperty.call(config, 'behaviorDomains')) {
+  config.behaviorDomains = []
+}
+if (!Object.prototype.hasOwnProperty.call(config, 'domainLinks')) {
+  config.domainLinks = []
+}
+
+// NOTE: Do NOT set workspaceVersion here.
+// workspaceVersion is updated by Step 7 (upgrade:set-version) ONLY after post-apply validation succeeds.
+// If migration fails partway through, the absence of workspaceVersion update protects the workspace.
+```
+
+Apply via:
+
+```bash
+deepfield upgrade:apply-op --type update \
+  --path "project.config.json" \
+  --content "<updated config JSON>"
+```
+
+### Failure handling
+
+If the config update fails:
+- Log: `Warning: project.config.json schema migration failed: <error>`
+- Do NOT abort — the workspace structure migration already applied. Report that the user should manually update `project.config.json` using the schema above.
+- Continue to Step 7 (set version).
+
+### Idempotency
+
+If `techDomains` already exists (a previous migration attempt partially completed), skip the rename step. Only add missing `behaviorDomains` and `domainLinks` fields.
+
+## Step 6.7: Migrate Legacy Flat Domain Draft Files (if mode is "draft-migration")
+
+This step runs only when the skill is invoked with `"mode": "draft-migration"` from the command's Step 7. Skip this step for normal upgrade invocations.
+
+### Detection
+
+Scan `deepfield/drafts/domains/` for flat `{domain}.md` files (files directly in the `domains/` directory, not in subdirectories):
+
+```bash
+find deepfield/drafts/domains -maxdepth 1 -name "*.md" -not -name "README.md"
+```
+
+**Idempotency check:** For each detected `{domain}.md`, check whether both `deepfield/drafts/behavior/{domain}/spec.md` AND `deepfield/drafts/tech/{domain}/spec.md` already exist. If both exist, skip that domain (already migrated).
+
+If no domains remain after the idempotency check, report "No legacy domain files found. Draft migration not needed." and exit this step.
+
+### Confirmation Prompt
+
+Before starting, ask the user:
+
+```
+Found {N} legacy domain file(s) that need to be split into behavior and tech specs.
+
+This migration will:
+  1. Use AI to classify each domain file into behavior (stakeholder) and tech (implementation) sections
+  2. Write deepfield/drafts/behavior/{domain}/spec.md
+  3. Write deepfield/drafts/tech/{domain}/spec.md
+  4. Archive the original {domain}.md as {domain}/_legacy.md (preserved, not deleted)
+  5. Update cross-reference links across all draft files
+
+A backup is available at: {backupPath}
+
+Proceed with draft migration? (yes/no)
+```
+
+If the user says **no**, report "Draft migration skipped. Re-run `/df-upgrade` later to migrate legacy files." and exit.
+
+### Migrate Each Domain (in sequence)
+
+For each legacy domain:
+
+1. Invoke `deepfield-document-generator` twice in migration mode:
+   - First: `domain_name: "{domain}"`, `track: "behavior"`, `findings_path: null`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+   - Then: `domain_name: "{domain}"`, `track: "tech"`, `findings_path: null`, `legacy_draft_path: "deepfield/drafts/domains/{domain}.md"`
+
+2. If both output files exist: archive the original via `deepfield upgrade:apply-op --type rename --path "drafts/domains/{domain}.md" --to "drafts/domains/{domain}/_legacy.md"`
+
+3. If either output file is missing: leave the original in place and log a warning. Continue with the next domain.
+
+### Update Cross-Reference Links
+
+For each successfully migrated domain, scan all `*.md` files under `deepfield/drafts/` and update links. Compute the relative path from each source file to the target individually based on directory depth below `deepfield/drafts/`:
+
+- Depth 0 (e.g. `drafts/_changelog.md`) → `tech/{domain}/spec.md`
+- Depth 1 (e.g. `drafts/cross-cutting/unknowns.md`) → `../tech/{domain}/spec.md`
+- Depth 2 (e.g. `drafts/tech/auth/spec.md`) → `../../tech/{domain}/spec.md`
+
+Replace patterns: `](./{domain}.md)` and `]({domain}.md)` with the computed relative path.
+
+### Report
+
+Write a migration summary to `deepfield/wip/migration-split-spec.md` and display a human-readable table to the user showing per-domain status and total links updated.
 
 ## Step 7: Update version
 
@@ -144,7 +341,7 @@ After successful post-apply validation, update the version:
 deepfield upgrade:set-version --to-version "<to>"
 ```
 
-If this fails (non-zero exit code), report the error. The upgrade operations were applied successfully but the version field was not updated. Advise the user to run `deepfield upgrade:set-version --version <to>` manually.
+If this fails (non-zero exit code), report the error. The upgrade operations were applied successfully but the version field was not updated. Advise the user to run `deepfield upgrade:set-version --to-version <to>` manually.
 
 ## Step 8: Report success
 
