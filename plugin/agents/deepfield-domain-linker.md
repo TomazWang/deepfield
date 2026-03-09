@@ -103,9 +103,8 @@ Write the complete `domain-links.md` to `existing_links_path` (creating the file
 ```
 
 Rules for the output:
-- Every behavior domain from `behavior-index.md` gets a section, even if its "Implemented by" list is empty (note: `No tech domains identified yet`)
-- Every tech domain from `tech-index.md` gets a section, even if its "Implements behavior" list is empty (note: `No behavior domains identified yet`)
-- Tech domains that appear ONLY in the Unmapped section do NOT get a separate `## Tech:` section — the Unmapped section is their entry
+- Every behavior domain from `behavior-index.md` gets a `## Behavior:` section, even if its "Implemented by" list is empty (note: `No tech domains identified yet`)
+- Tech domains that have at least one mapped behavior domain get a `## Tech:` section; tech domains with NO mapped behavior domains appear ONLY in `## Unmapped Tech Domains` — not as a separate `## Tech:` section
 - Sections are ordered: all `## Behavior:` sections first (alphabetically), then all `## Tech:` sections (alphabetically), then `## Unmapped Tech Domains`
 
 # Guardrails

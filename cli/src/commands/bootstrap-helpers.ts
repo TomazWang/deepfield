@@ -163,12 +163,17 @@ function detectDomainCandidates(sourceDir: string): DomainCandidate[] {
 
   scanDir(sourceDir);
 
-  // Promote first 3 unique candidates (across all files) to high confidence if not already high
+  // Promote up to 3 candidates to high confidence, but only if they already
+  // have meaningful signal (>= 0.4). Generic H1/H2 fallbacks (base 0.2) are
+  // not promoted — promoting them would misrepresent low-quality detections
+  // as high-confidence to the user (the skill labels >= 0.7 as "high").
   let promoted = 0;
   for (const [, cand] of candidates) {
     if (promoted >= 3) break;
-    if (cand.confidence < 0.8) cand.confidence = 0.8;
-    promoted++;
+    if (cand.confidence >= 0.4 && cand.confidence < 0.8) {
+      cand.confidence = 0.8;
+      promoted++;
+    }
   }
 
   return Array.from(candidates.values());

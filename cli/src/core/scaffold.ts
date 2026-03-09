@@ -131,9 +131,9 @@ export async function scaffold(
     { src: 'project.config.json', dest: 'project.config.json' },
     { src: 'brief.md', dest: 'brief.md' },
     { src: 'project-map.md', dest: 'project-map.md' },
-    { src: 'behavior-index.md', dest: 'behavior-index.md' },
-    { src: 'tech-index.md', dest: 'tech-index.md' },
-    { src: 'domain-links.md', dest: 'domain-links.md' },
+    { src: 'behavior-index.md', dest: 'wip/behavior-index.md' },
+    { src: 'tech-index.md', dest: 'wip/tech-index.md' },
+    { src: 'domain-links.md', dest: 'wip/domain-links.md' },
     { src: 'unknowns.md', dest: 'drafts/cross-cutting/unknowns.md' },
     { src: '_changelog.md', dest: 'drafts/_changelog.md' },
   ];

@@ -200,7 +200,8 @@ deepfield upgrade:validate
 Parse the JSON output `{ valid, errors }`.
 
 - If `valid === true`:
-  - Continue to Step 7.
+  - If upgrading from a version less than `0.7.0`: Continue to Step 6.5, then Step 7.
+  - Otherwise: Continue to Step 7.
 - If `valid === false`:
   - Report the validation errors.
   - Instruct the user to rollback:
@@ -257,7 +258,7 @@ deepfield upgrade:apply-op --type update \
 If the config update fails:
 - Log: `Warning: project.config.json schema migration failed: <error>`
 - Do NOT abort — the workspace structure migration already applied. Report that the user should manually update `project.config.json` using the schema above.
-- Continue to Step 6 (post-apply validation).
+- Continue to Step 7 (set version).
 
 ### Idempotency
 
