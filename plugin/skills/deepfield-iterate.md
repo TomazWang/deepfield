@@ -302,10 +302,10 @@ If instructions exist, they will be passed to the agent as additional context. I
 **Mode Selection** — determine which mode to use:
 
 1. If `--sequential` flag was passed → use **Sequential Mode**
-2. Else if `deepfield/wip/domain-index.md` exists → use **Parallel Mode** (default)
+2. Else if `deepfield/wip/behavior-index.md` exists OR `deepfield/wip/tech-index.md` exists → use **Parallel Mode** (default)
 3. Else → use **Sequential Mode** with warning:
    ```
-   Warning: domain-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
+   Warning: behavior-index.md and tech-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
    ```
 
 ---
@@ -666,7 +666,7 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/{behavior,tech}/**/*.md",
+  "existing_drafts": ["deepfield/drafts/behavior/**/*.md", "deepfield/drafts/tech/**/*.md"],
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language,
@@ -704,13 +704,17 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain that exists (i.e., has entries under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/`), not just domains updated this run:
+For every domain that exists under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/` (not just domains updated this run):
 
 ```bash
-# Enumerate domain names from behavior subtree
-ls -d deepfield/drafts/behavior/*/
+# Enumerate domain subdirectories from both subtrees
+ls -d deepfield/drafts/behavior/*/ deepfield/drafts/tech/*/ 2>/dev/null
+```
 
-# For each domain: <domain>
+Collect unique domain names from both subtrees, then for each domain:
+
+```bash
+# For each <domain> found in drafts/behavior/ or drafts/tech/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
@@ -720,7 +724,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --output          deepfield/drafts/behavior/<domain>/README.md
 ```
 
-Enumerate domain names by listing subdirectories under `deepfield/drafts/behavior/` and using the directory name as the domain name.
+Enumerate domain names by collecting unique directory names across `deepfield/drafts/behavior/` and `deepfield/drafts/tech/`.
 
 ### 5.5.3 Generate Run Review Guide
 
