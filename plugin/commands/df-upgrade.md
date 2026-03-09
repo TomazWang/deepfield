@@ -236,16 +236,23 @@ If one or both output files are missing after the agent completes:
 
 After all domains have been processed (success or failure), update cross-reference links in all draft files:
 
-Scan all `*.md` files under `deepfield/drafts/` and replace legacy link patterns:
+Scan all `*.md` files under `deepfield/drafts/` and replace legacy link patterns. For each source file, compute the relative path to the target individually — do NOT use a hardcoded `../../` prefix, as files at different directory depths require different prefixes.
 
-For each successfully migrated domain `{domain}`:
-- Pattern: `](./{domain}.md)` → Replace with `](../../tech/{domain}/spec.md)`
-- Pattern: `]({domain}.md)` → Replace with `](../../tech/{domain}/spec.md)`
+For each source file and each successfully migrated domain `{domain}`:
 
-Example:
+1. Determine the source file's depth below `deepfield/drafts/` by counting path segments. For example:
+   - `deepfield/drafts/_changelog.md` → depth 0 → prefix: (none, use `tech/{domain}/spec.md`)
+   - `deepfield/drafts/cross-cutting/unknowns.md` → depth 1 → prefix: `../tech/{domain}/spec.md`
+   - `deepfield/drafts/tech/auth/spec.md` → depth 2 → prefix: `../../tech/{domain}/spec.md`
+
+2. Replace in the source file:
+   - Pattern: `](./{domain}.md)` → `]({relative-path})`
+   - Pattern: `]({domain}.md)` → `]({relative-path})`
+
+Example for a file at `deepfield/drafts/cross-cutting/unknowns.md`:
 ```
 Before: [authentication](./authentication.md)
-After:  [authentication](../../tech/authentication/spec.md)
+After:  [authentication](../tech/authentication/spec.md)
 ```
 
 Record the number of links updated per file in the migration report.
