@@ -7,17 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #87 feat: bootstrap skill — dual-track domain detection and Q&A
-- #88 feat: CLI scripts and scaffold for dual-track domain analysis
-- #89 feat: iterate `--track` flag and upgrade migration to dual-track structure
-
 ---
 
 ## [0.7.0] - 2026-03-09
 
 ### Added
 
-- **Dual-track domain analysis** (#86) — splits the single domain model into two independent tracks:
+- **Dual-track domain analysis** (#86, #87, #88, #89) — splits the single domain model into two independent tracks:
   - **Behavior domains** (product view): what stakeholders care about → `wip/behavior-index.md`
   - **Tech domains** (implementation view): how engineers build it → `wip/tech-index.md`
   - **Domain links**: many-to-many behavior↔tech mapping → `wip/domain-links.md`
@@ -29,12 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Track-scoped output routing: `drafts/behavior/{name}/` and `drafts/tech/{name}/`
 - Multiple spec files per domain supported (e.g. `user-stories.md`, `api-spec.md`); default is `spec.md`
 - New templates: `behavior-index.md`, `tech-index.md`, `domain-links.md`
-- Upgrade migration step (Step 8 in `df-upgrade`) for workspaces < 0.7.0:
+- Upgrade migration for workspaces < 0.7.0:
   - Moves `drafts/domains/{name}/behavior-spec.md` → `drafts/behavior/{name}/spec.md`
   - Moves `drafts/domains/{name}/tech-spec.md` → `drafts/tech/{name}/spec.md`
   - AI-splits flat `spec.md` files into behavior + tech (original preserved as `.bak`)
   - Renames `wip/domain-index.md` → `wip/tech-index.md`; scaffolds new wip files
   - Migrates `project.config.json`: `domains` → `techDomains`, adds `behaviorDomains` and `domainLinks`
+- Plugin install instructions in README; Claude Code 2.1.69+ requirement documented (#83)
 
 ### Changed
 
@@ -46,25 +43,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scaffold.ts` / `scaffold-kb.sh`: init creates `drafts/behavior/` and `drafts/tech/` instead of `drafts/domains/`
 - `project.config.json` schema: new workspaces use `behaviorDomains`, `techDomains`, `domainLinks` (no `domains` field)
 
-### Deprecated
-
-- `wip/domain-index.md` — replaced by `wip/tech-index.md` + `wip/behavior-index.md`; auto-migrated on upgrade
-- `drafts/domains/` folder layout — replaced by `drafts/behavior/` + `drafts/tech/`; auto-migrated on upgrade
-- `project.config.json` `domains` field — renamed to `techDomains`; auto-migrated on upgrade
-
----
-
-## [0.6.1] - unreleased (rolled into 0.7.0)
-
-### Added
-
-- Plugin install instructions in README; Claude Code 2.1.69+ requirement documented (#83)
-
 ### Fixed
 
 - `marketplace.json`: plugin source now uses `git-subdir` with `ref: "latest"` (tracks latest release tag) — after two intermediate reverts (#80, #81, #82)
 - `df-upgrade` command: wrong skill invocation name `deepfield-upgrade` → `Deepfield Upgrade` (Title Case) (#84)
 - `deepfield-upgrade` skill: `scaffold-cross-cutting` called without `--templates-dir`; now passes `${CLAUDE_PLUGIN_ROOT}/templates` explicitly (#85)
+
+### Deprecated
+
+- `wip/domain-index.md` — replaced by `wip/tech-index.md` + `wip/behavior-index.md`; auto-migrated on upgrade
+- `drafts/domains/` folder layout — replaced by `drafts/behavior/` + `drafts/tech/`; auto-migrated on upgrade
+- `project.config.json` `domains` field — renamed to `techDomains`; auto-migrated on upgrade
 
 ---
 
@@ -162,9 +151,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df-input`, `df-output`, `df-bootstrap`, `df-continue` command specs (#13, #14, #15, #16, #17)
 - Initial CLI plugin architecture and spec (#1)
 
-[Unreleased]: https://github.com/TomazWang/deepfield/compare/latest...HEAD
+[Unreleased]: https://github.com/TomazWang/deepfield/compare/v0.7.0...HEAD
 [0.7.0]: https://github.com/TomazWang/deepfield/compare/v0.6.0...v0.7.0
-[0.6.1]: https://github.com/TomazWang/deepfield/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/TomazWang/deepfield/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/TomazWang/deepfield/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/TomazWang/deepfield/compare/v0.3.0...v0.4.0
