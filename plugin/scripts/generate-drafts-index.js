@@ -169,7 +169,7 @@ function buildDomainRows(domains, runConfig) {
     const conf = getConfidenceForDomain(d.name, runConfig);
     const confStr = conf ? `${conf.after}%` : '—';
     const lastUpdated = conf ? `Run ${runConfig.runNumber}` : '—';
-    const specFile = d.track === 'domains' ? `${d.name}.md` : `${d.track}/${d.name}/spec.md`;
+    const specFile = d.track === 'domains' ? `domains/${d.name}.md` : `${d.track}/${d.name}/spec.md`;
     const readmePath = d.track === 'domains' ? `domains/${d.name}/README.md` : `${d.track}/${d.name}/README.md`;
     const displayName = d.track !== 'domains' ? `${d.name} (${d.track})` : d.name;
     const link = `[${displayName}](${specFile})`;
