@@ -56,8 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.1] - TBD
 
+### Added
+
+- Plugin install instructions in README; Claude Code 2.1.69+ requirement documented (#83)
+
 ### Fixed
 
+- `marketplace.json`: plugin source now uses `git-subdir` with `ref: "latest"` (tracks latest release tag) — after two intermediate reverts (#80, #81, #82)
 - `df-upgrade` command: wrong skill invocation name `deepfield-upgrade` → `Deepfield Upgrade` (Title Case) (#84)
 - `deepfield-upgrade` skill: `scaffold-cross-cutting` called without `--templates-dir`; now passes `${CLAUDE_PLUGIN_ROOT}/templates` explicitly (#85)
 
@@ -75,14 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `marketplace.json`: plugin source uses `git-subdir` with `ref: "latest"` (tracks latest release tag) (#82)
 - Version files on `main` permanently set to `0.0.0-dev`; real semver only on release branches and tags
 
 ### Fixed
 
-- Marketplace source reverted from broken git-subdir schema to relative path, then fixed properly (#80, #81, #82)
 - `npm install` instead of `npm ci` in release workflow (no lockfile) (#79)
-- Plugin install instructions in README; Claude Code 2.1.69+ requirement documented (#83)
 
 ---
 
