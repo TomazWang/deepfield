@@ -302,10 +302,10 @@ If instructions exist, they will be passed to the agent as additional context. I
 **Mode Selection** — determine which mode to use:
 
 1. If `--sequential` flag was passed → use **Sequential Mode**
-2. Else if `deepfield/wip/domain-index.md` exists → use **Parallel Mode** (default)
+2. Else if `deepfield/wip/behavior-index.md` exists OR `deepfield/wip/tech-index.md` exists → use **Parallel Mode** (default)
 3. Else → use **Sequential Mode** with warning:
    ```
-   Warning: domain-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
+   Warning: behavior-index.md and tech-index.md not found — falling back to sequential learning. Run /df-bootstrap first to enable parallel learning.
    ```
 
 ---
@@ -321,7 +321,7 @@ Input: {
   "files_to_read": filesToRead,
   "previous_findings": "deepfield/wip/run-${nextRun-1}/findings.md",
   "domain_notes": "deepfield/wip/domains/*.md",
-  "current_drafts": "deepfield/drafts/domains/*.md",
+  "current_drafts": "deepfield/drafts/{behavior,tech}/**/*.md",
   "open_questions": <from learning plan>,
   "output_language": deepfieldConfig.language,
   "domain_instructions": {
@@ -921,7 +921,7 @@ Launch: deepfield-glossary-aligner
 Input: {
   "run_number": ${nextRun},
   "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
-  "drafts_dir": "deepfield/drafts/domains",
+  "drafts_dir": "deepfield/drafts",
   "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
 }
 ```

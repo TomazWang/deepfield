@@ -111,7 +111,7 @@ After the workspace structure upgrade completes (Step 6 success), check for lega
 Before scanning, check whether a previous migration attempt was partially completed:
 
 For each `{domain}` directory that already exists under `deepfield/drafts/domains/`:
-- If both `{domain}/behavior-spec.md` AND `{domain}/tech-spec.md` exist → skip this domain (already migrated)
+- If both `deepfield/drafts/behavior/{domain}/spec.md` AND `deepfield/drafts/tech/{domain}/spec.md` exist → skip this domain (already migrated)
 - If only one exists, or neither exists but a flat `{domain}.md` file is present → include for migration
 
 This check ensures that re-running `/df-upgrade` is safe: already-migrated domains are skipped; only remaining legacy files are retried.
@@ -142,12 +142,12 @@ Legacy domain files detected:
 Before starting migration, ask the user:
 
 ```
-Found {N} legacy domain file(s) that need to be split into behavior-spec.md and tech-spec.md.
+Found {N} legacy domain file(s) that need to be split into behavior and tech specs.
 
 This migration will:
   1. Use AI to classify each domain file into behavior (stakeholder) and tech (implementation) sections
-  2. Write deepfield/drafts/domains/{domain}/behavior-spec.md
-  3. Write deepfield/drafts/domains/{domain}/tech-spec.md
+  2. Write deepfield/drafts/behavior/{domain}/spec.md
+  3. Write deepfield/drafts/tech/{domain}/spec.md
   4. Rename the original {domain}.md to {domain}/_legacy.md (preserved, not deleted)
   5. Update cross-reference links across all draft files
 
@@ -163,32 +163,48 @@ If the user says **no**, skip Steps 7.4–7.9 and report:
 
 For each legacy domain (in sequence):
 
-1. **Invoke `deepfield-document-generator` in migration mode:**
+1. **Invoke `deepfield-document-generator` twice in migration mode (behavior track, then tech track):**
 
    ```
    Launch: deepfield-document-generator
    Input: {
      "domain_name": "{domain}",
      "findings_path": null,
-     "behavior_spec_path": "deepfield/drafts/domains/{domain}/behavior-spec.md",
-     "tech_spec_path":     "deepfield/drafts/domains/{domain}/tech-spec.md",
-     "legacy_draft_path":  "deepfield/drafts/domains/{domain}.md"
+     "track": "behavior",
+     "spec_file": "spec.md",
+     "output_path": "deepfield/drafts/behavior/{domain}/spec.md",
+     "legacy_draft_path": "deepfield/drafts/domains/{domain}.md"
    }
    ```
 
-2. **Wait for the agent to complete.**
+   Then:
+
+   ```
+   Launch: deepfield-document-generator
+   Input: {
+     "domain_name": "{domain}",
+     "findings_path": null,
+     "track": "tech",
+     "spec_file": "spec.md",
+     "output_path": "deepfield/drafts/tech/{domain}/spec.md",
+     "legacy_draft_path": "deepfield/drafts/domains/{domain}.md"
+   }
+   ```
+
+2. **Wait for both agent runs to complete.**
 
 3. **Verify output:** Check that both files now exist:
-   - `deepfield/drafts/domains/{domain}/behavior-spec.md`
-   - `deepfield/drafts/domains/{domain}/tech-spec.md`
+   - `deepfield/drafts/behavior/{domain}/spec.md`
+   - `deepfield/drafts/tech/{domain}/spec.md`
 
 #### 7.5 On Success per Domain
 
 If both output files exist:
 
 ```bash
-# Create the domain subdirectory if not already created by the agent
-mkdir -p "deepfield/drafts/domains/{domain}"
+# Create the behavior and tech subdirectories if not already created by the agent
+mkdir -p "deepfield/drafts/behavior/{domain}"
+mkdir -p "deepfield/drafts/tech/{domain}"
 
 # Archive the original flat file as _legacy.md
 mv "deepfield/drafts/domains/{domain}.md" "deepfield/drafts/domains/{domain}/_legacy.md"
@@ -208,8 +224,8 @@ If one or both output files are missing after the agent completes:
   ```javascript
   migrationResults[domain] = {
     status: 'failed',
-    behaviorSpec: fs.existsSync(`deepfield/drafts/domains/${domain}/behavior-spec.md`),
-    techSpec:     fs.existsSync(`deepfield/drafts/domains/${domain}/tech-spec.md`),
+    behaviorSpec: fs.existsSync(`deepfield/drafts/behavior/${domain}/spec.md`),
+    techSpec:     fs.existsSync(`deepfield/drafts/tech/${domain}/spec.md`),
     error: 'Agent did not produce both output files'
   }
   ```
@@ -223,13 +239,13 @@ After all domains have been processed (success or failure), update cross-referen
 Scan all `*.md` files under `deepfield/drafts/` and replace legacy link patterns:
 
 For each successfully migrated domain `{domain}`:
-- Pattern: `](./{domain}.md)` → Replace with `](../{domain}/tech-spec.md)`
-- Pattern: `]({domain}.md)` → Replace with `]({domain}/tech-spec.md)`
+- Pattern: `](./{domain}.md)` → Replace with `](../../tech/{domain}/spec.md)`
+- Pattern: `]({domain}.md)` → Replace with `](../../tech/{domain}/spec.md)`
 
 Example:
 ```
 Before: [authentication](./authentication.md)
-After:  [authentication](../authentication/tech-spec.md)
+After:  [authentication](../../tech/authentication/spec.md)
 ```
 
 Record the number of links updated per file in the migration report.
@@ -246,7 +262,7 @@ Write a migration report to `deepfield/wip/migration-split-spec.md`:
 
 ## Domain Migration Results
 
-| Domain | Status | behavior-spec.md | tech-spec.md | Legacy Archived |
+| Domain | Status | behavior/spec.md | tech/spec.md | Legacy Archived |
 |--------|--------|-----------------|-------------|----------------|
 | authentication | ✓ success | created | created | → _legacy.md |
 | api-structure  | ✓ success | created | created | → _legacy.md |
@@ -257,7 +273,7 @@ Write a migration report to `deepfield/wip/migration-split-spec.md`:
 | File | Links Updated |
 |------|--------------|
 | deepfield/drafts/cross-cutting/unknowns.md | 3 |
-| deepfield/drafts/domains/api-structure/tech-spec.md | 1 |
+| deepfield/drafts/tech/api-structure/spec.md | 1 |
 
 ## Summary
 

@@ -1,5 +1,5 @@
 ---
-name: Deepfield Domain Linker
+name: deepfield-domain-linker
 description: Infers and maintains the behavior↔tech domain mapping in domain-links.md
 ---
 
