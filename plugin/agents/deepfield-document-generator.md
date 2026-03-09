@@ -172,8 +172,8 @@ Migration mode is active when `legacy_draft_path` is provided.
    <!-- UNCERTAIN CLASSIFICATION: This section was copied from the legacy draft.
         Review and move content to the appropriate file. -->
    ```
-4. Write `behavior-spec.md` with all behavior-classified content.
-5. Write `tech-spec.md` with all tech-classified content.
+4. Write `drafts/behavior/{domain}/spec.md` with all behavior-classified content.
+5. Write `drafts/tech/{domain}/spec.md` with all tech-classified content.
 6. Do NOT delete the legacy file — the caller (`/df-upgrade`) will archive it.
 
 ## Migration Quality Guidelines

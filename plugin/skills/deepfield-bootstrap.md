@@ -215,6 +215,7 @@ With context:
   - behavior-index path: deepfield/wip/behavior-index.md
   - tech-index path:     deepfield/wip/tech-index.md
   - source files:        deepfield/source/baseline/
+  - existing-links path: deepfield/wip/domain-links.md
 ```
 
 The agent reads both indexes and available source files, then writes `deepfield/wip/domain-links.md` — a many-to-many mapping between behavior domains and tech domains.

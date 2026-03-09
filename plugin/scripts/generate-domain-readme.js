@@ -234,12 +234,12 @@ function render({
   const delta = renderConfidenceDelta(conf);
 
   const behaviorLine = behaviorSpecExists
-    ? `| [behavior-spec.md](./behavior-spec.md) | Stakeholder specification — user stories, scenarios, business rules | ${behaviorConfidence !== null ? behaviorConfidence + '%' : '—'} | ${behaviorLastUpdated || '—'} |`
-    : `| behavior-spec.md | _Not yet created_ | — | — |`;
+    ? `| [spec.md](./spec.md) | Stakeholder specification — user stories, scenarios, business rules | ${behaviorConfidence !== null ? behaviorConfidence + '%' : '—'} | ${behaviorLastUpdated || '—'} |`
+    : `| spec.md | _Not yet created_ | — | — |`;
 
   const techLine = techSpecExists
-    ? `| [tech-spec.md](./tech-spec.md) | Technical specification — architecture, implementations, data models | ${techConfidence !== null ? techConfidence + '%' : '—'} | ${techLastUpdated || '—'} |`
-    : `| tech-spec.md | _Not yet created_ | — | — |`;
+    ? `| [spec.md](./spec.md) | Technical specification — architecture, implementations, data models | ${techConfidence !== null ? techConfidence + '%' : '—'} | ${techLastUpdated || '—'} |`
+    : `| spec.md | _Not yet created_ | — | — |`;
 
   return `# ${displayName}
 
