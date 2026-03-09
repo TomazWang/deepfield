@@ -666,7 +666,7 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": "deepfield/drafts/domains/**/*.md",
+  "existing_drafts": ["deepfield/drafts/behavior/**/*.md", "deepfield/drafts/tech/**/*.md"],
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language,
@@ -679,8 +679,8 @@ Input: {
 ### Process Synthesis Output
 
 Synthesizer updates:
-- `deepfield/drafts/domains/<topic>/behavior-spec.md` - Updated stakeholder specification
-- `deepfield/drafts/domains/<topic>/tech-spec.md` - Updated technical specification
+- `deepfield/drafts/behavior/<topic>/spec.md` - Updated stakeholder specification
+- `deepfield/drafts/tech/<topic>/spec.md` - Updated technical specification
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
@@ -704,23 +704,27 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain subdirectory that exists in `deepfield/drafts/domains/` (not just domains updated this run):
+For every domain that exists under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/` (not just domains updated this run):
 
 ```bash
-# Enumerate domain subdirectories
-ls -d deepfield/drafts/domains/*/
+# Enumerate domain subdirectories from both subtrees
+ls -d deepfield/drafts/behavior/*/ deepfield/drafts/tech/*/ 2>/dev/null
+```
 
-# For each domain subdirectory: deepfield/drafts/domains/<domain>/
+Collect unique domain names from both subtrees, then for each domain:
+
+```bash
+# For each <domain> found in drafts/behavior/ or drafts/tech/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --behavior-spec   deepfield/drafts/domains/<domain>/behavior-spec.md \
-  --tech-spec       deepfield/drafts/domains/<domain>/tech-spec.md \
-  --output          deepfield/drafts/domains/<domain>/README.md
+  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
+  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
+  --output          deepfield/drafts/behavior/<domain>/README.md
 ```
 
-Enumerate domain names by listing subdirectories under `deepfield/drafts/domains/` and using the directory name as the domain name (exclude non-domain directories such as `cross-cutting`).
+Enumerate domain names by collecting unique directory names across `deepfield/drafts/behavior/` and `deepfield/drafts/tech/`.
 
 ### 5.5.3 Generate Run Review Guide
 
