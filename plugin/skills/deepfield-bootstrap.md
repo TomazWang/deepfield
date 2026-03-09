@@ -136,8 +136,10 @@ deepfield bootstrap:detect-behavior-domains --source-dir deepfield/source/baseli
 
 Parse the JSON array of domain candidates returned by the script. Each candidate has:
 - `name` — domain name
-- `description` — short description inferred from docs
-- `confidence` — `high` | `medium` | `low`
+- `sourceFile` — path of the reference doc it was detected from
+- `confidence` — number 0.0–1.0
+
+When displaying confidence to users, map it to a label: >= 0.7 → `high`, >= 0.4 → `medium`, else `low`.
 
 ### Step C: Interactive Q&A (unless `--skip-behavior-qa`)
 
@@ -148,7 +150,7 @@ If the `--skip-behavior-qa` flag was **not** passed:
 ```
 I detected the following product behavior domains from your documentation:
 
-<list each candidate as "- {name}: {description}">
+<list each candidate as "- {name} (from {sourceFile}, confidence: {confidence_label})">
 
 Do these capture the product features your stakeholders care about?
 Add or remove any domains before I write the behavior index.
