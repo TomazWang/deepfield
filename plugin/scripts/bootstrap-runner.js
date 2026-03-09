@@ -9,7 +9,7 @@
  *   2. Clone repositories
  *   3. Scan repository structure
  *   4. Generate project-map.md
- *   5. Generate domain-index.md
+ *   5. Generate tech-index.md
  *   6. Generate learning-plan.md
  *   7. Create run-0.config.json with file hashes
  *   8. Create run-1 staging area
@@ -306,10 +306,10 @@ async function runBootstrap() {
   const projectMapPath = generateProjectMap(brief, repos);
   console.log(`  Written: ${projectMapPath}`);
 
-  // Step 5: Generate domain-index.md (via CLI — generate-domain-index.js has no module.exports)
-  console.log('\nStep 5/9: Generating domain-index.md...');
-  const domainIndexPath = path.resolve('./deepfield/wip/domain-index.md');
-  fs.mkdirSync(path.dirname(domainIndexPath), { recursive: true });
+  // Step 5: Generate tech-index.md (via CLI — generate-domain-index.js has no module.exports)
+  console.log('\nStep 5/9: Generating tech-index.md...');
+  const techIndexPath = path.resolve('./deepfield/wip/tech-index.md');
+  fs.mkdirSync(path.dirname(techIndexPath), { recursive: true });
 
   // Write brief JSON for the CLI to consume
   const briefJsonPath = path.resolve('./deepfield/wip/run-0/.brief-tmp.json');
@@ -322,14 +322,14 @@ async function runBootstrap() {
 
   const generateDomainIndexScript = path.join(SCRIPT_DIR, 'generate-domain-index.js');
   execSync(
-    `node "${generateDomainIndexScript}" --repos '${JSON.stringify(reposArg)}' --brief "${briefJsonPath}" --output "${domainIndexPath}"`,
+    `node "${generateDomainIndexScript}" --repos '${JSON.stringify(reposArg)}' --brief "${briefJsonPath}" --output "${techIndexPath}"`,
     { stdio: 'inherit' }
   );
 
   // Clean up temp file
   try { fs.unlinkSync(briefJsonPath); } catch { /* ignore */ }
 
-  console.log(`  Written: ${domainIndexPath}`);
+  console.log(`  Written: ${techIndexPath}`);
 
   // Step 6: Generate learning-plan.md
   console.log('\nStep 6/9: Generating learning-plan.md...');
