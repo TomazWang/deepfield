@@ -69,16 +69,18 @@ Parse the JSON output `{ valid, errors }`.
   - Output: "Pre-upgrade validation failed. Please fix the errors above before running /df-upgrade again."
   - Stop.
 
-## Step 3.5: Handle Flat spec.md Splitting (pre-0.7.0 workspaces)
+## Step 3.5: Handle Flat spec.md Splitting (pre-0.6.0 workspaces only)
 
-This step runs only when the `df-upgrade` command delegates a flat-spec split for a specific domain. It is also invoked during Step 4 when a domain folder is found to have only a legacy `spec.md` with no behavior/tech split.
+This step applies only to workspaces from version 0.5.x and earlier, which stored a single flat `spec.md` per domain before the behavior/tech split was introduced in 0.6.0. Workspaces from 0.6.x already have `behavior-spec.md` and `tech-spec.md` — those are handled by Step 4, not this step.
 
 ### Detection
 
 A domain folder needs AI splitting when:
-- `drafts/domains/{domain}/spec.md` exists
-- Neither `drafts/behavior/{domain}/spec.md` nor `drafts/tech/{domain}/spec.md` exists
+- `drafts/domains/{domain}/spec.md` exists (the pre-0.6.0 flat format)
+- Neither `drafts/domains/{domain}/behavior-spec.md` nor `drafts/domains/{domain}/tech-spec.md` exists
 - The file does not end in `.bak`
+
+If no domain folders match this condition (true for all 0.6.x workspaces), skip this step entirely.
 
 ### Split Process
 
