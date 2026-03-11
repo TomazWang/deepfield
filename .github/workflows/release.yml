@@ -13,6 +13,9 @@ jobs:
       contents: write
 
     steps:
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -35,25 +38,24 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install jq
-        if: steps.skip.outputs.skip == 'false'
-        run: sudo apt-get install -y jq
-
       - name: Verify all version files are in sync
         if: steps.skip.outputs.skip == 'false'
         run: ./scripts/check-versions.sh
 
       - name: Skip if tag already exists
+        id: tag_check
         if: steps.skip.outputs.skip == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
           if git tag | grep -q "^v$V$"; then
             echo "Tag v$V already exists — skipping"
             echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Tag release
-        if: steps.skip.outputs.skip == 'false'
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
           git config user.name  "github-actions[bot]"
@@ -62,7 +64,7 @@ jobs:
           git push origin "v$V"
 
       - name: Move latest tag
-        if: steps.skip.outputs.skip == 'false'
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
         run: |
           git tag -f latest
           git push origin latest --force
