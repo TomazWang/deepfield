@@ -506,33 +506,45 @@ Three layers prevent context overload:
 
 ## Release Workflow
 
-**Trunk-based, CI tag-triggered releases. Main is always `0.0.0-dev`.**
+**`main` is trunk and always the latest release. All work flows through PRs.**
 
-- Version files on main are permanently `0.0.0-dev` — never bump them
-- Real semver only lives on `release/X.Y.Z` branches and git tags
+```
+feat/* / fix/* / docs/*  →  PR  →  main   (version stays 0.0.0-dev)
+bump/X.Y.Z               →  PR  →  main   (bumps version — this IS the release)
+```
+
+- `main` — default branch; always the latest stable release; what marketplace users get
+- Feature/fix branches — normal work; version files stay `0.0.0-dev`
+- `bump/X.Y.Z` — release PR; manually bumps all 4 version files to the real version
 
 ### Cutting a release
 
 ```bash
+# 1. Create a bump branch
 git checkout main && git pull
-git checkout -b release/0.6.0
-git push origin release/0.6.0
-# CI runs automatically:
-#   1. Sets all 4 version files to "0.6.0"
-#   2. Rebuilds CLI
-#   3. Commits + pushes release branch
-#   4. Tags v0.6.0 and moves latest tag
+git checkout -b bump/0.8.0
+
+# 2. Bump all 4 version files to 0.8.0
+./scripts/bump-version.sh 0.8.0   # or manually update the 4 files
+
+# 3. Open a PR into main — version-check CI verifies sync
+gh pr create --base main --title "chore: release v0.8.0"
+
+# 4. Merge the PR
+# CI on main push: detects version != 0.0.0-dev → tags v0.8.0 + moves latest tag
 ```
 
 ### How marketplace updates work
 
-- `marketplace.json` on main has `ref: "latest"` — never changes
-- `latest` tag moves on each release → users pick it up via `/plugin marketplace update`
+- Claude Code marketplace clones `main` (default branch) → reads `marketplace.json`
+- `marketplace.json` uses `"source": "./plugin"` → reads `plugin/` from that clone
+- `main` = latest release → users always get the latest stable version
+- `latest` tag is also moved by CI for any tooling that references it
 
 ### CI files
 
-- `.github/workflows/release.yml` — triggered by `push to release/**`
-- `.github/workflows/version-check.yml` — excludes `main` and `release/**`; runs on feature branches + PRs to main
+- `.github/workflows/release.yml` — triggers on push to `main`; skips if version is `0.0.0-dev` or tag already exists; creates `vX.Y.Z` + moves `latest` tag
+- `.github/workflows/version-check.yml` — runs on feature branches + PRs to `main`; verifies all 4 version files are in sync
 
 ## Current Status
 
