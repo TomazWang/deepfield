@@ -769,8 +769,24 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-run-review-guide.js" \
 
 If any of the three generation scripts exit with a non-zero status:
 - Log a warning: `Warning: Readability document generation failed: <script> — <error>`
-- Continue with Step 5.6 (terminology extraction) — do NOT abort the run
+- Continue with Step 5.5.5 — do NOT abort the run
 - These documents are supplementary; their absence does not affect core learning output
+
+### 5.5.5 Regenerate Domain Links (if manifest updated)
+
+After document generation, check whether `domain-manifest.json` was updated this run (i.e., any call to `update-domain-manifest.js` succeeded). If it was, regenerate the cross-cutting domain links index:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-links.js" \
+  --domain-links  deepfield/wip/domain-links.md \
+  --behavior-dir  deepfield/drafts/en/product-spec \
+  --tech-dir      deepfield/drafts/en/tech-spec \
+  --output        deepfield/drafts/cross-cutting/domain-links.md
+```
+
+If the script exits with a non-zero status or is not found:
+- Log a warning: `Warning: generate-domain-links.js failed for Run ${nextRun} — cross-cutting/domain-links.md not updated`
+- Continue with Step 5.6 (terminology extraction) — this is non-blocking
 
 ## Step 5.6: Extract Terminology
 
