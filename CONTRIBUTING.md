@@ -22,44 +22,54 @@ See `CLAUDE.md` for the full architecture guide and Plugin vs CLI decision rules
 
 ## Branching
 
-- `main` — always deployable, version is permanently `0.0.0-dev`
-- `feat/*` — feature branches, PR into main
-- `fix/*` — bug fix branches, PR into main
-- `release/X.Y.Z` — release branches, created from main to trigger a release
+```
+feat/* / fix/*  →  PR  →  dev   (daily work)
+dev             →  release/X.Y.Z  →  CI  →  main
+main            =  latest stable release
+```
 
-Never push version bumps to main. Never push directly to main.
+| Branch | Purpose |
+|--------|---------|
+| `dev` | Development trunk — **default branch**, all PRs target here |
+| `main` | Latest release — never push directly, CI-only merges |
+| `feat/*` | Feature branches, PR into `dev` |
+| `fix/*` | Bug fix branches, PR into `dev` |
+| `release/X.Y.Z` | Short-lived CI branch to trigger a release |
+
+**Never push directly to `main` or `dev`.** Always use PRs.
 
 ## Making Changes
 
-1. Branch off main: `git checkout -b feat/my-feature`
+1. Branch off `dev`: `git checkout -b feat/my-feature`
 2. Make changes, commit
-3. Push and open a PR into main
+3. Push and open a PR targeting `dev`
 4. CI runs version-check on the branch and on the PR
 
 ## Cutting a Release
 
-Releases are fully automated via CI. You only need to push a release branch:
+Releases are fully automated via CI. Branch off `dev` and push:
 
 ```bash
-git checkout main && git pull
-git checkout -b release/0.6.0
-git push origin release/0.6.0
+git checkout dev && git pull
+git checkout -b release/0.8.0
+git push origin release/0.8.0
 ```
 
 CI will automatically:
-1. Extract the version from the branch name (`0.6.0`)
+1. Extract the version from the branch name (`0.8.0`)
 2. Set all 4 version files to that version
 3. Rebuild the CLI
 4. Verify versions are in sync (`scripts/check-versions.sh`)
 5. Commit and push the release branch
-6. Create and push the `v0.6.0` tag
+6. Create and push the `v0.8.0` tag
 7. Move the `latest` tag to this commit
+8. Merge the release branch into `main`
 
-The `latest` tag is what the marketplace uses — users get the update on their next `/plugin marketplace update`.
+After CI completes, `main` = latest release. Users get the update on their next `/plugin marketplace update`.
 
 ### Version files
 
-There are 4 version files that must always stay in sync:
+There are 4 version files that must always stay in sync on a release:
 
 | File | Field |
 |------|-------|
@@ -68,17 +78,15 @@ There are 4 version files that must always stay in sync:
 | `plugin/package.json` | `version` + `peerDependencies.deepfield` |
 | `plugin/.claude-plugin/plugin.json` | `version` |
 
-On `main` these are all `0.0.0-dev`. CI sets them to the real version on the release branch.
+On `dev` these are all `0.0.0-dev`. CI sets them to the real version on the release branch.
 
 ## CI Workflows
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
-| `release.yml` | Push to `release/**` | Sets versions, builds, tags release |
-| `version-check.yml` | Push to feature branches + PRs to main | Verifies all 4 version files match |
+| `release.yml` | Push to `release/**` | Sets versions, builds, tags release, merges to `main` |
+| `version-check.yml` | Push to feature branches + PRs to `dev` | Verifies all 4 version files match |
 
 ## Marketplace
 
-`marketplace.json` lives on `main` and never changes. It points to `ref: "latest"`, which always resolves to the most recent release tag.
-
-Users install once; updates flow automatically when they run `/plugin marketplace update`.
+`marketplace.json` uses `"source": "./plugin"` — Claude Code reads the plugin from the `plugin/` subdirectory of the cloned marketplace repo. Since `main` always reflects the latest release, users always get stable plugin files.

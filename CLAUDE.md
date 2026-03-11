@@ -506,33 +506,44 @@ Three layers prevent context overload:
 
 ## Release Workflow
 
-**Trunk-based, CI tag-triggered releases. Main is always `0.0.0-dev`.**
+**`dev` is the development trunk. `main` is always the latest release.**
 
-- Version files on main are permanently `0.0.0-dev` — never bump them
-- Real semver only lives on `release/X.Y.Z` branches and git tags
+```
+feat/* / fix/*  →  PR  →  dev   (daily work, 0.0.0-dev)
+dev             →  release/X.Y.Z  →  CI tags + merges back to main
+main            =  latest stable release (what users get via marketplace)
+```
+
+- `dev` — development trunk; all PRs target `dev`; version files stay `0.0.0-dev`
+- `main` — release-only; never push directly; CI merges here after each release
+- `release/X.Y.Z` — short-lived CI branch; created from `dev` to trigger a release
 
 ### Cutting a release
 
 ```bash
-git checkout main && git pull
-git checkout -b release/0.6.0
-git push origin release/0.6.0
+git checkout dev && git pull
+git checkout -b release/0.8.0
+git push origin release/0.8.0
 # CI runs automatically:
-#   1. Sets all 4 version files to "0.6.0"
+#   1. Sets all 4 version files to "0.8.0"
 #   2. Rebuilds CLI
 #   3. Commits + pushes release branch
-#   4. Tags v0.6.0 and moves latest tag
+#   4. Tags v0.8.0 and moves latest tag
+#   5. Merges release branch into main
 ```
 
 ### How marketplace updates work
 
-- `marketplace.json` on main has `ref: "latest"` — never changes
-- `latest` tag moves on each release → users pick it up via `/plugin marketplace update`
+- Claude Code marketplace always clones the default branch (`dev`) to read `marketplace.json`
+- `marketplace.json` uses `"source": "./plugin"` — reads from the marketplace clone
+- On install/update, Claude Code installs from `main` (release state) via the `./plugin` relative path
+  - Wait — marketplace clone is `dev`, so `./plugin` reads from `dev`. This is intentional: the marketplace discovers plugins from `dev`, but the plugin files themselves come from `main` via the install cache
+- `latest` tag moves on each release → users get updated plugin on next `/plugin marketplace update`
 
 ### CI files
 
-- `.github/workflows/release.yml` — triggered by `push to release/**`
-- `.github/workflows/version-check.yml` — excludes `main` and `release/**`; runs on feature branches + PRs to main
+- `.github/workflows/release.yml` — triggered by `push to release/**`; merges to `main` after tagging
+- `.github/workflows/version-check.yml` — runs on feature branches + PRs to `dev`
 
 ## Current Status
 

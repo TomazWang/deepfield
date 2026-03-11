@@ -4,9 +4,10 @@ on:
   push:
     branches-ignore:
       - main
+      - dev
       - "release/**"
   pull_request:
-    branches: [main]
+    branches: [dev]
 
 jobs:
   check-versions:
