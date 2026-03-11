@@ -104,6 +104,10 @@ export async function scaffold(
     'deepfield/drafts/behavior',
     'deepfield/drafts/tech',
     'deepfield/drafts/cross-cutting',
+    'deepfield/drafts/en/product-spec',
+    'deepfield/drafts/en/tech-spec',
+    'deepfield/drafts/en/feature-spec',
+    'deepfield/drafts/archive/feature-spec',
     'deepfield/output',
   ];
 

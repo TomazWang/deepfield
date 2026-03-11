@@ -231,7 +231,7 @@ export function createValidateCommand(): Command {
  */
 export function createScaffoldCrossCuttingCommand(): Command {
   return new Command('upgrade:scaffold-cross-cutting')
-    .description('Check and create missing cross-cutting files (terminology.md, unknowns.md) from templates')
+    .description('Check and create missing cross-cutting files (glossary.md, unknowns.md) from templates')
     .option('--deepfield-dir <path>', 'Path to deepfield workspace directory', './deepfield')
     .option('--templates-dir <path>', 'Path to plugin templates directory')
     .action((options) => {
@@ -245,7 +245,7 @@ export function createScaffoldCrossCuttingCommand(): Command {
           ? require('path').resolve(cwd, options.templatesDir)
           : join(dirname(dirname(__filename)), 'plugin', 'templates');
 
-        const filesToScaffold = ['terminology.md', 'unknowns.md'];
+        const filesToScaffold = ['glossary.md', 'unknowns.md'];
 
         // Ensure cross-cutting directory exists
         mkdirSync(crossCuttingDir, { recursive: true });
