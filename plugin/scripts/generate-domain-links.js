@@ -129,8 +129,17 @@ function generateMarkdown(manifest, workspaceRoot) {
   }
 
   for (const domain of domains) {
-    lines.push(`## ${domain.slug}`);
+    // Use displayName for a human-readable heading; fall back to slug for
+    // backward compat with manifests written before displayName was added.
+    const heading = domain.displayName || domain.slug;
+    lines.push(`## ${heading}`);
     lines.push('');
+
+    // Show domain type badge when present (enables filtering in rendered output)
+    if (domain.domainType) {
+      lines.push(`**Type**: \`${domain.domainType}\``);
+      lines.push('');
+    }
 
     if (domain.notes) {
       lines.push(`> ${domain.notes}`);

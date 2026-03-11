@@ -108,6 +108,23 @@ export const DomainEntrySchema = z.object({
   slug: z.string().min(1),
 
   /**
+   * Human-readable display name for this domain.
+   * Used as the heading in domain-links.md and other rendered output.
+   * e.g. "Auth and Authorization"
+   * Falls back to slug when absent.
+   */
+  displayName: z.string().optional(),
+
+  /**
+   * Domain classification for filtering and rendering.
+   * - "product"       — user-facing product domains (features, flows)
+   * - "tech"          — engineering / implementation domains
+   * - "infra"         — infrastructure, deployment, platform
+   * - "cross-cutting" — concerns that span multiple domains
+   */
+  domainType: z.enum(['product', 'tech', 'infra', 'cross-cutting']).optional(),
+
+  /**
    * Path to the product-spec folder for this domain.
    * Relative to the workspace root (deepfield/).
    * e.g. "drafts/en/product-spec/auth-and-authorization"
