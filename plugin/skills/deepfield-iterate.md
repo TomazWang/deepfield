@@ -441,7 +441,7 @@ function getDraftBasePath(domainName, track, lang) {
   if (track === 'product')       return `deepfield/drafts/${l}/product-spec/${domainName}`
   if (track === 'tech')          return `deepfield/drafts/${l}/tech-spec/${domainName}`
   if (track === 'infra')         return `deepfield/drafts/${l}/tech-spec/${domainName}`
-  if (track === 'cross-cutting') return `deepfield/drafts/${l}/tech-spec/${domainName}`
+  if (track === 'cross-cutting') return `deepfield/drafts/cross-cutting/${domainName}`
   // Legacy fallback for 'behavior' track (pre-Phase-5 workspaces)
   if (track === 'behavior')      return `deepfield/drafts/behavior/${domainName}`
   // Defensive fallback
@@ -767,15 +767,16 @@ Synthesizer updates by finding type:
 
 After synthesis, check whether any new domains were discovered this run (i.e., the synthesizer created draft directories that did not exist before the run started). If new domains were created, update `wip/domain-manifest.json`:
 
+For each new domain discovered this run, call the script once per domain:
+
 ```bash
+# Repeat for each newly detected domain slug
 node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
-  --manifest       deepfield/wip/domain-manifest.json \
-  --drafts-dir     deepfield/drafts \
-  --lang           ${lang} \
-  --run            ${nextRun}
+  deepfield/wip/domain-manifest.json \
+  '{"slug":"${domain_slug}","domainType":"${domain_type}","languages":["${lang}"]}'
 ```
 
-The script scans `deepfield/drafts/${lang}/product-spec/`, `deepfield/drafts/${lang}/tech-spec/`, and `deepfield/drafts/${lang}/feature-spec/` for domain directories, compares with the current manifest, and appends any newly detected domains with their `domainType` (one of: `product`, `tech`, `infra`, `cross-cutting`), `lang`, and `firstSeen` run number. Existing entries are not overwritten.
+Enumerate only domains whose draft directories were created this run (not pre-existing ones). `domainType` values: `product`, `tech`, `infra`, or `cross-cutting`. The script deep-merges — existing entries are not overwritten.
 
 If the script exits with a non-zero status or is not found:
 - Log a warning: `Warning: update-domain-manifest.js failed for Run ${nextRun} — domain-manifest.json not updated`

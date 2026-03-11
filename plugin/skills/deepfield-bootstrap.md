@@ -341,17 +341,16 @@ If the glossary already exists (e.g., re-running bootstrap), skip this step to p
 
 Create `wip/domain-manifest.json` from the domains detected during bootstrap (Step 3b tech and behavior detection):
 
+For each domain detected during bootstrap, call the script once per domain (it upserts one entry per invocation):
+
 ```bash
+# Example for domain "auth-and-authorization" (repeat for each detected domain)
 node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
-  --manifest       deepfield/wip/domain-manifest.json \
-  --drafts-dir     deepfield/drafts \
-  --lang           en \
-  --run            0
+  deepfield/wip/domain-manifest.json \
+  '{"slug":"auth-and-authorization","domainType":"product","languages":["en"]}'
 ```
 
-The script scans `deepfield/drafts/en/product-spec/`, `deepfield/drafts/en/tech-spec/`, and `deepfield/drafts/en/feature-spec/` for domain directories and writes an initial `domain-manifest.json`. Each domain entry records its `domainType` (one of: `product`, `tech`, `infra`, `cross-cutting`), `lang`, and `firstSeen: 0`.
-
-If the manifest already exists (e.g., re-running bootstrap), the script only appends newly detected domains without overwriting existing entries.
+Enumerate all domains detected in Step 3b (tech + behavior detection) and call once per unique domain slug. `domainType` values: `product`, `tech`, `infra`, or `cross-cutting`. The script creates the manifest on first write and deep-merges on repeat calls — re-running bootstrap is safe.
 
 If the script exits with a non-zero status or is not found:
 - Log a warning: `Warning: update-domain-manifest.js failed during bootstrap — domain-manifest.json not created`
