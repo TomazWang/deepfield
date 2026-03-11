@@ -243,7 +243,7 @@ export function createScaffoldCrossCuttingCommand(): Command {
         // Determine templates directory
         const templatesDir = options.templatesDir
           ? require('path').resolve(cwd, options.templatesDir)
-          : join(dirname(dirname(__filename)), 'plugin', 'templates');
+          : join(dirname(dirname(__filename)), 'templates');
 
         const filesToScaffold = ['glossary.md', 'unknowns.md'];
 
