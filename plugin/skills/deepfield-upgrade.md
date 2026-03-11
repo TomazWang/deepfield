@@ -568,13 +568,23 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
   deepfield/wip/domain-manifest.json \
   '{"slug":"{domain}","domainType":"product","productSpec":"drafts/en/product-spec/{domain}","languages":["en"]}'
 
+# If a zh-tw translation was migrated for this behavior domain, add the language:
+node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
+  deepfield/wip/domain-manifest.json \
+  '{"slug":"{domain}","languages":["zh-tw"]}'
+
 # For each tech domain:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
   deepfield/wip/domain-manifest.json \
   '{"slug":"{domain}","domainType":"tech","techSpec":"drafts/en/tech-spec/{domain}","languages":["en"]}'
+
+# If a zh-tw translation was migrated for this tech domain, add the language:
+node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
+  deepfield/wip/domain-manifest.json \
+  '{"slug":"{domain}","languages":["zh-tw"]}'
 ```
 
-Add `"zh-tw"` to the `languages` array if a translation was found for that domain.
+The `unionArray` merge in `update-domain-manifest.js` handles additive merging — the second call only adds `"zh-tw"` without overwriting existing fields. Skip the second call if no translation file was found for that domain.
 
 If the script exits non-zero: log warning, continue (manifest update is non-blocking).
 
