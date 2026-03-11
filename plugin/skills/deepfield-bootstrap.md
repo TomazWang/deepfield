@@ -10,15 +10,15 @@ user_invocable: false
 **IMPORTANT**: Any AI agent or script generating draft documents in `deepfield/drafts/` should aim for approximately 350 lines of prose per file — code blocks (``` fenced sections) do not count toward the limit. This is a soft guideline, not a hard restriction. If content would significantly exceed ~350 prose lines, consider splitting:
 
 1. Identify logical sections in the document
-2. Move the largest section(s) to sub-files under `drafts/behavior/{domain}/` or `drafts/tech/{domain}/` named `{section}.md` (e.g., `drafts/behavior/authentication/flows.md`)
-3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/behavior/{domain}/overview.md` (or `index.md`) as a dedicated overview file with links to sub-files.
+2. Move the largest section(s) to sub-files under `drafts/en/product-spec/{domain}/` or `drafts/en/tech-spec/{domain}/` named `{section}.md` (e.g., `drafts/en/tech-spec/authentication/flows.md`)
+3. Remove the moved content entirely from the primary file — do NOT keep a summary. If the domain needs a navigational overview, create `drafts/en/product-spec/{domain}/index.md` (or `overview.md`) as a dedicated overview file with links to sub-files.
 4. Add a **"See also"** section at the bottom of the primary file linking to each sub-file:
    ```
    ## See also
    - [Authentication Flows](flows.md) — detailed flow diagrams
    ```
 
-Sub-files follow the same 350-line prose guideline and may be split further using `drafts/{track}/{domain}/{section}/{subsection}.md`.
+Sub-files follow the same 350-line prose guideline and may be split further using `drafts/en/{spec-type}/{domain}/{section}/{subsection}.md`.
 
 # Purpose
 
@@ -279,24 +279,27 @@ If `deepfield/drafts/` or `deepfield/wip/run-0/run-0.config.json` does not exist
 
 ### 5.2 Generate Domain Companion READMEs
 
-For every domain file in `deepfield/drafts/behavior/` and `deepfield/drafts/tech/` (if those directories exist):
+For every domain directory under the 3-tier spec-type directories (if those directories exist):
 
 ```bash
-# For each behavior domain file: deepfield/drafts/behavior/<domain>.md
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
-  --domain     <domain> \
-  --drafts-dir deepfield/drafts \
-  --track      behavior \
-  --run-config deepfield/wip/run-0/run-0.config.json \
-  --output     deepfield/drafts/behavior/<domain>/README.md
+# Enumerate domain subdirectories from all 3-tier spec-type directories
+ls -d deepfield/drafts/en/product-spec/*/ \
+      deepfield/drafts/en/tech-spec/*/ \
+      deepfield/drafts/en/feature-spec/*/ 2>/dev/null
+```
 
-# For each tech domain file: deepfield/drafts/tech/<domain>.md
+For each domain directory found, invoke the script with the correct track and output path:
+
+```bash
+# For each <domain> found in drafts/en/<spec-type>/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
-  --domain     <domain> \
-  --drafts-dir deepfield/drafts \
-  --track      tech \
-  --run-config deepfield/wip/run-0/run-0.config.json \
-  --output     deepfield/drafts/tech/<domain>/README.md
+  --domain          <domain> \
+  --drafts-dir      deepfield/drafts \
+  --track           <spec-type> \
+  --run-config      deepfield/wip/run-0/run-0.config.json \
+  --product-spec    deepfield/drafts/en/product-spec/<domain>/index.md \
+  --tech-spec       deepfield/drafts/en/tech-spec/<domain>/design.md \
+  --output          deepfield/drafts/en/<spec-type>/<domain>/README.md
 ```
 
 ### 5.3 Generate Run 0 Review Guide
@@ -316,22 +319,43 @@ If any of the three generation scripts exit with a non-zero status:
 - Log a warning: `Warning: Readability document generation failed: <script> — <error>`
 - Continue to Step 6 (Initialize Terminology Glossary) — do NOT abort bootstrap
 
-## Step 6: Initialize Terminology Glossary
+## Step 6: Initialize Terminology Glossary and Domain Manifest
 
-After the bootstrap runner script completes, create the empty terminology glossary:
+After the bootstrap runner script completes, initialize two files.
+
+### 6a. Initialize Glossary
+
+Create the empty terminology glossary at the new top-level path:
 
 ```bash
-# Create the cross-cutting drafts directory if it doesn't exist
-mkdir -p deepfield/drafts/cross-cutting
-
 # Copy the terminology template to initialize the empty glossary
 cp "${CLAUDE_PLUGIN_ROOT}/templates/terminology.md" \
-   deepfield/drafts/cross-cutting/terminology.md
+   deepfield/drafts/glossary.md
 ```
 
 This establishes the glossary file so that Run 1 can immediately start appending discovered terms without needing to create the file from scratch.
 
 If the glossary already exists (e.g., re-running bootstrap), skip this step to preserve any previously discovered terms.
+
+### 6b. Initialize Domain Manifest
+
+Create `wip/domain-manifest.json` from the domains detected during bootstrap (Step 3b tech and behavior detection):
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
+  --manifest       deepfield/wip/domain-manifest.json \
+  --drafts-dir     deepfield/drafts \
+  --lang           en \
+  --run            0
+```
+
+The script scans `deepfield/drafts/en/product-spec/`, `deepfield/drafts/en/tech-spec/`, and `deepfield/drafts/en/feature-spec/` for domain directories and writes an initial `domain-manifest.json`. Each domain entry records its `domainType` (one of: `product`, `tech`, `infra`, `cross-cutting`), `lang`, and `firstSeen: 0`.
+
+If the manifest already exists (e.g., re-running bootstrap), the script only appends newly detected domains without overwriting existing entries.
+
+If the script exits with a non-zero status or is not found:
+- Log a warning: `Warning: update-domain-manifest.js failed during bootstrap — domain-manifest.json not created`
+- Continue — this is non-blocking
 
 ## Step 7: Verify Output
 
@@ -346,7 +370,8 @@ After the script completes, verify these files exist:
 - `deepfield/wip/run-0/findings.md` — Bootstrap findings summary
 - `deepfield/source/run-1-staging/README.md` — Staging area guide
 - `deepfield/source/run-1-staging/feedback.md` — Open questions template
-- `deepfield/drafts/cross-cutting/terminology.md` — Empty terminology glossary (initialized from template)
+- `deepfield/drafts/glossary.md` — Empty terminology glossary (initialized from template)
+- `deepfield/wip/domain-manifest.json` — Initial domain manifest (written by `update-domain-manifest.js`)
 - `deepfield/drafts/README.md` — Drafts index (generated by `generate-drafts-index.js`)
 - `deepfield/wip/run-0/review-guide.md` — Run 0 review guide (generated by `generate-run-review-guide.js`)
 
@@ -440,7 +465,8 @@ Bootstrap is successful when:
 - `deepfield/wip/domain-links.md` exists
 - `deepfield/wip/learning-plan.md` exists
 - `deepfield/project.config.json` has `bootstrapCompleted: true`
-- `deepfield/drafts/cross-cutting/terminology.md` exists (initialized from template)
+- `deepfield/drafts/glossary.md` exists (initialized from template)
+- `deepfield/wip/domain-manifest.json` exists (written by `update-domain-manifest.js`)
 - `deepfield/wip/domain-index.md` does **not** exist (old single-track path — must not be created)
 
 # State Transition

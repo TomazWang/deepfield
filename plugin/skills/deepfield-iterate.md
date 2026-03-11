@@ -434,25 +434,73 @@ For each domain, prepare the inputs for its `deepfield-domain-learner` agent. Ea
 ```javascript
 const maxAgents = options.maxAgents || 5  // default: 5
 
-function getDraftBasePath(domainName, track) {
-  // Route output to the correct track subdirectory
-  if (track === 'behavior') return `deepfield/drafts/behavior/${domainName}`
-  if (track === 'tech')     return `deepfield/drafts/tech/${domainName}`
-  // Fallback: should not happen, but guard defensively
-  return `deepfield/drafts/tech/${domainName}`
+function getDraftBasePath(domainName, track, lang) {
+  // 3-tier structure (Phase 5+): drafts/{lang}/{spec-type}/{domain}
+  // domainType values: 'product' | 'tech' | 'infra' | 'cross-cutting'
+  const l = lang || 'en'
+  if (track === 'product')       return `deepfield/drafts/${l}/product-spec/${domainName}`
+  if (track === 'tech')          return `deepfield/drafts/${l}/tech-spec/${domainName}`
+  if (track === 'infra')         return `deepfield/drafts/${l}/tech-spec/${domainName}`
+  if (track === 'cross-cutting') return `deepfield/drafts/${l}/tech-spec/${domainName}`
+  // Legacy fallback for 'behavior' track (pre-Phase-5 workspaces)
+  if (track === 'behavior')      return `deepfield/drafts/behavior/${domainName}`
+  // Defensive fallback
+  return `deepfield/drafts/${l}/tech-spec/${domainName}`
 }
 
+/**
+ * Route a finding to the appropriate draft file within a domain's base path.
+ *
+ * findingType values and their target files:
+ *   'product'       → product-spec/{domain}/index.md
+ *   'architecture'  → tech-spec/{domain}/design.md
+ *   'adr'           → tech-spec/{domain}/decisions.md  (append only)
+ *   'code'          → tech-spec/{domain}/implementation.md  (or impl-{component}.md)
+ *   'interface'     → tech-spec/{domain}/contract-{name}.md
+ *
+ * @param {string} draftBasePath  result of getDraftBasePath(...)
+ * @param {string} findingType    one of 'product' | 'architecture' | 'adr' | 'code' | 'interface'
+ * @param {object} opts           optional: { component, contractName }
+ * @returns {string}              absolute-style path within the workspace
+ */
+function getDraftFileForFinding(draftBasePath, findingType, opts = {}) {
+  switch (findingType) {
+    case 'product':       return `${draftBasePath}/index.md`
+    case 'architecture':  return `${draftBasePath}/design.md`
+    case 'adr':           return `${draftBasePath}/decisions.md`
+    case 'code':          return opts.component
+                            ? `${draftBasePath}/impl-${opts.component}.md`
+                            : `${draftBasePath}/implementation.md`
+    case 'interface':     return opts.contractName
+                            ? `${draftBasePath}/contract-${opts.contractName}.md`
+                            : `${draftBasePath}/contract.md`
+    default:              return `${draftBasePath}/index.md`
+  }
+}
+
+const lang = deepfieldConfig.language || 'en'
+
 const agentTasks = allDomains.map(domain => {
-  const draftBasePath = getDraftBasePath(domain.name, domain.track)
+  const draftBasePath = getDraftBasePath(domain.name, domain.track, lang)
   return {
     domainName: domain.name,
     track: domain.track,
+    lang,
     fileList: domain.files,
     previousFindingsPath: `deepfield/wip/run-${nextRun - 1}/domains/${domain.name}-findings.md`,
     findingsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-findings.md`,
     unknownsOutputPath: `deepfield/wip/run-${nextRun}/domains/${domain.name}-unknowns.md`,
     openQuestions: extractQuestionsForDomain(learningPlan, domain.name),
-    draftSpecPath: `${draftBasePath}/spec.md`,
+    // Primary entry point for this domain (product/user-facing view)
+    draftIndexPath: getDraftFileForFinding(draftBasePath, 'product'),
+    // Architecture / design document
+    draftDesignPath: getDraftFileForFinding(draftBasePath, 'architecture'),
+    // ADR log (append-only)
+    draftDecisionsPath: getDraftFileForFinding(draftBasePath, 'adr'),
+    // Default implementation document (code-level findings)
+    draftImplPath: getDraftFileForFinding(draftBasePath, 'code'),
+    // Legacy field kept for backward compat with agents that read draftSpecPath
+    draftSpecPath: getDraftFileForFinding(draftBasePath, 'product'),
     draftBasePath,
   }
 })
@@ -683,7 +731,14 @@ After consolidation, parallel mode rejoins the sequential workflow at **Step 5: 
 Launch: deepfield-knowledge-synth
 Input: {
   "findings": "deepfield/wip/run-${nextRun}/findings.md",
-  "existing_drafts": ["deepfield/drafts/behavior/**/*.md", "deepfield/drafts/tech/**/*.md"],
+  "existing_drafts": [
+    "deepfield/drafts/${lang}/product-spec/**/*.md",
+    "deepfield/drafts/${lang}/tech-spec/**/*.md",
+    "deepfield/drafts/${lang}/feature-spec/**/*.md",
+    // Legacy fallback paths (pre-Phase-5 workspaces):
+    "deepfield/drafts/behavior/**/*.md",
+    "deepfield/drafts/tech/**/*.md"
+  ],
   "unknowns": "deepfield/drafts/cross-cutting/unknowns.md",
   "changelog": "deepfield/drafts/_changelog.md",
   "output_language": deepfieldConfig.language,
@@ -695,15 +750,38 @@ Input: {
 
 ### Process Synthesis Output
 
-Synthesizer updates:
-- `deepfield/drafts/behavior/<topic>/spec.md` - Updated stakeholder specification
-- `deepfield/drafts/tech/<topic>/spec.md` - Updated technical specification
+Synthesizer updates by finding type:
+- `deepfield/drafts/${lang}/product-spec/<domain>/index.md` — Product/user-facing findings
+- `deepfield/drafts/${lang}/tech-spec/<domain>/design.md` — Architecture findings
+- `deepfield/drafts/${lang}/tech-spec/<domain>/decisions.md` — ADR discoveries (append only)
+- `deepfield/drafts/${lang}/tech-spec/<domain>/implementation.md` (or `impl-<component>.md`) — Code-level findings
+- `deepfield/drafts/${lang}/tech-spec/<domain>/contract-<name>.md` — Interface discoveries
 - `deepfield/drafts/cross-cutting/unknowns.md` - Add/remove unknowns
 - `deepfield/drafts/_changelog.md` - Append run summary
 
 ### Document Length Rule for Synthesizer Agent
 
 > Follow the [Document Length Rule](#document-length-rule) defined above.
+
+## Step 5.4b: Update Domain Manifest
+
+After synthesis, check whether any new domains were discovered this run (i.e., the synthesizer created draft directories that did not exist before the run started). If new domains were created, update `wip/domain-manifest.json`:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
+  --manifest       deepfield/wip/domain-manifest.json \
+  --drafts-dir     deepfield/drafts \
+  --lang           ${lang} \
+  --run            ${nextRun}
+```
+
+The script scans `deepfield/drafts/${lang}/product-spec/`, `deepfield/drafts/${lang}/tech-spec/`, and `deepfield/drafts/${lang}/feature-spec/` for domain directories, compares with the current manifest, and appends any newly detected domains with their `domainType` (one of: `product`, `tech`, `infra`, `cross-cutting`), `lang`, and `firstSeen` run number. Existing entries are not overwritten.
+
+If the script exits with a non-zero status or is not found:
+- Log a warning: `Warning: update-domain-manifest.js failed for Run ${nextRun} — domain-manifest.json not updated`
+- Set a flag `manifestUpdated = false` and continue — this is non-blocking
+
+If the script succeeds and modified the manifest, set `manifestUpdated = true`. This flag is checked in Step 5.5.5 to decide whether to regenerate the domain links index.
 
 ## Step 5.5: Generate Readability Documents
 
@@ -721,38 +799,43 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-drafts-index.js" \
 
 ### 5.5.2 Generate Domain Companion READMEs
 
-For every domain that exists under `deepfield/drafts/behavior/` or `deepfield/drafts/tech/` (not just domains updated this run):
+For every domain that exists under the 3-tier spec directories (not just domains updated this run):
 
 ```bash
-# Enumerate domain subdirectories from both subtrees
-ls -d deepfield/drafts/behavior/*/ deepfield/drafts/tech/*/ 2>/dev/null
+# Enumerate domain subdirectories from all 3-tier spec-type directories per language
+# (plus legacy behavior/ and tech/ subtrees for backward compat)
+ls -d deepfield/drafts/${lang}/product-spec/*/ \
+      deepfield/drafts/${lang}/tech-spec/*/ \
+      deepfield/drafts/${lang}/feature-spec/*/ \
+      deepfield/drafts/behavior/*/ \
+      deepfield/drafts/tech/*/ 2>/dev/null
 ```
 
-For each domain, invoke the script once per track it belongs to — a domain that appears in both subtrees gets two README invocations:
+For each domain directory found, invoke the script with the correct track and output path:
 
 ```bash
-# For each <domain> found in drafts/behavior/:
+# For each <domain> found in drafts/${lang}/<spec-type>/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
-  --track           behavior \
+  --track           <spec-type> \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
-  --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
-  --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
-  --output          deepfield/drafts/behavior/<domain>/README.md
+  --product-spec    deepfield/drafts/${lang}/product-spec/<domain>/index.md \
+  --tech-spec       deepfield/drafts/${lang}/tech-spec/<domain>/design.md \
+  --output          deepfield/drafts/${lang}/<spec-type>/<domain>/README.md
 
-# For each <domain> found in drafts/tech/:
+# Legacy: for each <domain> found in drafts/behavior/ or drafts/tech/:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-readme.js" \
   --domain          <domain> \
   --drafts-dir      deepfield/drafts \
-  --track           tech \
+  --track           <behavior|tech> \
   --run-config      deepfield/wip/run-${nextRun}/run-${nextRun}.config.json \
   --behavior-spec   deepfield/drafts/behavior/<domain>/spec.md \
   --tech-spec       deepfield/drafts/tech/<domain>/spec.md \
-  --output          deepfield/drafts/tech/<domain>/README.md
+  --output          deepfield/drafts/<behavior|tech>/<domain>/README.md
 ```
 
-Enumerate behavior domains from `deepfield/drafts/behavior/` and tech domains from `deepfield/drafts/tech/` separately, writing each README into the correct subtree.
+Enumerate domains from all spec-type directories per language, then from legacy subtrees, writing each README into the correct location.
 
 ### 5.5.3 Generate Run Review Guide
 
@@ -793,10 +876,10 @@ After synthesis, extract domain-specific terms from the files analyzed this run 
 
 ### Pre-check: Ensure terminology.md exists
 
-Before running the extraction script, check whether `deepfield/drafts/cross-cutting/terminology.md` exists:
+Before running the extraction script, check whether `deepfield/drafts/glossary.md` exists:
 
 ```javascript
-const terminologyPath = 'deepfield/drafts/cross-cutting/terminology.md';
+const terminologyPath = 'deepfield/drafts/glossary.md';
 const terminologyExists = fs.existsSync(terminologyPath);
 ```
 
@@ -814,7 +897,7 @@ deepfield upgrade:scaffold-cross-cutting --templates-dir "${CLAUDE_PLUGIN_ROOT}/
 
 Log a warning:
 ```
-Warning: terminology.md was missing — created from template before extraction
+Warning: glossary.md was missing — created from template before extraction
 ```
 
 The run is NOT aborted. Proceed to extraction normally with the newly created file.
@@ -840,7 +923,7 @@ fs.writeFileSync(
 node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-terminology.js" \
   --run ${nextRun} \
   --files-json deepfield/wip/run-${nextRun}/files-analyzed.json \
-  --glossary deepfield/drafts/cross-cutting/terminology.md
+  --glossary deepfield/drafts/glossary.md
 ```
 
 This writes `deepfield/wip/run-${nextRun}/term-extraction-input.json` and a placeholder `deepfield/wip/run-${nextRun}/new-terms.md`.
@@ -853,7 +936,7 @@ Input: {
   "run_number": ${nextRun},
   "manifest": "deepfield/wip/run-${nextRun}/term-extraction-input.json",
   "files_to_scan": <filesToRead>,
-  "previous_glossary": "deepfield/drafts/cross-cutting/terminology.md",
+  "previous_glossary": "deepfield/drafts/glossary.md",
   "output_path": "deepfield/wip/run-${nextRun}/new-terms.md"
 }
 ```
@@ -866,11 +949,11 @@ The agent reads source files and writes discovered terms to `deepfield/wip/run-$
 node "${CLAUDE_PLUGIN_ROOT}/scripts/merge-glossary.js" \
   --run ${nextRun} \
   --new-terms deepfield/wip/run-${nextRun}/new-terms.md \
-  --glossary deepfield/drafts/cross-cutting/terminology.md \
+  --glossary deepfield/drafts/glossary.md \
   --template "${CLAUDE_PLUGIN_ROOT}/templates/terminology.md"
 ```
 
-This merges per-run discoveries into `deepfield/drafts/cross-cutting/terminology.md`.
+This merges per-run discoveries into `deepfield/drafts/glossary.md`.
 
 ### Error Handling
 
@@ -963,7 +1046,7 @@ After confidence scoring (Step 5.7), run the glossary alignment step to enforce 
 Launch: deepfield-glossary-aligner
 Input: {
   "run_number": ${nextRun},
-  "terminology_path": "deepfield/drafts/cross-cutting/terminology.md",
+  "terminology_path": "deepfield/drafts/glossary.md",
   "drafts_dir": "deepfield/drafts",
   "alignment_log_path": "deepfield/wip/run-${nextRun}/alignment-log.md"
 }
