@@ -300,16 +300,18 @@ Migration mode is active when `legacy_draft_path` is provided.
 After successfully writing a spec file, call `update-domain-manifest.js` to register the file in the domain manifest:
 
 ```bash
-node plugin/scripts/update-domain-manifest.js \
-  --domain   {domain_name} \
-  --spec     {effective_spec} \
-  --lang     {lang} \
-  --file     {resolved_output_path}
+node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
+  "deepfield/wip/domain-manifest.json" \
+  '{"slug":"{domain_slug}","productSpec":"{product_spec_path}","techSpec":"{tech_spec_path}","featureSpecs":[],"languages":["{lang}"]}'
 ```
 
-<!-- DEPENDENCY: update-domain-manifest.js will be added by @robodev.claude-M4DN in their Phase 3 PR.
-     Until that PR merges, this call will fail gracefully — wrap in try/catch and log a warning
-     rather than aborting document generation. -->
+Build the JSON inline, substituting:
+- `{domain_slug}` — the domain's slug (e.g. `auth-and-authorization`)
+- `{product_spec_path}` — `drafts/{lang}/product-spec/{domain}` if `spec == product-spec`, else omit field
+- `{tech_spec_path}` — `drafts/{lang}/tech-spec/{domain}` if `spec == tech-spec`, else omit field
+- `{lang}` — the language parameter (default `en`)
+
+`domainType` should be included when known: add `"domainType":"product"` or `"domainType":"infra"` etc.
 
 If the script exits with a non-zero status or is not found:
 - Log a warning: `Warning: update-domain-manifest.js failed or not yet available — manifest not updated for {domain}/{spec}/{file}`

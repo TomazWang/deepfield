@@ -229,10 +229,9 @@ After the `deepfield-domain-linker` agent completes and initial domain documents
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-links.js" \
-  --domain-links  deepfield/wip/domain-links.md \
-  --behavior-dir  deepfield/drafts/en/product-spec \
-  --tech-dir      deepfield/drafts/en/tech-spec \
-  --output        deepfield/drafts/cross-cutting/domain-links.md
+  --manifest       deepfield/wip/domain-manifest.json \
+  --output         deepfield/drafts/cross-cutting/domain-links.md \
+  --workspace-root deepfield
 ```
 
 If the script exits with a non-zero status:
