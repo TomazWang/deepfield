@@ -89,17 +89,44 @@ function loadRunConfig(runConfigPath) {
 function findDomainFiles(draftsDir) {
   const results = [];
 
-  // New dual-track structure: drafts/behavior/{domain}/ and drafts/tech/{domain}/
-  for (const track of ['behavior', 'tech']) {
-    const trackDir = path.join(draftsDir, track);
-    if (!fs.existsSync(trackDir)) continue;
-    for (const entry of fs.readdirSync(trackDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      results.push({
-        name: entry.name,
-        track,
-        fullPath: path.join(trackDir, entry.name),
-      });
+  // 3-tier structure (Phase 5+): drafts/{lang}/{spec-type}/{domain}/
+  // Enumerate language directories (e.g. "en", "fr") under drafts/
+  const langEntries = fs.existsSync(draftsDir)
+    ? fs.readdirSync(draftsDir, { withFileTypes: true }).filter(e => e.isDirectory())
+    : [];
+
+  const SPEC_DIRS = ['product-spec', 'tech-spec', 'feature-spec'];
+
+  for (const langEntry of langEntries) {
+    const langDir = path.join(draftsDir, langEntry.name);
+    for (const specType of SPEC_DIRS) {
+      const specTypeDir = path.join(langDir, specType);
+      if (!fs.existsSync(specTypeDir)) continue;
+      for (const domainEntry of fs.readdirSync(specTypeDir, { withFileTypes: true })) {
+        if (!domainEntry.isDirectory()) continue;
+        results.push({
+          name: domainEntry.name,
+          track: specType,
+          lang: langEntry.name,
+          fullPath: path.join(specTypeDir, domainEntry.name),
+        });
+      }
+    }
+  }
+
+  // Legacy fallback: drafts/behavior/{domain}/ and drafts/tech/{domain}/ (pre-Phase-5)
+  if (results.length === 0) {
+    for (const track of ['behavior', 'tech']) {
+      const trackDir = path.join(draftsDir, track);
+      if (!fs.existsSync(trackDir)) continue;
+      for (const entry of fs.readdirSync(trackDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        results.push({
+          name: entry.name,
+          track,
+          fullPath: path.join(trackDir, entry.name),
+        });
+      }
     }
   }
 
@@ -169,9 +196,23 @@ function buildDomainRows(domains, runConfig) {
     const conf = getConfidenceForDomain(d.name, runConfig);
     const confStr = conf ? `${conf.after}%` : '—';
     const lastUpdated = conf ? `Run ${runConfig.runNumber}` : '—';
-    const specFile = d.track === 'domains' ? `domains/${d.name}.md` : `${d.track}/${d.name}/spec.md`;
-    const readmePath = d.track === 'domains' ? `domains/${d.name}/README.md` : `${d.track}/${d.name}/README.md`;
-    const displayName = d.track !== 'domains' ? `${d.name} (${d.track})` : d.name;
+    let specFile, readmePath, displayName;
+    if (d.track === 'domains') {
+      // pre-0.6.0 flat structure
+      specFile    = `domains/${d.name}.md`;
+      readmePath  = `domains/${d.name}/README.md`;
+      displayName = d.name;
+    } else if (d.lang) {
+      // 3-tier structure: {lang}/{spec-type}/{domain}
+      specFile    = `${d.lang}/${d.track}/${d.name}/index.md`;
+      readmePath  = `${d.lang}/${d.track}/${d.name}/README.md`;
+      displayName = `${d.name} (${d.lang}/${d.track})`;
+    } else {
+      // Legacy dual-track: behavior/{domain} or tech/{domain}
+      specFile    = `${d.track}/${d.name}/spec.md`;
+      readmePath  = `${d.track}/${d.name}/README.md`;
+      displayName = `${d.name} (${d.track})`;
+    }
     const link = `[${displayName}](${specFile})`;
     return `| ${link} | ${confStr} | ${lastUpdated} | [README](${readmePath}) |`;
   }).join('\n');
