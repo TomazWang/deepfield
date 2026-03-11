@@ -127,8 +127,8 @@ When `--sequential` is passed:
 
 When `--track=behavior`, `--track=tech`, or `--track=both` is passed:
 - Pass the value directly to the `deepfield-iterate` skill as the `track` parameter
-- `behavior`: skill reads only `behavior-index.md`; writes to `drafts/behavior/`
-- `tech`: skill reads only `tech-index.md`; writes to `drafts/tech/`
+- `behavior`: skill reads only `behavior-index.md`; writes to `drafts/en/product-spec/`
+- `tech`: skill reads only `tech-index.md`; writes to `drafts/en/tech-spec/`
 - `both` (default): skill reads both indexes; writes to both output subtrees
 
 ### --max-agents=N
