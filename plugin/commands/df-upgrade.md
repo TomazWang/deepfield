@@ -110,6 +110,34 @@ The skill handles all migration logic: idempotency check, legacy file detection,
 
 **On failure**, direct the user to `deepfield rollback <backupPath>` as usual.
 
+### Step 7b: Dual-Track Migration — Migrate behavior/ + tech/ to 3-Tier Structure
+
+After Step 7 completes (or is skipped), invoke the `Deepfield Upgrade` skill a third time in dual-track-migration mode to detect and migrate any post-#91 dual-track spec files (`drafts/behavior/` + `drafts/tech/`) into the new language-first 3-tier structure.
+
+Pass the same payload as Step 4, plus `"mode": "dual-track-migration"` and `"backupPath": "<backupPath>"`.
+
+Also add workspace indicators to the payload:
+
+```bash
+# Detect dual-track structure
+ls deepfield/drafts/behavior/ 2>/dev/null && echo "behavior_exists=true" || echo "behavior_exists=false"
+ls deepfield/drafts/tech/ 2>/dev/null && echo "tech_exists=true" || echo "tech_exists=false"
+ls deepfield/drafts/en/product-spec/ 2>/dev/null && echo "product_spec_exists=true" || echo "product_spec_exists=false"
+```
+
+Pass these as `"legacyIndicators"` in the payload:
+```json
+{
+  "hasBehaviorDrafts": "<true if drafts/behavior/ exists and non-empty>",
+  "hasTechDrafts": "<true if drafts/tech/ exists and non-empty>",
+  "hasProductSpec": "<true if drafts/en/product-spec/ exists>"
+}
+```
+
+The skill handles all migration logic: dual-track detection, confirmation prompt, per-domain behavior→product-spec move, tech spec AI-split into design/decisions/implementation, glossary conversion, manifest update, domain-links rebuild, and per-domain audit files via `generate-migration-review.js`. If no dual-track files are found, the skill reports and exits cleanly.
+
+**On failure**, direct the user to `deepfield rollback <backupPath>` as usual.
+
 ## Error Handling
 
 - **CLI not found**: Suggest `npm install -g deepfield`
