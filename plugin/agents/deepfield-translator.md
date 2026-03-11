@@ -119,13 +119,11 @@ After successfully writing each translated file (not stubs), update the domain m
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/update-domain-manifest.js" \
-  --workspace "${workspace_root}" \
-  --domain "${source_domain}" \
-  --spec "${source_spec}" \
-  --add-language "${target_language}"
+  "${workspace_root}/wip/domain-manifest.json" \
+  "{\"slug\":\"${source_domain}\",\"languages\":[\"${target_language}\"]}"
 ```
 
-This adds `target_language` to the `languages` array for the domain entry in `wip/domain-manifest.json` if not already present.
+The script performs an additive merge on `languages` — `target_language` is unioned with existing values, so existing languages are never removed.
 
 **If the script is missing:** Log a warning (`update-domain-manifest.js not found — manifest not updated`) and continue. Do not abort the translation run.
 

@@ -138,7 +138,7 @@ Input: {
   "source_domain":   "<domain | null>",
   "source_file":     "<file | null>",
   "stub_mode":       <true | false>,
-  "workspace_root":  "./deepfield"
+  "workspace_root":  "<absolute path — resolve via: realpath ./deepfield>"
 }
 ```
 
