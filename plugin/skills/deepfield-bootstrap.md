@@ -223,6 +223,21 @@ The agent reads both indexes and available source files, then writes `deepfield/
 
 Wait for the agent to complete before proceeding.
 
+### Step 3c.1: Generate cross-cutting/domain-links.md
+
+After the `deepfield-domain-linker` agent completes and initial domain documents have been written to `deepfield/drafts/`, call `generate-domain-links.js` to produce the cross-cutting domain links index:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-domain-links.js" \
+  --manifest       deepfield/wip/domain-manifest.json \
+  --output         deepfield/drafts/cross-cutting/domain-links.md \
+  --workspace-root deepfield
+```
+
+If the script exits with a non-zero status:
+- Log a warning: `Warning: generate-domain-links.js failed — cross-cutting/domain-links.md not generated`
+- Continue to Step 4 — this is non-blocking
+
 ## Step 4: Document Length Rule for Bootstrap-generated Drafts
 
 > Follow the [Document Length Rule](#document-length-rule) defined above.
