@@ -506,44 +506,45 @@ Three layers prevent context overload:
 
 ## Release Workflow
 
-**`dev` is the development trunk. `main` is always the latest release.**
+**`main` is trunk and always the latest release. All work flows through PRs.**
 
 ```
-feat/* / fix/*  →  PR  →  dev   (daily work, 0.0.0-dev)
-dev             →  release/X.Y.Z  →  CI tags + merges back to main
-main            =  latest stable release (what users get via marketplace)
+feat/* / fix/* / docs/*  →  PR  →  main   (version stays 0.0.0-dev)
+bump/X.Y.Z               →  PR  →  main   (bumps version — this IS the release)
 ```
 
-- `dev` — development trunk; all PRs target `dev`; version files stay `0.0.0-dev`
-- `main` — release-only; never push directly; CI merges here after each release
-- `release/X.Y.Z` — short-lived CI branch; created from `dev` to trigger a release
+- `main` — default branch; always the latest stable release; what marketplace users get
+- Feature/fix branches — normal work; version files stay `0.0.0-dev`
+- `bump/X.Y.Z` — release PR; manually bumps all 4 version files to the real version
 
 ### Cutting a release
 
 ```bash
-git checkout dev && git pull
-git checkout -b release/0.8.0
-git push origin release/0.8.0
-# CI runs automatically:
-#   1. Sets all 4 version files to "0.8.0"
-#   2. Rebuilds CLI
-#   3. Commits + pushes release branch
-#   4. Tags v0.8.0 and moves latest tag
-#   5. Merges release branch into main
+# 1. Create a bump branch
+git checkout main && git pull
+git checkout -b bump/0.8.0
+
+# 2. Bump all 4 version files to 0.8.0
+./scripts/bump-version.sh 0.8.0   # or manually update the 4 files
+
+# 3. Open a PR into main — version-check CI verifies sync
+gh pr create --base main --title "chore: release v0.8.0"
+
+# 4. Merge the PR
+# CI on main push: detects version != 0.0.0-dev → tags v0.8.0 + moves latest tag
 ```
 
 ### How marketplace updates work
 
-- Claude Code marketplace always clones the default branch (`dev`) to read `marketplace.json`
-- `marketplace.json` uses `"source": "./plugin"` — reads from the marketplace clone
-- On install/update, Claude Code installs from `main` (release state) via the `./plugin` relative path
-  - Wait — marketplace clone is `dev`, so `./plugin` reads from `dev`. This is intentional: the marketplace discovers plugins from `dev`, but the plugin files themselves come from `main` via the install cache
-- `latest` tag moves on each release → users get updated plugin on next `/plugin marketplace update`
+- Claude Code marketplace clones `main` (default branch) → reads `marketplace.json`
+- `marketplace.json` uses `"source": "./plugin"` → reads `plugin/` from that clone
+- `main` = latest release → users always get the latest stable version
+- `latest` tag is also moved by CI for any tooling that references it
 
 ### CI files
 
-- `.github/workflows/release.yml` — triggered by `push to release/**`; merges to `main` after tagging
-- `.github/workflows/version-check.yml` — runs on feature branches + PRs to `dev`
+- `.github/workflows/release.yml` — triggers on push to `main`; skips if version is `0.0.0-dev` or tag already exists; creates `vX.Y.Z` + moves `latest` tag
+- `.github/workflows/version-check.yml` — runs on feature branches + PRs to `main`; verifies all 4 version files are in sync
 
 ## Current Status
 

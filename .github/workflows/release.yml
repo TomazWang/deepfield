@@ -3,81 +3,66 @@ name: Release
 on:
   push:
     branches:
-      - "release/**"
+      - main
 
 jobs:
   release:
-    name: Set version and publish release
+    name: Tag and publish release
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Extract version from branch name
-        id: version
-        run: |
-          BRANCH="${GITHUB_REF#refs/heads/release/}"
-          echo "version=$BRANCH" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout release branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Read version from plugin.json
+        id: version
+        run: |
+          V=$(jq -r '.version' plugin/.claude-plugin/plugin.json)
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if dev version
+        id: skip
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          if [ "$V" = "0.0.0-dev" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install jq
+        if: steps.skip.outputs.skip == 'false'
         run: sudo apt-get install -y jq
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install CLI dependencies
-        working-directory: cli
-        run: npm install
-
-      - name: Set version in all package files
-        run: |
-          V="${{ steps.version.outputs.version }}"
-          set_ver() { jq "$2" "$1" > "$1.tmp" && mv "$1.tmp" "$1"; }
-          set_ver package.json                        ".version = \"$V\""
-          set_ver cli/package.json                    ".version = \"$V\""
-          set_ver plugin/package.json                 ".version = \"$V\" | .peerDependencies.deepfield = \"^$V\""
-          set_ver plugin/.claude-plugin/plugin.json   ".version = \"$V\""
-
-      - name: Rebuild CLI
-        working-directory: cli
-        run: npm run build
-
-      - name: Verify versions in sync
+      - name: Verify all version files are in sync
+        if: steps.skip.outputs.skip == 'false'
         run: ./scripts/check-versions.sh
 
-      - name: Commit and push
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json cli/package.json plugin/package.json \
-            "plugin/.claude-plugin/plugin.json"
-          git add cli/dist/ || true
-          git diff --cached --quiet || \
-            git commit -m "chore: release v${{ steps.version.outputs.version }}"
-          git push origin ${{ github.ref_name }}
-
-      - name: Tag release
+      - name: Skip if tag already exists
+        if: steps.skip.outputs.skip == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
+          if git tag | grep -q "^v$V$"; then
+            echo "Tag v$V already exists — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tag release
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "v$V"
           git push origin "v$V"
 
       - name: Move latest tag
+        if: steps.skip.outputs.skip == 'false'
         run: |
           git tag -f latest
           git push origin latest --force
-
-      - name: Merge release into main
-        run: |
-          git checkout main
-          git merge --ff-only ${{ github.ref_name }} || git merge --no-ff ${{ github.ref_name }} -m "chore: merge release v${{ steps.version.outputs.version }} into main"
-          git push origin main
