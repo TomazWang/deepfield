@@ -76,18 +76,30 @@ jobs:
           git tag -f latest
           git push origin latest --force
 
+      - name: Check if already published to npm
+        id: npm_check
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          if npm view "deepfield@$V" version &>/dev/null 2>&1; then
+            echo "Version $V already published to npm — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install CLI dependencies
-        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        if: steps.skip.outputs.skip == 'false' && steps.npm_check.outputs.skip == 'false'
         working-directory: cli
         run: npm install
 
       - name: Build CLI
-        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        if: steps.skip.outputs.skip == 'false' && steps.npm_check.outputs.skip == 'false'
         working-directory: cli
         run: npm run build
 
       - name: Publish to npm
-        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        if: steps.skip.outputs.skip == 'false' && steps.npm_check.outputs.skip == 'false'
         working-directory: cli
         run: npm publish --provenance --access public
         env:
