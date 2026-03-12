@@ -1,4 +1,5 @@
-import { pathExists, ensureDir, copy, readJson, remove, readdir } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, ensureDir, copy, readJson, remove, readdir } = fsExtra;
 import { join } from 'path';
 import { writeFile, readFile } from 'fs/promises';
 import { readdirSync, statSync } from 'fs';

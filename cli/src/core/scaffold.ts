@@ -1,4 +1,5 @@
-import { ensureDir, pathExists, copy, access, constants } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { ensureDir, pathExists, copy, access, constants } = fsExtra;
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';

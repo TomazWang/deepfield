@@ -1,4 +1,5 @@
-import { pathExists, readFile } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, readFile } = fsExtra;
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

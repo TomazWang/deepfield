@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { pathExists } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists } = fsExtra;
 import { join } from 'path';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import chalk from 'chalk';

@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { pathExists, readJson, writeJson } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, readJson, writeJson } = fsExtra;
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';

@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { pathExists, readJson } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, readJson } = fsExtra;
 import { join } from 'path';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
