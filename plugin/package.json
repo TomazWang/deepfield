@@ -1,10 +1,10 @@
 {
   "name": "deepfield-plugin",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "Claude Code plugin for Deepfield knowledge base builder",
   "private": true,
   "peerDependencies": {
-    "deepfield": "^0.8.5"
+    "deepfield": "^0.8.6"
   },
   "dependencies": {
     "mammoth": "^1.8.0",
