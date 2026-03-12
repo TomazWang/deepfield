@@ -8,7 +8,7 @@
 #   plugin/package.json           → .version AND .peerDependencies.deepfield
 #   plugin/.claude-plugin/plugin.json → .version
 #
-# Usage: ./scripts/bump-version.sh <patch|minor|major>
+# Usage: ./scripts/bump-version.sh <patch|minor|major|X.Y.Z>
 #
 # Requires: jq, node (for version arithmetic)
 
@@ -25,13 +25,15 @@ PLUGIN_JSON="$REPO_ROOT/plugin/.claude-plugin/plugin.json"
 # Usage / argument validation
 # ---------------------------------------------------------------------------
 usage() {
-  echo "Usage: $0 <patch|minor|major>"
+  echo "Usage: $0 <patch|minor|major|X.Y.Z>"
   echo ""
   echo "  patch  — increment the patch digit  (0.2.0 → 0.2.1)"
   echo "  minor  — increment the minor digit  (0.2.0 → 0.3.0)"
   echo "  major  — increment the major digit  (0.2.0 → 1.0.0)"
+  echo "  X.Y.Z  — set an explicit version     (0.2.0 → 0.8.1)"
   echo ""
   echo "Example: $0 patch"
+  echo "Example: $0 0.8.1"
 }
 
 if [[ $# -ne 1 ]]; then
@@ -42,10 +44,21 @@ if [[ $# -ne 1 ]]; then
 fi
 
 BUMP_TYPE="$1"
+EXPLICIT_VERSION=""
 case "$BUMP_TYPE" in
   patch|minor|major) ;;
+  [0-9]*.[0-9]*.[0-9]*)
+    # Direct semver input — validate format
+    if [[ ! "$BUMP_TYPE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "ERROR: '$BUMP_TYPE' is not a valid semver (expected X.Y.Z)." >&2
+      echo "" >&2
+      usage >&2
+      exit 1
+    fi
+    EXPLICIT_VERSION="$BUMP_TYPE"
+    ;;
   *)
-    echo "ERROR: Invalid bump type '$BUMP_TYPE'. Must be patch, minor, or major." >&2
+    echo "ERROR: Invalid argument '$BUMP_TYPE'. Must be patch, minor, major, or X.Y.Z." >&2
     echo "" >&2
     usage >&2
     exit 1
@@ -85,29 +98,46 @@ echo "Current version: $CURRENT_VERSION"
 # ---------------------------------------------------------------------------
 # Compute new version
 # ---------------------------------------------------------------------------
-IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+if [[ -n "$EXPLICIT_VERSION" ]]; then
+  # Guard: explicit version must be strictly greater than current
+  if [[ "$EXPLICIT_VERSION" == "$CURRENT_VERSION" ]]; then
+    echo "ERROR: Version '$EXPLICIT_VERSION' is the same as current ($CURRENT_VERSION)." >&2
+    exit 1
+  fi
+  IFS='.' read -r EX_MAJOR EX_MINOR EX_PATCH <<< "$EXPLICIT_VERSION"
+  IFS='.' read -r CUR_MAJOR CUR_MINOR CUR_PATCH <<< "$CURRENT_VERSION"
+  if (( EX_MAJOR < CUR_MAJOR )) || \
+     (( EX_MAJOR == CUR_MAJOR && EX_MINOR < CUR_MINOR )) || \
+     (( EX_MAJOR == CUR_MAJOR && EX_MINOR == CUR_MINOR && EX_PATCH < CUR_PATCH )); then
+    echo "ERROR: Version '$EXPLICIT_VERSION' is lower than current ($CURRENT_VERSION). Versions can only go up." >&2
+    exit 1
+  fi
+  NEW_VERSION="$EXPLICIT_VERSION"
+else
+  IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
 
-if ! [[ "$MAJOR" =~ ^[0-9]+$ && "$MINOR" =~ ^[0-9]+$ && "$PATCH" =~ ^[0-9]+$ ]]; then
-  echo "ERROR: Current version '$CURRENT_VERSION' is not a valid semver (MAJOR.MINOR.PATCH)." >&2
-  exit 1
+  if ! [[ "$MAJOR" =~ ^[0-9]+$ && "$MINOR" =~ ^[0-9]+$ && "$PATCH" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: Current version '$CURRENT_VERSION' is not a valid semver (MAJOR.MINOR.PATCH)." >&2
+    exit 1
+  fi
+
+  case "$BUMP_TYPE" in
+    patch)
+      PATCH=$((PATCH + 1))
+      ;;
+    minor)
+      MINOR=$((MINOR + 1))
+      PATCH=0
+      ;;
+    major)
+      MAJOR=$((MAJOR + 1))
+      MINOR=0
+      PATCH=0
+      ;;
+  esac
+
+  NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 fi
-
-case "$BUMP_TYPE" in
-  patch)
-    PATCH=$((PATCH + 1))
-    ;;
-  minor)
-    MINOR=$((MINOR + 1))
-    PATCH=0
-    ;;
-  major)
-    MAJOR=$((MAJOR + 1))
-    MINOR=0
-    PATCH=0
-    ;;
-esac
-
-NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 echo "New version:     $NEW_VERSION"
 echo ""
 

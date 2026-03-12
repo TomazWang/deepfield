@@ -54,8 +54,9 @@ A release is just a PR that bumps the version files.
 git checkout main && git pull
 git checkout -b bump/0.8.0
 
-# Bump all 4 version files manually or via script:
-./scripts/bump-version.sh 0.8.0
+# Bump all 4 version files — accepts patch/minor/major or explicit X.Y.Z:
+./scripts/bump-version.sh 0.8.1
+# or: ./scripts/bump-version.sh patch
 
 # Open PR
 gh pr create --base main --title "chore: release v0.8.0"
