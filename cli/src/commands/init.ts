@@ -1,11 +1,13 @@
 import { Command } from 'commander';
 import { pathExists, readJson, writeJson } from 'fs-extra';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
-import { dirname } from 'path';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { scaffold, formatScaffoldResult, PermissionError } from '../core/scaffold.js';
+
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * Get current CLI version from package.json

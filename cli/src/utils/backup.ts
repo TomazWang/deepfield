@@ -1,6 +1,7 @@
 import { pathExists, ensureDir, copy, readJson, remove, readdir } from 'fs-extra';
 import { join } from 'path';
 import { writeFile, readFile } from 'fs/promises';
+import { readdirSync, statSync } from 'fs';
 
 export interface BackupMeta {
   id: string;
@@ -20,7 +21,6 @@ function formatTimestamp(date: Date): string {
  * Recursively estimate folder size in bytes (best-effort, not precise)
  */
 async function estimateFolderSize(dirPath: string): Promise<number> {
-  const { readdirSync, statSync } = require('fs');
   let total = 0;
   try {
     const entries = readdirSync(dirPath, { withFileTypes: true });

@@ -1,10 +1,13 @@
 import { Command } from 'commander';
 import { pathExists, readJson } from 'fs-extra';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
-import { readFileSync, writeFileSync, renameSync, unlinkSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync, unlinkSync, mkdirSync, existsSync } from 'fs';
 import chalk from 'chalk';
 import { createBackup } from '../utils/backup.js';
+
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * Get installed plugin version from Claude Code's installed_plugins.json.
@@ -151,7 +154,7 @@ export function createApplyOpCommand(): Command {
             break;
           }
           case 'delete': {
-            if (!require('fs').existsSync(absPath)) {
+            if (!existsSync(absPath)) {
               process.stderr.write(chalk.red(`❌ File not found: ${relPath}\n`));
               process.exit(1);
             }
@@ -260,12 +263,12 @@ export function createScaffoldCrossCuttingCommand(): Command {
     .action((options) => {
       try {
         const cwd = process.cwd();
-        const deepfieldDir = require('path').resolve(cwd, options.deepfieldDir);
+        const deepfieldDir = resolve(cwd, options.deepfieldDir);
         const crossCuttingDir = join(deepfieldDir, 'drafts', 'cross-cutting');
 
         // Determine templates directory
         const templatesDir = options.templatesDir
-          ? require('path').resolve(cwd, options.templatesDir)
+          ? resolve(cwd, options.templatesDir)
           : join(dirname(dirname(__filename)), 'templates');
 
         const filesToScaffold = ['glossary.md', 'unknowns.md'];
@@ -277,11 +280,11 @@ export function createScaffoldCrossCuttingCommand(): Command {
           const targetPath = join(crossCuttingDir, filename);
           const relativePath = `drafts/cross-cutting/${filename}`;
 
-          if (require('fs').existsSync(targetPath)) {
+          if (existsSync(targetPath)) {
             process.stdout.write(`Already exists: ${relativePath}\n`);
           } else {
             const templatePath = join(templatesDir, filename);
-            if (!require('fs').existsSync(templatePath)) {
+            if (!existsSync(templatePath)) {
               process.stderr.write(chalk.red(`❌ Template not found: ${templatePath}\n`));
               process.exit(1);
             }

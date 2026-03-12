@@ -3,6 +3,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 
+const __filename = fileURLToPath(import.meta.url);
+
 /**
  * Custom error for permission issues
  */

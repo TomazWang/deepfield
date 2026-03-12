@@ -14,6 +14,9 @@ import {
   getSuggestedFix
 } from './core/errors.js';
 
+// ESM equivalent of __filename/__dirname
+const __filename = fileURLToPath(import.meta.url);
+
 // Get package.json for version
 const packageJsonPath = join(dirname(__filename), '../package.json');
 let version = '1.0.0';

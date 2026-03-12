@@ -2,12 +2,13 @@
   "name": "deepfield",
   "version": "0.8.6",
   "description": "CLI tool for AI-driven knowledge base building",
+  "type": "module",
   "main": "dist/cli.js",
   "bin": {
     "deepfield": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsup src/cli.ts --format cjs --dts --clean --sourcemap && npm run copy:templates",
+    "build": "tsup src/cli.ts --format esm --dts --clean --sourcemap && npm run copy:templates",
     "copy:templates": "mkdir -p dist/templates && cp -r templates/* dist/templates/",
     "dev": "tsx src/cli.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
