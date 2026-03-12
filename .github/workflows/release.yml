@@ -11,10 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - name: Install jq
         run: sudo apt-get install -y jq
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,3 +75,20 @@ jobs:
         run: |
           git tag -f latest
           git push origin latest --force
+
+      - name: Install CLI dependencies
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        working-directory: cli
+        run: npm ci
+
+      - name: Build CLI
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        working-directory: cli
+        run: npm run build
+
+      - name: Publish to npm
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        working-directory: cli
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

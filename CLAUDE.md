@@ -12,6 +12,23 @@
 
 When the user says "update the plugin" or "fix the command", edit files in `./plugin/`, NOT `./.claude/plugins/`.
 
+## ⚠️ CLI Commands in Dev Environment
+
+**Two CLI commands exist — use the right one:**
+
+| Command | Source | Use for |
+|---------|--------|---------|
+| `deepfield` | npm global install (`npm install -g deepfield`) | Stable released version — what users run. Use when testing against a real workspace. |
+| `deepfield-dev` | `~/dev/workspace/mine/deepfield/cli/dist/cli.js` | Live dev build — reflects current branch. Use when developing/testing CLI changes in this repo. |
+
+**Why this matters:** `deepfield-dev` is built from this repo. Switching branches changes its behavior and reported version. Always use `deepfield` (npm) when you need a stable, version-correct CLI, and `deepfield-dev` when you're iterating on CLI code.
+
+After editing CLI source, rebuild with:
+```bash
+cd cli && npm run build
+```
+Then test with `deepfield-dev`.
+
 ## Project Overview
 
 **Deepfield** is an AI-driven knowledge base builder for Claude Code that iteratively learns codebases and distills institutional knowledge. It helps developers understand brownfield projects through autonomous, iterative learning.
