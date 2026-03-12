@@ -1,8 +1,11 @@
 import { pathExists, readFile } from 'fs-extra';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import semver from 'semver';
+
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * Get the current CLI version. Reads from Claude Code's installed_plugins.json first
@@ -83,7 +86,7 @@ export async function checkProjectVersion(projectPath: string): Promise<VersionC
     // Dynamically load migration list to avoid circular deps at import time
     let migrations: MigrationInfo[] = [];
     try {
-      const { getRequiredMigrations } = require('../../migrations/index.js');
+      const { getRequiredMigrations } = await import('../../migrations/index.js');
       const migs = getRequiredMigrations(projectVersion, currentVersion);
       migrations = migs.map((m: { from: string; to: string; description: string }) => ({
         from: m.from,

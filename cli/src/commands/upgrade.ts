@@ -1,11 +1,14 @@
 import { Command } from 'commander';
 import { pathExists, readJson } from 'fs-extra';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import { readFileSync } from 'fs';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { createBackup } from '../utils/backup.js';
+
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * Get current CLI version. Reads from Claude Code's installed_plugins.json first

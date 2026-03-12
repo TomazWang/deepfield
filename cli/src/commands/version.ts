@@ -1,7 +1,10 @@
 import { Command } from 'commander';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import chalk from 'chalk';
+
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * The three files that must carry identical version values.
