@@ -1,6 +1,6 @@
 {
   "name": "deepfield",
-  "version": "0.8.7",
+  "version": "0.9.0",
   "description": "CLI tool for AI-driven knowledge base building",
   "type": "module",
   "main": "dist/cli.js",
