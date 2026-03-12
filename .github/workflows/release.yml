@@ -81,6 +81,11 @@ jobs:
         working-directory: cli
         run: npm ci
 
+      - name: Build CLI
+        if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
+        working-directory: cli
+        run: npm run build
+
       - name: Publish to npm
         if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
         working-directory: cli
