@@ -1,15 +1,27 @@
 import { Command } from 'commander';
 import { pathExists, readJson } from 'fs-extra';
 import { join, dirname } from 'path';
+import { homedir } from 'os';
 import { readFileSync } from 'fs';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { createBackup } from '../utils/backup.js';
 
 /**
- * Get current CLI version from package.json
+ * Get current CLI version. Reads from Claude Code's installed_plugins.json first
+ * (authoritative source when installed via marketplace), falling back to package.json.
  */
 function getCliVersion(): string {
+  try {
+    const installedPath = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    const data = JSON.parse(readFileSync(installedPath, 'utf-8'));
+    const entry = data?.plugins?.['deepfield@deepfield'];
+    if (Array.isArray(entry) && entry.length > 0 && entry[0].version) {
+      return entry[0].version;
+    }
+  } catch {
+    // fall through to package.json
+  }
   try {
     const pkgPath = join(dirname(dirname(__filename)), 'package.json');
     return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '0.0.0';
