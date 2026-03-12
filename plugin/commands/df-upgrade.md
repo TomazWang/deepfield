@@ -79,9 +79,10 @@ Build a JSON payload:
 
 ### Step 5: Invoke the deepfield-upgrade skill
 
-Invoke the `Deepfield Upgrade` skill with the payload from Step 4.
+Invoke the skill with slug `deepfield-upgrade` (NOT `kb-management` or any other skill).
+Use: `Skill("deepfield:deepfield-upgrade", payload)` — the exact slug is `deepfield-upgrade`.
 
-Pass the payload as the skill argument. The skill will:
+Pass the payload from Step 4 as the skill argument. The skill will:
 - Validate the workspace pre-upgrade
 - Analyze the structural diff between versions
 - Apply all required file operations atomically using CLI helpers
@@ -104,7 +105,7 @@ Pass the payload as the skill argument. The skill will:
 
 ### Step 7: Draft Migration — Split Legacy Domain Files
 
-After the workspace structure upgrade completes (Step 6 success), invoke the `Deepfield Upgrade` skill a second time in draft-migration mode to detect and migrate any legacy flat domain files. Pass the same payload as Step 4, plus `"mode": "draft-migration"` and `"backupPath": "<backupPath>"`.
+After the workspace structure upgrade completes (Step 6 success), invoke the `deepfield-upgrade` skill (`Skill("deepfield:deepfield-upgrade", payload)`) a second time in draft-migration mode to detect and migrate any legacy flat domain files. Pass the same payload as Step 4, plus `"mode": "draft-migration"` and `"backupPath": "<backupPath>"`.
 
 The skill handles all migration logic: idempotency check, legacy file detection, user confirmation prompt, AI-driven spec splitting via `deepfield-document-generator`, link rewriting, and the migration report. If no legacy files are found, the skill reports and exits cleanly.
 
@@ -112,7 +113,7 @@ The skill handles all migration logic: idempotency check, legacy file detection,
 
 ### Step 7b: Dual-Track Migration — Migrate behavior/ + tech/ to 3-Tier Structure
 
-After Step 7 completes (or is skipped), invoke the `Deepfield Upgrade` skill a third time in dual-track-migration mode to detect and migrate any post-#91 dual-track spec files (`drafts/behavior/` + `drafts/tech/`) into the new language-first 3-tier structure.
+After Step 7 completes (or is skipped), invoke the `deepfield-upgrade` skill (`Skill("deepfield:deepfield-upgrade", payload)`) a third time in dual-track-migration mode to detect and migrate any post-#91 dual-track spec files (`drafts/behavior/` + `drafts/tech/`) into the new language-first 3-tier structure.
 
 Pass the same payload as Step 4, plus `"mode": "dual-track-migration"` and `"backupPath": "<backupPath>"`.
 
