@@ -1,20 +1,43 @@
 import { Command } from 'commander';
 import { pathExists, readJson } from 'fs-extra';
 import { join, dirname } from 'path';
+import { homedir } from 'os';
 import { readFileSync, writeFileSync, renameSync, unlinkSync, mkdirSync } from 'fs';
 import chalk from 'chalk';
 import { createBackup } from '../utils/backup.js';
 
 /**
- * Get current CLI version from package.json
+ * Get installed plugin version from Claude Code's installed_plugins.json.
+ * Returns null if not found (e.g. not installed via marketplace, or running headlessly).
+ */
+function getInstalledPluginVersion(): string | null {
+  try {
+    const installedPath = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    const raw = readFileSync(installedPath, 'utf-8');
+    const data = JSON.parse(raw);
+    const entry = data?.plugins?.['deepfield@deepfield'];
+    if (Array.isArray(entry) && entry.length > 0 && entry[0].version) {
+      return entry[0].version;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get current CLI version. Reads from Claude Code's installed_plugins.json first
+ * (authoritative source when installed via marketplace), falling back to package.json.
  */
 function getCliVersion(): string {
-  try {
-    const pkgPath = join(dirname(dirname(__filename)), 'package.json');
-    return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '0.0.0';
-  } catch {
-    return '0.0.0';
-  }
+  return getInstalledPluginVersion() ?? (() => {
+    try {
+      const pkgPath = join(dirname(dirname(__filename)), 'package.json');
+      return JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? '0.0.0';
+    } catch {
+      return '0.0.0';
+    }
+  })();
 }
 
 /**

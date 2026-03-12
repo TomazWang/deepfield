@@ -1,15 +1,28 @@
 import { pathExists, readFile } from 'fs-extra';
+import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
+import { homedir } from 'os';
 import semver from 'semver';
 
 /**
- * Get the current CLI version from package.json
+ * Get the current CLI version. Reads from Claude Code's installed_plugins.json first
+ * (authoritative source when installed via marketplace), falling back to package.json.
  */
 function getCliVersion(): string {
   try {
+    const installedPath = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    const data = JSON.parse(readFileSync(installedPath, 'utf-8'));
+    const entry = data?.plugins?.['deepfield@deepfield'];
+    if (Array.isArray(entry) && entry.length > 0 && entry[0].version) {
+      return entry[0].version;
+    }
+  } catch {
+    // fall through to package.json
+  }
+  try {
     // Handles both dist/ and src/ paths
     const pkgPath = join(dirname(dirname(__filename)), 'package.json');
-    const pkg = JSON.parse(require('fs').readFileSync(pkgPath, 'utf-8'));
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     return pkg.version ?? '1.0.0';
   } catch {
     return '1.0.0';
