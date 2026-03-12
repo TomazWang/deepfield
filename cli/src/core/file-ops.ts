@@ -1,6 +1,6 @@
-import { writeFile, rename, unlink, pathExists } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { writeFile, rename, unlink, pathExists, ensureDir, readdir } = fsExtra;
 import { join, dirname } from 'path';
-import { ensureDir } from 'fs-extra';
 
 /**
  * Custom error for file operation issues
@@ -56,7 +56,6 @@ export async function atomicWrite(filePath: string, content: string): Promise<vo
  * @param dirPath Directory to clean
  */
 export async function cleanupTmpFiles(dirPath: string): Promise<void> {
-  const { readdir } = await import('fs-extra');
 
   try {
     if (!(await pathExists(dirPath))) {

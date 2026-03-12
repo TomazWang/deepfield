@@ -1,7 +1,7 @@
-import { pathExists, readdir, stat } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, readdir, stat, readFile } = fsExtra;
 import { join } from 'path';
 import { createHash } from 'crypto';
-import { readFile } from 'fs-extra';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 

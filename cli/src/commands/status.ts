@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { pathExists, readdir, readFile } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { pathExists, readdir, readFile } = fsExtra;
 import { join } from 'path';
 import chalk from 'chalk';
 import { readProjectConfig, StateError } from '../core/state.js';

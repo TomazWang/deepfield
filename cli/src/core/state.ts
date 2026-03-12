@@ -1,4 +1,5 @@
-import { readFile, writeFile, pathExists } from 'fs-extra';
+import fsExtra from 'fs-extra';
+const { readFile, writeFile, pathExists } = fsExtra;
 import { join } from 'path';
 import { z } from 'zod';
 import { ProjectConfigSchema, RunConfigSchema, ProjectConfig, RunConfig } from './schemas.js';
