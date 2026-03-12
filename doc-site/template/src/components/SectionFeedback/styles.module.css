@@ -1,0 +1,88 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  position: relative;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  font-size: 0.85em;
+  line-height: 1;
+  color: var(--deepfield-feedback-color);
+}
+
+.button:hover,
+.buttonActive {
+  opacity: 1;
+  background-color: var(--ifm-color-emphasis-200);
+}
+
+.icon {
+  pointer-events: none;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: min(600px, 90vw);
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--ifm-color-emphasis-100);
+  border-bottom: 1px solid var(--ifm-color-emphasis-300);
+  font-size: 0.85rem;
+}
+
+.panelTitle {
+  font-weight: 600;
+  color: var(--ifm-color-content);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80%;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--ifm-color-content-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+/* Giscus iframe container inside the panel */
+.panel > :last-child {
+  padding: 0.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}

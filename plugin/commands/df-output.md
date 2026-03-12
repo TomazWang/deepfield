@@ -246,6 +246,25 @@ Documents included: [N]
 Polished: [Yes/No]
 ```
 
+### 8. Generate Docusaurus Site
+
+After the snapshot is written (Steps 1–7), generate a Docusaurus site by running:
+
+```bash
+deepfield docs build "deepfield/output/${VERSION}/"
+```
+
+If Giscus feedback is configured in the project config (`project.config.json` field `giscusRepo`), pass the additional flags:
+
+```bash
+deepfield docs build "deepfield/output/${VERSION}/" \
+  --giscus-repo "$(jq -r '.giscusRepo // empty' deepfield/project.config.json)" \
+  --giscus-repo-id "$(jq -r '.giscusRepoId // empty' deepfield/project.config.json)" \
+  --giscus-category-id "$(jq -r '.giscusCategoryId // empty' deepfield/project.config.json)"
+```
+
+If the command fails (e.g. `deepfield-doc-site` package not found), warn but do NOT fail the snapshot — the snapshot itself is already complete.
+
 ## Output
 
 ### On Success
@@ -257,6 +276,11 @@ Knowledge base snapshot created
   Location:  deepfield/output/[version]/
   Documents: [N] files
   Polished:  [Yes/No]
+
+  Docusaurus site: deepfield/output/[version]/docusaurus/
+  To preview:
+    cd deepfield/output/[version]/docusaurus
+    npm install && npm start
 
   This snapshot is immutable. Continue learning with /df-iterate
   and create new snapshots anytime with /df-output.
@@ -273,3 +297,5 @@ Knowledge base snapshot created
 - When extracting confidence data, handle missing or malformed learning-plan.md gracefully
 - If the learning plan has no topics yet, show "No topics tracked yet" in the confidence table
 - Always generate the INDEX.md to make multiple snapshots discoverable
+- The Docusaurus site is built by the CLI (`deepfield docs build`) — do NOT generate it manually
+- If `deepfield docs build` fails, still report snapshot success and mention the user can run it manually
