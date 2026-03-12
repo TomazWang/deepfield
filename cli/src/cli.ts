@@ -59,6 +59,7 @@ import {
   createScaffoldCrossCuttingCommand,
 } from './commands/upgrade-helpers.js';
 import { createDetectBehaviorDomainsCommand } from './commands/bootstrap-helpers.js';
+import { createDocsCommand } from './commands/docs.js';
 
 // Register commands
 program.addCommand(createInitCommand());
@@ -68,6 +69,7 @@ program.addCommand(createBootstrapCommand());
 program.addCommand(createUpgradeCommand());
 program.addCommand(createRollbackCommand());
 program.addCommand(createVersionCommand());
+program.addCommand(createDocsCommand());
 
 // Register bootstrap helper sub-commands (used by the deepfield-bootstrap plugin skill)
 program.addCommand(createDetectBehaviorDomainsCommand());

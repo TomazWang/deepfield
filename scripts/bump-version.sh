@@ -5,6 +5,7 @@
 # Files updated:
 #   package.json                  → .version  (monorepo root)
 #   cli/package.json              → .version
+#   doc-site/package.json         → .version
 #   plugin/package.json           → .version AND .peerDependencies.deepfield
 #   plugin/.claude-plugin/plugin.json → .version
 #
@@ -18,6 +19,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 ROOT_PKG="$REPO_ROOT/package.json"
 CLI_PKG="$REPO_ROOT/cli/package.json"
+DOC_SITE_PKG="$REPO_ROOT/doc-site/package.json"
 PLUGIN_PKG="$REPO_ROOT/plugin/package.json"
 PLUGIN_JSON="$REPO_ROOT/plugin/.claude-plugin/plugin.json"
 
@@ -175,6 +177,9 @@ atomic_json_update "$ROOT_PKG" ".version = \"$NEW_VERSION\""
 
 echo "Updating cli/package.json ..."
 atomic_json_update "$CLI_PKG" ".version = \"$NEW_VERSION\""
+
+echo "Updating doc-site/package.json ..."
+atomic_json_update "$DOC_SITE_PKG" ".version = \"$NEW_VERSION\""
 
 echo "Updating plugin/package.json ..."
 atomic_json_update "$PLUGIN_PKG" ".version = \"$NEW_VERSION\" | .peerDependencies.deepfield = \"^$NEW_VERSION\""

@@ -16,6 +16,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 ROOT_PKG="$REPO_ROOT/package.json"
 CLI_PKG="$REPO_ROOT/cli/package.json"
+DOC_SITE_PKG="$REPO_ROOT/doc-site/package.json"
 PLUGIN_PKG="$REPO_ROOT/plugin/package.json"
 PLUGIN_JSON="$REPO_ROOT/plugin/.claude-plugin/plugin.json"
 
@@ -43,6 +44,7 @@ read_field() {
 
 ROOT_VERSION=$(read_field "$ROOT_PKG" ".version")
 CLI_VERSION=$(read_field "$CLI_PKG" ".version")
+DOC_SITE_VERSION=$(read_field "$DOC_SITE_PKG" ".version")
 PLUGIN_VERSION=$(read_field "$PLUGIN_PKG" ".version")
 PLUGIN_PEER=$(read_field "$PLUGIN_PKG" ".peerDependencies.deepfield")
 PLUGIN_JSON_VERSION=$(read_field "$PLUGIN_JSON" ".version")
@@ -57,6 +59,7 @@ echo "Deepfield version sync check"
 echo "──────────────────────────────────────────────────────"
 printf "  %-42s  %s\n" "package.json (.version)"                         "$ROOT_VERSION"
 printf "  %-42s  %s\n" "cli/package.json (.version)"                     "$CLI_VERSION"
+printf "  %-42s  %s\n" "doc-site/package.json (.version)"                "$DOC_SITE_VERSION"
 printf "  %-42s  %s\n" "plugin/package.json (.version)"                  "$PLUGIN_VERSION"
 printf "  %-42s  %s\n" "plugin/package.json (.peerDependencies.deepfield)" "$PLUGIN_PEER"
 printf "  %-42s  %s\n" "plugin/.claude-plugin/plugin.json (.version)"    "$PLUGIN_JSON_VERSION"
@@ -75,6 +78,10 @@ if [[ "$CLI_VERSION" == "(not found)" || "$CLI_VERSION" == "(missing)" ]]; then
   ERRORS+=("cli/package.json version is missing or file not found")
 fi
 
+if [[ "$DOC_SITE_VERSION" == "(not found)" || "$DOC_SITE_VERSION" == "(missing)" ]]; then
+  ERRORS+=("doc-site/package.json version is missing or file not found")
+fi
+
 if [[ "$PLUGIN_VERSION" == "(not found)" || "$PLUGIN_VERSION" == "(missing)" ]]; then
   ERRORS+=("plugin/package.json version is missing or file not found")
 fi
@@ -91,6 +98,10 @@ fi
 if [[ ${#ERRORS[@]} -eq 0 ]]; then
   if [[ "$ROOT_VERSION" != "$CLI_VERSION" ]]; then
     ERRORS+=("package.json ($ROOT_VERSION) != cli/package.json ($CLI_VERSION)")
+  fi
+
+  if [[ "$CLI_VERSION" != "$DOC_SITE_VERSION" ]]; then
+    ERRORS+=("cli/package.json ($CLI_VERSION) != doc-site/package.json ($DOC_SITE_VERSION)")
   fi
 
   if [[ "$CLI_VERSION" != "$PLUGIN_VERSION" ]]; then

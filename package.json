@@ -5,11 +5,12 @@
   "private": true,
   "workspaces": [
     "cli",
-    "plugin"
+    "plugin",
+    "doc-site"
   ],
   "scripts": {
-    "build": "npm run build -w cli",
-    "build:all": "npm run build -w cli && npm run build -w plugin",
+    "build": "npm run build -w cli && npm run build -w doc-site",
+    "build:all": "npm run build -w cli && npm run build -w doc-site && npm run build -w plugin",
     "test": "npm test --workspaces",
     "lint": "npm run lint --workspaces",
     "clean": "npm run clean --workspaces"
