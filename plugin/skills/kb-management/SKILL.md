@@ -1,6 +1,6 @@
 ---
 name: Knowledge Base Management
-description: This skill activates when discussing knowledge base creation, deepfield workflow, or brownfield project documentation. Provides guidance on initializing, configuring, and managing AI-driven knowledge bases for legacy codebases.
+description: User-facing guidance skill — answers questions about how to use Deepfield (setup, commands, workflow). Activates ONLY when a user explicitly asks for help or explanation (e.g. "how do I use deepfield?", "what does df-init do?"). Does NOT activate during automated command execution flows such as /df-upgrade, /df-bootstrap, or /df-iterate.
 version: 1.0.0
 ---
 
