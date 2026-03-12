@@ -79,7 +79,7 @@ jobs:
       - name: Install CLI dependencies
         if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
         working-directory: cli
-        run: npm ci
+        run: npm install
 
       - name: Build CLI
         if: steps.skip.outputs.skip == 'false' && steps.tag_check.outputs.skip == 'false'
